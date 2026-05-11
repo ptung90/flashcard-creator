@@ -314,10 +314,10 @@
           <div id="editor-content" style="display: none"></div>
         </div>
 
-        <div class="fc-panel-divider" data-panel="fc-preview"></div>
+        <div class="fc-panel-divider" data-panel="fc-preview-panel"></div>
 
         <!-- Preview -->
-        <div class="fc-preview" id="fc-preview">
+        <div class="fc-preview-panel" id="fc-preview-panel">
           <div class="fc-preview-header">
             <div style="display:flex;align-items:center;gap:6px">
               <div class="fc-preview-label">Preview</div>
@@ -334,7 +334,9 @@
               </button>
             </div>
           </div>
-          <div id="preview-card-wrap"></div>
+          <div class="fc-preview" id="fc-preview">
+            <div id="preview-card-wrap"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -569,13 +571,6 @@
               >
                 📁 <span id="load-folder-name"></span>
               </span>
-              <button
-                class="btn btn-secondary btn-sm"
-                onclick="setWorkDir()"
-                style="font-size: 11px; padding: 2px 8px"
-              >
-                Open folder
-              </button>
             </div>
             <div id="load-folder-list"></div>
           </div>
@@ -936,6 +931,7 @@
       </div>
     </div>
 
+    <div id="fc-toast"></div>
     <!-- BUILD:JS -->
   </body>
 </html>

@@ -494,14 +494,13 @@ function renderEditor() {
     const img = card.images.find((im) => im.slot === i);
     const url = img ? img.url : "";
     const hasOverride = img != null && img.size != null;
-    const sizeOpts = [["cover","Cover"],["contain","Contain"],["100% auto","Fit width"],["auto 100%","Fit height"]];
+    const sizeOpts = [["cover", "Cover"], ["contain", "Contain"], ["100% auto", "Fit width"], ["auto 100%", "Fit height"]];
     const overrideHtml = url && !hidden ? `<div class="img-override-row">
         <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;white-space:nowrap">
           <input type="checkbox" ${hasOverride ? "checked" : ""} onchange="toggleImgOverride(${i},this.checked)">Custom</label>
-        ${hasOverride ? `<select class="img-override-select" onchange="updateImgProp(${i},'size',this.value)">${
-          sizeOpts.map(([v,l]) => `<option value="${v}"${img.size===v?" selected":""}>${l}</option>`).join("")
+        ${hasOverride ? `<select class="img-override-select" onchange="updateImgProp(${i},'size',this.value)">${sizeOpts.map(([v, l]) => `<option value="${v}"${img.size === v ? " selected" : ""}>${l}</option>`).join("")
         }</select>` : ""}
-        ${hasOverride && img.size !== "cover" ? `<input type="color" value="${img.color||"#e5e7eb"}" onchange="updateImgProp(${i},'color',this.value)" title="Background color" style="width:26px;height:22px;padding:0;border:1px solid #d1d5db;border-radius:3px;cursor:pointer">` : ""}
+        ${hasOverride && img.size !== "cover" ? `<input type="color" value="${img.color || "#e5e7eb"}" onchange="updateImgProp(${i},'color',this.value)" title="Background color" style="width:26px;height:22px;padding:0;border:1px solid #d1d5db;border-radius:3px;cursor:pointer">` : ""}
       </div>` : "";
     return `
       <div class="image-slot-row${hidden ? " slot-hidden" : ""}" draggable="true" data-slot="${i}">
@@ -529,6 +528,7 @@ function renderEditor() {
     card.layout === "2img-2txt" || card.layout === "2img-4txt" || card.layout === "8img-8txt";
   const isImgPairedLayout =
     card.layout === "2img-2txt" || card.layout === "8img-8txt";
+  const sectionRows = card.layout === "fulltext" ? 10 : 2;
 
   const sections = card.sections
     .map((s, si) => {
@@ -554,7 +554,7 @@ function renderEditor() {
         <button class="icon-btn" onclick="moveSection('${s.id}',1)">↓</button>
         <button class="icon-btn" onclick="deleteSection('${s.id}')">🗑</button>
       </div>
-      <textarea class="section-content-input" rows="2" placeholder="Markdown content..." oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
+      <textarea class="section-content-input" rows="${sectionRows}" placeholder="Markdown content..." oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
     </div>`;
     })
     .join("");
@@ -572,7 +572,6 @@ function renderEditor() {
 
     ${card.layout !== 'fullimage' &&
       card.layout !== 'fulltext' &&
-      card.layout !== '2img-2txt' &&
       card.layout !== '2img-4txt' ? `
     <div class="editor-section">
       <h3>Image Area Height</h3>
@@ -583,7 +582,7 @@ function renderEditor() {
       </div>
     </div>` : ''}
 
-    ${card.layout === '2img-2txt' || card.layout === '2img-4txt' ? (() => {
+    ${card.layout === '2img-4txt' ? (() => {
       const sp = card.imageGridSplit;
       const r = sp.row;
       const row2 = card.layout === '2img-4txt' ? Math.round((100 - r) * sp.inner / 100) : 100 - r;
@@ -755,14 +754,14 @@ function layoutIcon(layout, selected) {
 `,
 
     "2img-2txt": `
-  <div class="lo-row" style="flex:1">
+  <div class="lo-row" style="flex:2">
     <div class="lo-block"></div>
     <div class="lo-block"></div>
   </div>
 
-  <div class="lo-row" style="flex:1">
-    <div class="lo-text"></div>
-    <div class="lo-text"></div>
+  <div class="lo-row" style="flex:1;align-items:stretch">
+    <div class="lo-text" style="height:auto"></div>
+    <div class="lo-text" style="height:auto"></div>
   </div>
 `,
 
@@ -1072,6 +1071,7 @@ function getGridTemplateStyle(layout, sp) {
 }
 
 function buildHandles(layout, sp) {
+  if (layout === "2img-2txt") return "";
   const { row: r, col: c, inner: n } = sp;
 
   const H = (type, sty) =>
@@ -1254,10 +1254,11 @@ function buildSectionCellsHtml(sections, count, contentStyle, cellOptions) {
   }).join("");
 }
 
-function getCompoundGridStyle(layout, split, gapPx) {
+function getCompoundGridStyle(layout, split, gapPx, imgPct) {
   const rowsGap2 = gapPx * 2;
   const gap = gapPx + "px";
   if (layout === "2img-2txt") {
+    const rowPct = imgPct ?? split.row;
     return (
       "grid-template-columns:calc((100% - " +
       gap +
@@ -1267,11 +1268,11 @@ function getCompoundGridStyle(layout, split, gapPx) {
       "grid-template-rows:calc((100% - " +
       gap +
       ") * " +
-      split.row +
+      rowPct +
       " / 100) calc((100% - " +
       gap +
       ") * " +
-      (100 - split.row) +
+      (100 - rowPct) +
       " / 100);"
     );
   }
@@ -1468,7 +1469,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
     borderCss,
     borderRadiusPx: s.border.radius,
   };
-  const compoundGridStyle = getCompoundGridStyle(card.layout, split, marginPx);
+  const compoundGridStyle = getCompoundGridStyle(card.layout, split, marginPx, card.imageHeightPercent);
 
   // fullimage: image-only card with inner padding wrapper
   if (card.layout === 'fullimage') {
@@ -1569,7 +1570,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
       const section = card.sections[i];
       const imgContent = img && img.url
         ? '<div style="width:100%;height:100%;overflow:hidden;"><div class="img-bg" style="background-image:url(\'' +
-          esc(img.url) + '\');' + resolveImgStyle(img, imgStyle) + 'background-repeat:no-repeat;width:100%;height:100%;"></div></div>'
+        esc(img.url) + '\');' + resolveImgStyle(img, imgStyle) + 'background-repeat:no-repeat;width:100%;height:100%;"></div></div>'
         : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;"><span class="empty-placeholder">📷</span></div>';
       imgItems.push(
         '<div class="fc-image-slot fc-image-slot-' + i + '" style="' +
@@ -1651,12 +1652,13 @@ function renderPreview() {
     state.settings.paperSize,
     card.orientation || state.settings.orientation,
   );
-  const panelW = document.getElementById("fc-preview").clientWidth - 32;
+  const panelW = document.getElementById("fc-preview-panel").clientWidth - 32;
   const scale = (panelW / w) * previewZoom;
   const zl = document.getElementById("preview-zoom-label");
   if (zl) zl.textContent = Math.round(previewZoom * 100) + "%";
   const scaledW = Math.round(w * scale);
   const scaledH = Math.round(h * scale);
+  wrap.style.cssText = "width:100%;min-width:" + scaledW + "px;display:flex;justify-content:center;";
   // White paper background; card sits inside with margin applied via its own style
   wrap.innerHTML =
     '<div style="width:' +
@@ -2173,6 +2175,15 @@ function clearDirty() {
   _updateLabels();
 }
 
+let _toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById("fc-toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove("show"), 2000);
+}
+
 async function _autoSaveToFile() {
   if (!workDirHandle || !state.cards.length) return;
   if (!currentFileName) currentFileName = _defaultFileName();
@@ -2181,6 +2192,7 @@ async function _autoSaveToFile() {
     await _writeToDir(currentFileName, JSON.stringify(dataObj, null, 2));
     localStorage.setItem("fc_last_file", currentFileName);
     clearDirty();
+    showToast("✓ Saved");
   } catch (_) { }
 }
 
@@ -2252,6 +2264,20 @@ function _defaultFileName() {
   return `${slug}.json`;
 }
 
+function _timestampedFileName() {
+  const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mmm = MONTHS[d.getMonth()];
+  const yy = String(d.getFullYear()).slice(-2);
+  const hhmm = String(d.getHours()).padStart(2, "0") + String(d.getMinutes()).padStart(2, "0");
+  const slug = (state.projectName || "untitled")
+    .toLowerCase().trim()
+    .replace(/[^a-z0-9À-ɏḀ-ỿ]+/g, "-")
+    .replace(/^-|-$/g, "") || "untitled";
+  return `${slug}-${dd}${mmm}${yy}-${hhmm}.json`;
+}
+
 async function saveJSON() {
   const dataObj = _buildDataObj();
   const json = JSON.stringify(dataObj, null, 2);
@@ -2274,9 +2300,19 @@ async function saveJSONAs() {
   const dataObj = _buildDataObj();
   const json = JSON.stringify(dataObj, null, 2);
   if (workDirHandle) {
-    const raw = prompt("Tên file:", currentFileName || _defaultFileName());
+    const raw = prompt("File name:", _timestampedFileName());
     if (!raw) return;
     const name = raw.endsWith(".json") ? raw : raw + ".json";
+    if (name !== currentFileName) {
+      let exists = false;
+      try {
+        await workDirHandle.getFileHandle(name, { create: false });
+        exists = true;
+      } catch (e) {
+        if (e.name !== "NotFoundError") exists = true; // unknown error → assume exists
+      }
+      if (exists && !confirm(`"${name}" already exists. Overwrite?`)) return;
+    }
     try {
       await _writeToDir(name, json);
       currentFileName = name;
@@ -3104,6 +3140,36 @@ function initPanelResize() {
   });
 }
 
+// ── Preview pan (click-drag to scroll) ────────────────────────────
+function initPreviewPan() {
+  const el = document.getElementById("fc-preview");
+  let panning = false, startX, startY, scrollX, scrollY;
+
+  el.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    if (e.target.closest(".fc-grid-handle")) return;
+    panning = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    scrollX = el.scrollLeft;
+    scrollY = el.scrollTop;
+    el.classList.add("panning");
+    e.preventDefault();
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!panning) return;
+    el.scrollLeft = scrollX - (e.clientX - startX);
+    el.scrollTop = scrollY - (e.clientY - startY);
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (!panning) return;
+    panning = false;
+    el.classList.remove("panning");
+  });
+}
+
 // ── Init ───────────────────────────────────────────────────────────
 async function init() {
   const vEl = document.getElementById("app-version");
@@ -3114,6 +3180,7 @@ async function init() {
   applySettingsToUI();
   document.getElementById('view-grid-btn').classList.add('active');
   initPanelResize();
+  initPreviewPan();
   renderSidebar();
   renderEditor();
   renderPreview();
@@ -3175,4 +3242,3 @@ async function init() {
 
 init();
 
-    
