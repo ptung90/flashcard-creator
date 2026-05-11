@@ -13,6 +13,11 @@ backup-*/
 sessions/
 docs/
 
+# Office docs
+*.docx
+*.xlsx
+*.pptx
+
 # OS
 Thumbs.db
 .DS_Store
