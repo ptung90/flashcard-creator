@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FlashCard Creator</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>"
+    />
+
+    <!-- BUILD:CONFIG -->
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- BUILD:CSS -->
+    <style id="fc-custom-css"></style>
+  </head>
+  <body>
+    <div class="fc-app">
+      <!-- Settings Bar -->
+      <div class="fc-settings-bar">
+        <div class="setting-group">
+          <label>Paper</label>
+          <select id="set-paper">
+            <option value="A4">A4</option>
+            <option value="A5">A5</option>
+            <option value="A6">A6</option>
+            <option value="Letter">Letter</option>
+          </select>
+          <select id="set-orient">
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label>Margin</label>
+          <input
+            type="number"
+            id="set-margin"
+            value="15"
+            min="0"
+            max="40"
+            title="mm"
+          />
+          <label>mm</label>
+          <label style="margin-left: 6px">Text Pad</label>
+          <input
+            type="number"
+            id="set-padding"
+            value="12"
+            min="0"
+            max="40"
+            title="mm"
+          />
+          <label>mm</label>
+          <label style="margin-left: 6px">Img Pad</label>
+          <input
+            type="number"
+            id="set-img-padding"
+            value="0"
+            min="0"
+            max="20"
+            title="mm"
+          />
+          <label>mm</label>
+        </div>
+        <div class="setting-group">
+          <label>Border</label>
+          <input
+            type="number"
+            id="set-bw"
+            value="2"
+            min="0"
+            max="10"
+            title="px"
+            style="width: 40px"
+          />
+          <label>px</label>
+          <select id="set-bs">
+            <option value="dashed" selected>Dashed</option>
+            <option value="solid">Solid</option>
+            <option value="dotted">Dotted</option>
+            <option value="double">Double</option>
+            <option value="none">None</option>
+          </select>
+          <input
+            type="color"
+            id="set-bc"
+            value="#6B21A8"
+            title="Border color"
+          />
+          <label>R</label>
+          <input
+            type="number"
+            id="set-br"
+            value="0"
+            min="0"
+            max="40"
+            title="radius px"
+            style="width: 40px"
+          />
+          <label>px</label>
+        </div>
+        <div class="setting-group" style="display: none">
+          <label>Img size</label>
+          <select id="set-imgsize">
+            <option value="cover">Cover</option>
+            <option value="contain">Contain</option>
+          </select>
+          <label>pos</label>
+          <input
+            type="text"
+            id="set-imgpos"
+            value="center"
+            style="width: 60px"
+            title="CSS background-position"
+          />
+        </div>
+
+        <button class="btn-font-toggle" id="btn-font-toggle" onclick="toggleFontPanel()" title="Font settings">Aa ▾</button>
+      </div>
+
+      <!-- Font Settings Panel (collapsible) -->
+      <div id="font-settings-panel" class="font-settings-panel">
+        <div class="setting-group">
+          <label>Title</label>
+          <select id="set-font-family">
+            <option value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif">Modern Sans</option>
+            <option value="sans-serif">Sans-serif</option>
+            <option value="serif">Serif</option>
+            <option value="'Georgia',serif">Georgia</option>
+            <option value="'Times New Roman',serif">Times</option>
+            <option value="'Courier New',monospace">Mono</option>
+            <option value="'Be Vietnam Pro','Noto Sans','Segoe UI',sans-serif">Vietnamese Sans</option>
+            <option value="'Inter','Segoe UI',Roboto,Arial,sans-serif">Inter</option>
+            <option value="'SF Pro Display','SF Pro Text','Helvetica Neue',Arial,sans-serif">SF Pro</option>
+            <option value="'Segoe UI',Tahoma,Geneva,Verdana,sans-serif">Windows UI</option>
+            <option value="Roboto,'Helvetica Neue',Arial,sans-serif">Roboto</option>
+            <option value="'Helvetica Neue',Helvetica,Arial,sans-serif">Helvetica</option>
+            <option value="'Trebuchet MS',sans-serif">Trebuchet</option>
+            <option value="Verdana,Geneva,sans-serif">Verdana</option>
+            <option value="Tahoma,Geneva,sans-serif">Tahoma</option>
+            <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">Palatino</option>
+            <option value="'Lucida Console','Courier New',monospace">Lucida Console</option>
+            <option value="'Lexend',sans-serif">Lexend</option>
+            <option value="'Lexend Light','Lexend',sans-serif">Lexend Light</option>
+          </select>
+          <input type="number" id="set-font-size" min="8" max="28" style="width:46px" title="Size (px)" />
+          <label>px</label>
+          <input type="color" id="set-font-color" title="Text color" />
+          <label>LH</label>
+          <input type="number" id="set-font-lh" min="1" max="3" step="0.1" style="width:46px" title="Line height" />
+          <div class="align-btn-group">
+            <button class="align-btn" data-key="titleFont" data-align="left"    onclick="setFontAlign('titleFont','left')"    title="Left">&#8676;</button>
+            <button class="align-btn" data-key="titleFont" data-align="center"  onclick="setFontAlign('titleFont','center')"  title="Center">&#8596;</button>
+            <button class="align-btn" data-key="titleFont" data-align="right"   onclick="setFontAlign('titleFont','right')"   title="Right">&#8677;</button>
+            <button class="align-btn" data-key="titleFont" data-align="justify" onclick="setFontAlign('titleFont','justify')" title="Justify">&#8644;</button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label>Content</label>
+          <select id="set-cfont-family">
+            <option value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif">Modern Sans</option>
+            <option value="sans-serif">Sans-serif</option>
+            <option value="serif">Serif</option>
+            <option value="'Georgia',serif">Georgia</option>
+            <option value="'Times New Roman',serif">Times</option>
+            <option value="'Courier New',monospace">Mono</option>
+            <option value="'Be Vietnam Pro','Noto Sans','Segoe UI',sans-serif">Vietnamese Sans</option>
+            <option value="'Inter','Segoe UI',Roboto,Arial,sans-serif">Inter</option>
+            <option value="'SF Pro Display','SF Pro Text','Helvetica Neue',Arial,sans-serif">SF Pro</option>
+            <option value="'Segoe UI',Tahoma,Geneva,Verdana,sans-serif">Windows UI</option>
+            <option value="Roboto,'Helvetica Neue',Arial,sans-serif">Roboto</option>
+            <option value="'Helvetica Neue',Helvetica,Arial,sans-serif">Helvetica</option>
+            <option value="'Trebuchet MS',sans-serif">Trebuchet</option>
+            <option value="Verdana,Geneva,sans-serif">Verdana</option>
+            <option value="Tahoma,Geneva,sans-serif">Tahoma</option>
+            <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">Palatino</option>
+            <option value="'Lucida Console','Courier New',monospace">Lucida Console</option>
+            <option value="'Lexend',sans-serif">Lexend</option>
+            <option value="'Lexend Light','Lexend',sans-serif">Lexend Light</option>
+          </select>
+          <input type="number" id="set-cfont-size" min="8" max="28" style="width:46px" title="Size (px)" />
+          <label>px</label>
+          <input type="color" id="set-cfont-color" title="Text color" />
+          <label>LH</label>
+          <input type="number" id="set-cfont-lh" min="1" max="3" step="0.1" style="width:46px" title="Line height" />
+          <div class="align-btn-group">
+            <button class="align-btn" data-key="contentFont" data-align="left"    onclick="setFontAlign('contentFont','left')"    title="Left">&#8676;</button>
+            <button class="align-btn" data-key="contentFont" data-align="center"  onclick="setFontAlign('contentFont','center')"  title="Center">&#8596;</button>
+            <button class="align-btn" data-key="contentFont" data-align="right"   onclick="setFontAlign('contentFont','right')"   title="Right">&#8677;</button>
+            <button class="align-btn" data-key="contentFont" data-align="justify" onclick="setFontAlign('contentFont','justify')" title="Justify">&#8644;</button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label>V-Align</label>
+          <div class="align-btn-group">
+            <button class="valign-btn align-btn" data-valign="top"    onclick="setTextVAlign('top')"    title="Top">&#8869;</button>
+            <button class="valign-btn align-btn" data-valign="middle" onclick="setTextVAlign('middle')" title="Middle">&#8861;</button>
+            <button class="valign-btn align-btn" data-valign="bottom" onclick="setTextVAlign('bottom')" title="Bottom">&#8868;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="fc-toolbar">
+        <button class="btn btn-primary btn-sm" onclick="addCard()">
+          + New Card
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="refreshAllThumbs()" title="Regenerate all sidebar thumbnails">
+          ↻ Thumbs
+        </button>
+        <div class="spacer"></div>
+        <button
+          class="btn btn-secondary btn-sm"
+          onclick="openSettingsModal()"
+          title="App settings"
+        >
+          ⚙️ Settings
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="openCssModal()">
+          Custom CSS
+        </button>
+        <button
+          class="btn btn-secondary btn-sm"
+          onclick="setWorkDir()"
+          id="work-dir-btn"
+          title="Chọn folder làm việc"
+        >
+          📁 <span id="work-dir-label">Set Folder</span>
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="saveJSON()">
+          💾 Save<span
+            id="dirty-dot"
+            style="display: none; color: #ef4444; margin-left: 3px"
+            >●</span
+          >
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="saveJSONAs()">
+          💾 Save As
+        </button>
+        <div style="display: flex; flex-direction: column; gap: 1px">
+          <input
+            id="project-name-input"
+            type="text"
+            value="Untitled"
+            title="Project name — click to rename"
+            onchange="
+              state.projectName = this.value.trim() || 'Untitled';
+              this.value = state.projectName;
+              setDirty();
+            "
+          />
+          <!-- <span id="current-file-label" style="font-size:10px;color:#9ca3af;padding-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px"></span> -->
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="openLoadModal()">
+          📂 Load
+        </button>
+        <input
+          type="file"
+          id="load-file"
+          accept=".json"
+          style="display: none"
+          onchange="loadJSON(event)"
+        />
+        <button class="btn btn-secondary btn-sm" onclick="printAll()">
+          🖨 Print All
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="exportPDF()">
+          ⬇ PDF All
+        </button>
+        <span
+          id="app-version"
+          style="
+            font-size: 10px;
+            color: #9ca3af;
+            padding-left: 6px;
+            user-select: none;
+          "
+        ></span>
+      </div>
+
+      <!-- Main 3-panel -->
+      <div class="fc-main">
+        <!-- Sidebar: Card List -->
+        <div class="fc-sidebar" id="fc-sidebar">
+          <div class="fc-sidebar-header">
+            <span>Cards <span id="card-count" style="color:#9ca3af;font-weight:normal">0</span></span>
+            <div class="view-toggle">
+              <button class="view-toggle-btn" id="view-list-btn" onclick="setViewMode('list')" title="List view">☰</button>
+              <button class="view-toggle-btn" id="view-grid-btn" onclick="setViewMode('grid')" title="Grid view">⊞</button>
+            </div>
+          </div>
+          <div class="fc-card-list" id="card-list"></div>
+        </div>
+
+        <div class="fc-panel-divider" data-panel="fc-sidebar"></div>
+
+        <!-- Editor -->
+        <div class="fc-editor" id="fc-editor">
+          <div class="fc-editor-empty" id="editor-empty">
+            Select a card to edit, or click "+ New Card"
+          </div>
+          <div id="editor-content" style="display: none"></div>
+        </div>
+
+        <div class="fc-panel-divider" data-panel="fc-preview"></div>
+
+        <!-- Preview -->
+        <div class="fc-preview" id="fc-preview">
+          <div class="fc-preview-header">
+            <div style="display:flex;align-items:center;gap:6px">
+              <div class="fc-preview-label">Preview</div>
+              <button class="btn btn-secondary btn-sm" onclick="changePreviewZoom(-0.25)">−</button>
+              <span id="preview-zoom-label" onclick="changePreviewZoom(0)" title="Reset zoom" style="cursor:pointer;min-width:32px;text-align:center;font-size:11px;color:#374151;user-select:none">100%</span>
+              <button class="btn btn-secondary btn-sm" onclick="changePreviewZoom(0.25)">+</button>
+            </div>
+            <div class="fc-preview-actions">
+              <button class="btn btn-secondary btn-sm" onclick="printOne()">
+                🖨 Print
+              </button>
+              <button class="btn btn-primary btn-sm" onclick="exportOnePDF()">
+                ⬇ Export PDF
+              </button>
+            </div>
+          </div>
+          <div id="preview-card-wrap"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Image Search Modal -->
+    <div class="modal-backdrop" id="img-modal" style="display: none">
+      <div class="modal">
+        <div class="modal-header">
+          <span>Search Image — Slot <span id="modal-slot-num">0</span></span>
+          <button class="modal-close" onclick="closeImgModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="search-tabs">
+            <div
+              class="search-tab active"
+              data-tab="wikimedia"
+              onclick="switchTab(this)"
+            >
+              Wikimedia
+            </div>
+            <div
+              class="search-tab"
+              data-tab="inaturalist"
+              onclick="switchTab(this)"
+            >
+              iNaturalist
+            </div>
+            <div
+              class="search-tab"
+              data-tab="pixabay"
+              onclick="switchTab(this)"
+            >
+              Pixabay
+            </div>
+            <div class="search-tab" data-tab="upload" onclick="switchTab(this)">
+              📁 Upload
+            </div>
+            <div class="search-tab" data-tab="url" onclick="switchTab(this)">
+              URL
+            </div>
+          </div>
+
+          <div id="tab-wikimedia">
+            <div class="search-bar">
+              <input
+                type="text"
+                id="search-wikimedia"
+                placeholder="Search Wikimedia Commons..."
+                onkeydown="if (event.key === 'Enter') searchWikimedia();"
+              />
+              <button
+                class="btn btn-primary btn-sm"
+                onclick="searchWikimedia()"
+              >
+                Search
+              </button>
+            </div>
+            <div class="search-results" id="results-wikimedia">
+              <div class="search-status">Type a query and press Search</div>
+            </div>
+          </div>
+
+          <div id="tab-inaturalist" style="display: none">
+            <div class="search-bar">
+              <input
+                type="text"
+                id="search-inaturalist"
+                placeholder="Search iNaturalist (species, nature)..."
+                onkeydown="if (event.key === 'Enter') searchINaturalist();"
+              />
+              <button
+                class="btn btn-primary btn-sm"
+                onclick="searchINaturalist()"
+              >
+                Search
+              </button>
+            </div>
+            <div class="search-results" id="results-inaturalist">
+              <div class="search-status">Type a query and press Search</div>
+            </div>
+          </div>
+
+          <div id="tab-pixabay" style="display: none">
+            <div class="pixabay-key-row">
+              <span>API Key:</span>
+              <input
+                type="text"
+                id="pixabay-key"
+                placeholder="Enter Pixabay API key..."
+                value=""
+              />
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="savePixabayKey()"
+              >
+                Save
+              </button>
+            </div>
+            <div class="search-bar">
+              <input
+                type="text"
+                id="search-pixabay"
+                placeholder="Search Pixabay..."
+                onkeydown="if (event.key === 'Enter') searchPixabay();"
+              />
+              <button class="btn btn-primary btn-sm" onclick="searchPixabay()">
+                Search
+              </button>
+            </div>
+            <div class="search-results" id="results-pixabay">
+              <div class="search-status">Enter API key and search</div>
+            </div>
+          </div>
+
+          <div id="tab-upload" style="display: none">
+            <div
+              class="upload-drop-zone"
+              id="upload-drop-zone"
+              onclick="document.getElementById('upload-file-input').click()"
+            >
+              <div class="upload-drop-icon">📂</div>
+              <div>Click hoặc kéo thả ảnh vào đây</div>
+              <div style="font-size: 11px; color: #555; margin-top: 4px">
+                Chọn nhiều file cùng lúc (jpg, png, webp, gif)
+              </div>
+              <input
+                type="file"
+                id="upload-file-input"
+                accept="image/*"
+                multiple
+                style="display: none"
+                onchange="handleUploadFiles(this.files)"
+              />
+            </div>
+            <div
+              class="search-results"
+              id="results-upload"
+              style="display: none"
+            ></div>
+          </div>
+
+          <div id="tab-url" style="display: none">
+            <div class="url-input-area">
+              <label style="color: #888; font-size: 12px"
+                >Paste image URL:</label
+              >
+              <input
+                type="text"
+                id="url-input"
+                placeholder="https://example.com/image.jpg"
+                oninput="previewUrlInput()"
+              />
+              <img id="url-preview-img" class="url-preview" />
+              <button class="btn btn-primary" onclick="insertUrl()">
+                Insert Image
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom CSS Modal -->
+    <div class="modal-backdrop css-modal" id="css-modal" style="display: none">
+      <div class="modal">
+        <div class="modal-header">
+          <span>Custom CSS</span>
+          <button class="modal-close" onclick="closeCssModal()">×</button>
+        </div>
+        <div
+          class="modal-body"
+          style="padding: 12px; display: flex; flex-direction: column; gap: 8px"
+        >
+          <div style="font-size: 11px; color: #555">
+            CSS classes: .fc-card, .fc-image-area, .fc-image-slot,
+            .fc-image-slot-0...3, .fc-text-area, .fc-title, .fc-sections,
+            .fc-section, .fc-section__label, .fc-section__content
+          </div>
+          <textarea
+            id="custom-css-input"
+            placeholder=".fc-title { font-size: 16px; color: #333; }&#10;.fc-section__label { color: #6B21A8; }"
+          ></textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger btn-sm" onclick="resetCustomCss()">
+            Reset
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="closeCssModal()">
+            Cancel
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="applyCustomCss()">
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load / Recent modal -->
+    <div class="modal-backdrop" id="load-modal" style="display: none">
+      <div class="modal" style="max-width: 500px">
+        <div class="modal-header">
+          <span>Load</span>
+          <button class="modal-close" onclick="closeLoadModal()">×</button>
+        </div>
+        <div
+          class="modal-body"
+          style="
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 60vh;
+            overflow-y: auto;
+          "
+        >
+          <div id="load-folder-section" style="display: none">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 6px;
+              "
+            >
+              <span
+                style="
+                  font-size: 11px;
+                  color: #6b7280;
+                  text-transform: uppercase;
+                  letter-spacing: 0.05em;
+                "
+              >
+                📁 <span id="load-folder-name"></span>
+              </span>
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="setWorkDir()"
+                style="font-size: 11px; padding: 2px 8px"
+              >
+                Open folder
+              </button>
+            </div>
+            <div id="load-folder-list"></div>
+          </div>
+          <div>
+            <div
+              style="
+                font-size: 11px;
+                color: #6b7280;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                margin-bottom: 6px;
+              "
+            >
+              Recent
+            </div>
+            <div id="load-recent-list"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" onclick="closeLoadModal()">
+            Cancel
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="newProject()">
+            + New Project
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="setWorkDir()">
+            📁 Set Folder
+          </button>
+          <button
+            class="btn btn-primary btn-sm"
+            onclick="
+              closeLoadModal();
+              openFilePicker();
+            "
+          >
+            Browse file…
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div
+      class="modal-backdrop settings-modal"
+      id="settings-modal"
+      style="display: none"
+    >
+      <div class="modal">
+        <div class="modal-header">
+          <span>⚙️ Settings</span>
+          <button class="modal-close" onclick="closeSettingsModal()">×</button>
+        </div>
+        <div
+          class="modal-body"
+          style="
+            padding: 14px;
+            max-height: 70vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          "
+        >
+          <!-- App Behaviour -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">App Behaviour</div>
+            <div class="cfg-row">
+              <label for="cfg-pasteBlock">Show Paste Block in editor</label>
+              <input type="checkbox" id="cfg-pasteBlock" />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-maxImgPx">Max image size khi paste</label>
+              <select id="cfg-maxImgPx">
+                <option value="800">Small — 800px (A6 @ 200dpi)</option>
+                <option value="1240">Medium — 1240px (A4 @ 150dpi)</option>
+                <option value="1654">Large — 1654px (A4 @ 200dpi)</option>
+                <option value="2480">Original — 2480px (A4 @ 300dpi)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- New Card Defaults -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">New Card Defaults</div>
+            <div class="cfg-row">
+              <label for="cfg-newCard-layout">Default layout</label>
+              <select id="cfg-newCard-layout">
+                <option value="2top-1bot">2top-1bot</option>
+                <option value="1top-2bot">1top-2bot</option>
+                <option value="1big-2small">1big-2small</option>
+                <option value="2x2">2x2</option>
+                <option value="1full">1full</option>
+                <option value="1left-2right">1left-2right</option>
+                <option value="1left-3right">1left-3right</option>
+                <option value="1top-3bot">1top-3bot</option>
+                <option value="1top-1bot">1top-1bot</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-newCard-ihp">Image height % (20–80)</label>
+              <input
+                type="number"
+                id="cfg-newCard-ihp"
+                min="20"
+                max="80"
+                step="1"
+              />
+            </div>
+          </div>
+
+          <!-- Paper & Spacing -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Paper &amp; Spacing</div>
+            <div class="cfg-row">
+              <label for="cfg-paperSize">Paper size</label>
+              <select id="cfg-paperSize">
+                <option value="A4">A4</option>
+                <option value="A5">A5</option>
+                <option value="A6">A6</option>
+                <option value="Letter">Letter</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-orientation">Orientation</label>
+              <select id="cfg-orientation">
+                <option value="portrait">Portrait</option>
+                <option value="landscape">Landscape</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-margin">Margin (mm)</label>
+              <input type="number" id="cfg-margin" min="0" max="40" step="1" />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-padding">Padding (mm)</label>
+              <input type="number" id="cfg-padding" min="0" max="40" step="1" />
+            </div>
+          </div>
+
+          <!-- Default Border -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Default Border</div>
+            <div class="cfg-row">
+              <label for="cfg-border-width">Width (px)</label>
+              <input
+                type="number"
+                id="cfg-border-width"
+                min="0"
+                max="10"
+                step="1"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-border-style">Style</label>
+              <select id="cfg-border-style">
+                <option value="none">none</option>
+                <option value="solid">solid</option>
+                <option value="dashed">dashed</option>
+                <option value="dotted">dotted</option>
+                <option value="double">double</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-border-color">Color</label>
+              <div class="cfg-color-row">
+                <input
+                  type="color"
+                  id="cfg-border-color"
+                  oninput="
+                    document.getElementById('cfg-border-color-hex').value =
+                      this.value
+                  "
+                />
+                <input
+                  type="text"
+                  id="cfg-border-color-hex"
+                  maxlength="7"
+                  placeholder="#6B21A8"
+                  oninput="
+                    syncColorPicker('cfg-border-color', 'cfg-border-color-hex')
+                  "
+                />
+              </div>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-border-radius">Radius (px)</label>
+              <input
+                type="number"
+                id="cfg-border-radius"
+                min="0"
+                max="40"
+                step="1"
+              />
+            </div>
+          </div>
+
+          <!-- Default Image -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Default Image</div>
+            <div class="cfg-row">
+              <label for="cfg-img-size">Background-size</label>
+              <select id="cfg-img-size">
+                <option value="cover">cover</option>
+                <option value="contain">contain</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-img-pos">Background-position</label>
+              <input type="text" id="cfg-img-pos" placeholder="center" />
+            </div>
+          </div>
+
+          <!-- Title Font (global) -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Title Font</div>
+            <div class="cfg-row">
+              <label for="cfg-font-family">Family</label>
+              <input
+                type="text"
+                id="cfg-font-family"
+                placeholder="sans-serif"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-font-size">Size (px)</label>
+              <input
+                type="number"
+                id="cfg-font-size"
+                min="8"
+                max="48"
+                step="1"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-font-color">Color</label>
+              <div class="cfg-color-row">
+                <input
+                  type="color"
+                  id="cfg-font-color"
+                  oninput="
+                    document.getElementById('cfg-font-color-hex').value =
+                      this.value
+                  "
+                />
+                <input
+                  type="text"
+                  id="cfg-font-color-hex"
+                  maxlength="7"
+                  placeholder="#1a1a1a"
+                  oninput="
+                    syncColorPicker('cfg-font-color', 'cfg-font-color-hex')
+                  "
+                />
+              </div>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-font-lh">Line-height</label>
+              <input
+                type="number"
+                id="cfg-font-lh"
+                min="0.8"
+                max="3"
+                step="0.1"
+              />
+            </div>
+          </div>
+
+          <!-- Content Font (global) -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Content Font</div>
+            <div class="cfg-row">
+              <label for="cfg-cfont-family">Family</label>
+              <input
+                type="text"
+                id="cfg-cfont-family"
+                placeholder="sans-serif"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-cfont-size">Size (px)</label>
+              <input
+                type="number"
+                id="cfg-cfont-size"
+                min="8"
+                max="48"
+                step="1"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-cfont-color">Color</label>
+              <div class="cfg-color-row">
+                <input
+                  type="color"
+                  id="cfg-cfont-color"
+                  oninput="
+                    document.getElementById('cfg-cfont-color-hex').value =
+                      this.value
+                  "
+                />
+                <input
+                  type="text"
+                  id="cfg-cfont-color-hex"
+                  maxlength="7"
+                  placeholder="#1a1a1a"
+                  oninput="
+                    syncColorPicker('cfg-cfont-color', 'cfg-cfont-color-hex')
+                  "
+                />
+              </div>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-cfont-lh">Line-height</label>
+              <input
+                type="number"
+                id="cfg-cfont-lh"
+                min="0.8"
+                max="3"
+                step="0.1"
+              />
+            </div>
+          </div>
+
+          <!-- Maintenance -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Maintenance</div>
+            <div class="cfg-row">
+              <label
+                >Compress all pasted images<br /><small style="color: #9ca3af"
+                  >Re-compress existing base64 images to current max size</small
+                ></label
+              >
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="migrateImages(this)"
+              >
+                Run
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger btn-sm" onclick="resetUserConfig()">
+            Reset to defaults
+          </button>
+          <button
+            class="btn btn-secondary btn-sm"
+            onclick="closeSettingsModal()"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn btn-primary btn-sm"
+            onclick="applyAndSaveSettings()"
+          >
+            Apply &amp; Save
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUILD:JS -->
+  </body>
+</html>

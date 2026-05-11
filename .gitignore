@@ -1,0 +1,21 @@
+# Generated output — rebuilt by `node build.js`
+index.html
+FlashCardApp/
+FlashCardApp2/
+
+# Backups & archives
+backup-*/
+*.rar
+
+# Local data files
+*.json
+*.pdf
+sessions/
+docs/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Node
+node_modules/
