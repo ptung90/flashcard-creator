@@ -334,6 +334,7 @@ function addCard() {
     titleFont: null,
     contentFont: null,
     orientation: null,
+    customCss: "",
     sections: (
       nc.defaultSections || [
         { label: "Đặc điểm", content: "" },
@@ -568,7 +569,7 @@ function renderEditor() {
   empty.style.display = "none";
   content.style.display = "";
 
-  const slotCount = LAYOUT_SLOTS[card.layout] || 3;
+  const slotCount = LAYOUT_SLOTS[card.layout] ?? 3;
   const slotRow = (i, hidden) => {
     const img = card.images.find((im) => im.slot === i);
     const url = img ? img.url : "";
@@ -607,7 +608,7 @@ function renderEditor() {
     card.layout === "2img-2txt" || card.layout === "2img-4txt" || card.layout === "8img-8txt";
   const isImgPairedLayout =
     card.layout === "2img-2txt" || card.layout === "8img-8txt";
-  const sectionRows = card.layout === "fulltext" ? 10 : 2;
+  const sectionRows = card.layout === "fulltext" ? 10 : 4;
 
   const sections = card.sections
     .map((s, si) => {
@@ -621,7 +622,7 @@ function renderEditor() {
       <div class="pair-thumb" onclick="openImgModal(${si})" title="Click to change image">${thumb}</div>
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
         <input class="section-label-input" value="${esc(s.label)}" placeholder="Label" oninput="updateSection('${s.id}','label',this.value)">
-        <textarea class="section-content-input" rows="2" placeholder="Text label..." oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
+        <textarea class="section-content-input" rows="4" placeholder="Text label..." oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
       </div>
     </div>`;
       }
@@ -702,10 +703,17 @@ function renderEditor() {
       <div class="sections-list ${isCompoundTextLayout ? "sections-list--2col" : ""}" id="sections-list">
         ${sections || '<div style="color:#555;font-size:12px;padding:8px 0">No sections — add one below</div>'}
       </div>
-      ${!isImgPairedLayout ? `<div style="margin-top:8px;display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap">
-        <button class="btn btn-secondary btn-sm" onclick="addSection()">+ Add Section</button>
-        <button class="btn btn-secondary btn-sm" onclick="togglePasteBlock()">📋 Paste block</button>
-      </div>` : ''}
+      <div style="margin-top:8px;display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap">
+        ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="addSection()">+ Add Section</button>` : ''}
+        ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="togglePasteBlock()">📋 Paste block</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="toggleCardCssEditor()" id="card-css-btn">${card.customCss ? '💅✓' : '💅'} CSS</button>
+      </div>
+      <div id="card-css-area" style="display:${card.customCss ? '' : 'none'};margin-top:8px">
+        <div style="font-size:10px;color:#9ca3af;margin-bottom:4px">Scoped to this card — use .fc-title, .fc-section__content, etc.</div>
+        <textarea id="card-css-input" class="section-content-input" rows="5"
+          placeholder=".fc-title { font-size: 20px; color: #6b21a8; }&#10;.fc-section__content { line-height: 1.8; }"
+          oninput="updateCardCss(this.value)">${esc(card.customCss || '')}</textarea>
+      </div>
       <div id="paste-block-area" style="display:none;margin-top:8px">
         <textarea id="paste-block-input" class="section-content-input" rows="6"
           placeholder="• Đặc điểm: Dạng tai, màu nâu sẫm...&#10;• Môi trường: Mọc trên thân cây gỗ mục...&#10;• Ghi chú: Thường dùng trong canh, nem."></textarea>
@@ -1458,8 +1466,18 @@ function mdParse(text) {
   return marked.parse((text || "").replace(/^ +/gm, (m) => " ".repeat(m.length)));
 }
 
+function _scopeCardCss(css, cardId) {
+  const prefix = `.fc-card[data-id="${cardId}"]`;
+  return css.replace(/([^{}@][^{]*)\{([^}]*)\}/g, (_, sel, body) =>
+    `${prefix} ${sel.trim()} { ${body} }`
+  );
+}
+
 function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   const s = settings;
+  const cardStyleTag = card.customCss
+    ? '<style>' + _scopeCardCss(card.customCss, card.id) + '</style>'
+    : '';
   const { w, h } = overridePx || getPaperPx(s.paperSize, card.orientation || s.orientation);
   const marginPx = mmToPx(s.margin);
   const paddingPx = mmToPx(s.padding);
@@ -1473,7 +1491,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   const cardH = h - 2 * marginPx;
   const innerH = cardH - 2 * paddingPx;
   const imgH = Math.round((innerH * card.imageHeightPercent) / 100);
-  const slotCount = LAYOUT_SLOTS[card.layout] || 3;
+  const slotCount = LAYOUT_SLOTS[card.layout] ?? 3;
   const split = card.imageGridSplit ||
     LAYOUT_SPLIT_DEFAULTS[card.layout] || { row: 50, col: 50, inner: 50 };
 
@@ -1552,16 +1570,18 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
 
   // fullimage: image-only card with inner padding wrapper
   if (card.layout === 'fullimage') {
+    const borderW = s.border.width || 0;
     const nopadStyle = "width:" + cardW + "px;height:" + cardH + "px;margin:" + marginPx + "px auto;background:white;padding:0;";
     const innerWrapStyle =
       "box-sizing:border-box;width:100%;height:100%;padding:" +
       imgPaddingPx +
       'px;';
     return (
+      cardStyleTag +
       '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id +
       '" style="' + nopadStyle + borderStyle + '">' +
       '<div style="' + innerWrapStyle + '">' +
-      '<div class="fc-image-area" style="height:' + (cardH - 2 * imgPaddingPx) + 'px;position:relative;">' +
+      '<div class="fc-image-area" style="height:' + (cardH - 2 * imgPaddingPx - 2 * borderW) + 'px;position:relative;">' +
       slots + handles +
       '</div></div></div>'
     );
@@ -1572,6 +1592,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
     const sectionB = buildSectionCellHtml(card.sections[1]);
     const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions);
     return (
+      cardStyleTag +
       '<div class="' +
       cls +
       '" data-layout="' +
@@ -1608,6 +1629,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   if (card.layout === "2img-4txt") {
     const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions);
     return (
+      cardStyleTag +
       '<div class="' +
       cls +
       '" data-layout="' +
@@ -1671,6 +1693,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
     }
 
     return (
+      cardStyleTag +
       '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id + '" style="' + compoundWrapperStyle + '">' +
       '<div style="width:100%;height:100%;display:grid;grid-template-columns:repeat(' + cols + ',1fr);grid-template-rows:' + rowTemplate + ';gap:' + marginPx + 'px;">' +
       cells + '</div></div>'
@@ -1680,6 +1703,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   // fulltext: text fills entire card, no image area
   if (card.layout === 'fulltext') {
     return (
+      cardStyleTag +
       '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id +
       '" style="' + sizeStyle + borderStyle + '">' +
       '<div class="fc-text-area" style="height:' + cardH + 'px;overflow:auto;' + textVAlignStyle + '">' +
@@ -1690,6 +1714,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   }
 
   return (
+    cardStyleTag +
     '<div class="' +
     cls +
     '" data-layout="' +
@@ -2498,13 +2523,53 @@ async function _autoRestore() {
   if (!lastFile) return;
   try {
     const perm = await workDirHandle.requestPermission({ mode: "readwrite" });
-    if (perm !== "granted") return;
-    const fh = await workDirHandle.getFileHandle(lastFile);
-    const file = await fh.getFile();
-    const data = JSON.parse(await file.text());
-    currentFileName = lastFile;
-    applyLoadedData(data);
+    if (perm === "granted") {
+      await _loadFileFromWorkDir(lastFile);
+    } else {
+      // requestPermission needs user gesture in some contexts — show banner fallback
+      const banner = document.getElementById("fc-restore-banner");
+      const label = document.getElementById("fc-restore-label");
+      if (banner) {
+        label.textContent = "Resume: " + lastFile;
+        banner._pendingFile = lastFile;
+        banner.style.display = "flex";
+      }
+    }
   } catch (_) { }
+}
+
+async function _loadFileFromWorkDir(fileName) {
+  const fh = await workDirHandle.getFileHandle(fileName);
+  const file = await fh.getFile();
+  const data = JSON.parse(await file.text());
+  currentFileName = fileName;
+  applyLoadedData(data);
+}
+
+async function resumeLastProject() {
+  const banner = document.getElementById("fc-restore-banner");
+  const fileName = banner && banner._pendingFile;
+  if (!fileName || !workDirHandle) return;
+  try {
+    const perm = await workDirHandle.requestPermission({ mode: "readwrite" });
+    if (perm !== "granted") { alert("Permission denied."); return; }
+    await _loadFileFromWorkDir(fileName);
+    dismissRestoreBanner();
+    renderSidebar(); renderEditor(); renderPreview();
+  } catch (e) { alert("Could not load: " + e.message); }
+}
+
+function dismissRestoreBanner() {
+  const banner = document.getElementById("fc-restore-banner");
+  if (banner) banner.style.display = "none";
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById("fc-sidebar");
+  const btn = document.getElementById("sidebar-toggle-btn");
+  const collapsed = sidebar.classList.toggle("collapsed");
+  btn.textContent = collapsed ? "▶" : "◀";
+  renderPreview();
 }
 
 function applyLoadedData(data) {
@@ -2971,6 +3036,25 @@ async function pasteToSlot(slot) {
   }
 }
 
+// ── Per-card custom CSS ────────────────────────────────────────────
+function toggleCardCssEditor() {
+  const area = document.getElementById("card-css-area");
+  if (!area) return;
+  const open = area.style.display === "none";
+  area.style.display = open ? "" : "none";
+  if (open) document.getElementById("card-css-input")?.focus();
+}
+
+function updateCardCss(css) {
+  const card = getActiveCard();
+  if (!card) return;
+  card.customCss = css;
+  const btn = document.getElementById("card-css-btn");
+  if (btn) btn.textContent = (css ? '💅✓' : '💅') + ' CSS';
+  setDirty();
+  renderPreview();
+}
+
 // ── Paste block parser ────────────────────────────────────────────
 function togglePasteBlock() {
   const area = document.getElementById("paste-block-area");
@@ -3201,12 +3285,12 @@ function initPanelResize() {
       const onMove = ev => {
         const dx = ev.clientX - startX;
         // sidebar: drag right = wider; preview divider: drag right = narrower
-        const newW = panelId === 'fc-preview'
+        const newW = panelId === 'fc-preview-panel'
           ? Math.max(280, Math.min(800, startW - dx))
           : Math.max(120, Math.min(500, startW + dx));
         panel.style.width = newW + 'px';
         panel.style.minWidth = newW + 'px';
-        if (panelId === 'fc-preview') renderPreview();
+        if (panelId === 'fc-preview-panel') renderPreview();
       };
 
       const onUp = () => {
@@ -3301,7 +3385,7 @@ async function init() {
     reader.onload = async (ev) => {
       const compressed = await _compressImage(ev.target.result);
       if (pendingPasteSlot === null) {
-        const slotCount = LAYOUT_SLOTS[card.layout] || 3;
+        const slotCount = LAYOUT_SLOTS[card.layout] ?? 3;
         const usedSlots = new Set(card.images.map((i) => i.slot));
         imgModalSlot =
           Array.from({ length: slotCount }, (_, i) => i).find(

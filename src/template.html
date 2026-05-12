@@ -216,8 +216,16 @@
         <div id="gfont-tags" class="gfont-tags"></div>
       </div>
 
+      <!-- Restore banner (shown when permission not yet granted) -->
+      <div id="fc-restore-banner" style="display:none">
+        <span id="fc-restore-label"></span>
+        <button class="btn btn-primary btn-sm" onclick="resumeLastProject()">Resume</button>
+        <button class="btn btn-secondary btn-sm" onclick="dismissRestoreBanner()">Dismiss</button>
+      </div>
+
       <!-- Toolbar -->
       <div class="fc-toolbar">
+        <button class="btn btn-secondary btn-sm btn-icon" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">◀</button>
         <button class="btn btn-primary btn-sm" onclick="addCard()">
           + New Card
         </button>

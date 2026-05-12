@@ -105,6 +105,7 @@
         padding: 0 12px 8px;
         width: 100%;
       }
+
       .gfont-tag {
         display: inline-flex;
         align-items: center;
@@ -116,6 +117,7 @@
         font-size: 11px;
         font-family: sans-serif;
       }
+
       .gfont-tag-src {
         font-size: 9px;
         font-weight: 700;
@@ -124,6 +126,7 @@
         border-radius: 2px;
         padding: 0 3px;
       }
+
       .gfont-tag button {
         background: none;
         border: none;
@@ -133,6 +136,7 @@
         font-size: 14px;
         line-height: 1;
       }
+
       .setting-group--full {
         width: 100%;
         flex-basis: 100%;
@@ -159,8 +163,17 @@
         align-items: center;
         justify-content: center;
       }
-      .align-btn:hover { background: #e5e7eb; color: #374151; }
-      .align-btn.active { background: #ede9fe; border-color: #a78bfa; color: #6b21a8; }
+
+      .align-btn:hover {
+        background: #e5e7eb;
+        color: #374151;
+      }
+
+      .align-btn.active {
+        background: #ede9fe;
+        border-color: #a78bfa;
+        color: #6b21a8;
+      }
 
       .btn-font-toggle {
         margin-left: auto;
@@ -174,8 +187,16 @@
         white-space: nowrap;
         flex-shrink: 0;
       }
-      .btn-font-toggle:hover { background: #e5e7eb; }
-      .btn-font-toggle.open { background: #ede9fe; border-color: #a78bfa; color: #6b21a8; }
+
+      .btn-font-toggle:hover {
+        background: #e5e7eb;
+      }
+
+      .btn-font-toggle.open {
+        background: #ede9fe;
+        border-color: #a78bfa;
+        color: #6b21a8;
+      }
 
       .font-settings-panel {
         display: none;
@@ -187,7 +208,27 @@
         align-items: center;
         flex-shrink: 0;
       }
-      .font-settings-panel.open { display: flex; }
+
+      .font-settings-panel.open {
+        display: flex;
+      }
+
+      /* ── Restore banner ── */
+      #fc-restore-banner {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: #fffbeb;
+        border-bottom: 1px solid #fcd34d;
+        font-size: 13px;
+        color: #92400e;
+      }
+
+      #fc-restore-label {
+        flex: 1;
+        font-weight: 500;
+      }
 
       /* ── Toast ── */
       #fc-toast {
@@ -204,7 +245,10 @@
         transition: opacity 0.25s;
         z-index: 9999;
       }
-      #fc-toast.show { opacity: 1; }
+
+      #fc-toast.show {
+        opacity: 1;
+      }
 
       /* ── Toolbar (action buttons) ── */
       .fc-toolbar {
@@ -316,7 +360,27 @@
         flex-direction: column;
         overflow: hidden;
         flex-shrink: 0;
+        transition: width 0.2s ease, min-width 0.2s ease;
       }
+
+      .fc-sidebar.collapsed {
+        width: 0 !important;
+        min-width: 0 !important;
+        border-right: none;
+      }
+
+      .fc-sidebar.collapsed + .fc-panel-divider {
+        display: none;
+      }
+
+      #sidebar-toggle-btn {
+        width: 26px;
+        padding: 0;
+        font-size: 11px;
+        flex-shrink: 0;
+      }
+
+      #sidebar-toggle-btn.collapsed { content: '▶'; }
 
       .fc-sidebar-header {
         padding: 8px 10px;
@@ -548,7 +612,7 @@
       /* Layout Picker */
       .layout-grid {
         display: grid;
-        grid-template-columns: repeat(9, 1fr);
+        grid-template-columns: repeat(13, 1fr);
         gap: 6px;
       }
 
@@ -774,7 +838,7 @@
       /* ── Preview Panel ── */
       .fc-preview-panel {
         width: 40%;
-        min-width: 400px;
+        min-width: 320px;
         flex-shrink: 0;
         display: flex;
         flex-direction: column;
@@ -803,7 +867,10 @@
         cursor: grab;
         user-select: none;
       }
-      .fc-preview.panning { cursor: grabbing; }
+
+      .fc-preview.panning {
+        cursor: grabbing;
+      }
 
       .fc-preview-label {
         font-size: 11px;
