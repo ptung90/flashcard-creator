@@ -89,6 +89,7 @@ let state = {
     padding: _cfg.padding ?? 2,
     imgPadding: _cfg.imgPadding ?? 0,
     textVAlign: _cfg.textVAlign ?? "middle",
+    googleFonts: [],
     border: {
       width: 4,
       style: "double",
@@ -174,6 +175,83 @@ function getCardOrientation(card) {
   return card?.orientation || state.settings.orientation;
 }
 
+// ── Google / Custom Fonts ─────────────────────────────────────────
+function _injectGoogleFontLink(name) {
+  const id = "gf-" + name.replace(/\s+/g, "-").toLowerCase();
+  if (document.getElementById(id)) return;
+  const link = document.createElement("link");
+  link.id = id;
+  link.rel = "stylesheet";
+  link.href = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(name) + ":wght@400;700&display=swap";
+  document.head.appendChild(link);
+}
+
+function _addFontOption(name) {
+  const value = "'" + name + "',sans-serif";
+  ["set-font-family", "set-cfont-family"].forEach((selId) => {
+    const sel = document.getElementById(selId);
+    if (!sel || [...sel.options].some((o) => o.value === value)) return;
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+function _removeFontOption(name) {
+  const value = "'" + name + "',sans-serif";
+  ["set-font-family", "set-cfont-family"].forEach((selId) => {
+    const sel = document.getElementById(selId);
+    const opt = sel && [...sel.options].find((o) => o.value === value);
+    if (opt) opt.remove();
+  });
+}
+
+function applyGoogleFonts() {
+  (state.settings.googleFonts || []).forEach((f) => {
+    if (f.src === "google") _injectGoogleFontLink(f.name);
+    _addFontOption(f.name);
+  });
+  renderGFontTags();
+}
+
+function renderGFontTags() {
+  const container = document.getElementById("gfont-tags");
+  if (!container) return;
+  container.innerHTML = (state.settings.googleFonts || []).map((f) =>
+    '<span class="gfont-tag">' +
+    esc(f.name) +
+    '<span class="gfont-tag-src">' + (f.src === "google" ? "G" : "C") + "</span>" +
+    '<button onclick="removeGoogleFont(\'' + esc(f.name) + '\')" title="Remove">\xd7</button>' +
+    "</span>"
+  ).join("");
+}
+
+function addGoogleFont(src) {
+  const input = document.getElementById("gfont-input");
+  const name = (input.value || "").trim().replace(/['"]/g, "");
+  if (!name) return;
+  const fonts = state.settings.googleFonts || [];
+  if (fonts.some((f) => f.name.toLowerCase() === name.toLowerCase())) {
+    input.value = "";
+    return;
+  }
+  if (src === "google") _injectGoogleFontLink(name);
+  _addFontOption(name);
+  fonts.push({ name, src });
+  state.settings.googleFonts = fonts;
+  input.value = "";
+  renderGFontTags();
+  setDirty();
+}
+
+function removeGoogleFont(name) {
+  state.settings.googleFonts = (state.settings.googleFonts || []).filter((f) => f.name !== name);
+  _removeFontOption(name);
+  renderGFontTags();
+  setDirty();
+}
+
 // ── Settings sync ──────────────────────────────────────────────────
 function bindSettings() {
   const ids = {
@@ -238,6 +316,7 @@ function applySettingsToUI() {
   document.querySelectorAll(".valign-btn").forEach((b) => b.classList.toggle("active", b.dataset.valign === va));
   document.getElementById("fc-custom-css").textContent =
     s.customCss || "";
+  renderGFontTags();
 }
 
 // ── Card Management ────────────────────────────────────────────────
@@ -2465,6 +2544,8 @@ function applyLoadedData(data) {
     });
   }
   activeCardId = state.cards.length ? state.cards[0].id : null;
+  if (!state.settings.googleFonts) state.settings.googleFonts = [];
+  applyGoogleFonts();
   applySettingsToUI();
   document.getElementById("fc-custom-css").textContent =
     state.settings.customCss || "";
@@ -3177,6 +3258,7 @@ async function init() {
   await restoreWorkDir();
   await _autoRestore();
   bindSettings();
+  applyGoogleFonts();
   applySettingsToUI();
   document.getElementById('view-grid-btn').classList.add('active');
   initPanelResize();

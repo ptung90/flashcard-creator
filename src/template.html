@@ -18,10 +18,7 @@
 
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-    <link
-      href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;700&display=swap"
-      rel="stylesheet"
-    />
+
     <!-- BUILD:CSS -->
     <style id="fc-custom-css"></style>
   </head>
@@ -152,8 +149,7 @@
             <option value="Tahoma,Geneva,sans-serif">Tahoma</option>
             <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">Palatino</option>
             <option value="'Lucida Console','Courier New',monospace">Lucida Console</option>
-            <option value="'Lexend',sans-serif">Lexend</option>
-            <option value="'Lexend Light','Lexend',sans-serif">Lexend Light</option>
+
           </select>
           <input type="number" id="set-font-size" min="8" max="28" style="width:46px" title="Size (px)" />
           <label>px</label>
@@ -187,8 +183,7 @@
             <option value="Tahoma,Geneva,sans-serif">Tahoma</option>
             <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">Palatino</option>
             <option value="'Lucida Console','Courier New',monospace">Lucida Console</option>
-            <option value="'Lexend',sans-serif">Lexend</option>
-            <option value="'Lexend Light','Lexend',sans-serif">Lexend Light</option>
+
           </select>
           <input type="number" id="set-cfont-size" min="8" max="28" style="width:46px" title="Size (px)" />
           <label>px</label>
@@ -210,6 +205,15 @@
             <button class="valign-btn align-btn" data-valign="bottom" onclick="setTextVAlign('bottom')" title="Bottom">&#8868;</button>
           </div>
         </div>
+        <div class="setting-group setting-group--full">
+          <label>Load Font</label>
+          <input type="text" id="gfont-input" placeholder="Nunito, Pacifico…"
+            style="flex:1;min-width:100px"
+            onkeydown="if(event.key==='Enter')addGoogleFont('google')">
+          <button class="btn btn-secondary btn-sm" onclick="addGoogleFont('google')" title="Load from Google Fonts CDN">Google</button>
+          <button class="btn btn-secondary btn-sm" onclick="addGoogleFont('custom')" title="Add name only (font defined in Custom CSS)">Custom</button>
+        </div>
+        <div id="gfont-tags" class="gfont-tags"></div>
       </div>
 
       <!-- Toolbar -->

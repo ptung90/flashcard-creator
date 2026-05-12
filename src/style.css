@@ -97,6 +97,47 @@
         outline: 1px solid #6b21a8;
       }
 
+      /* ── Google/Custom Font tags ── */
+      .gfont-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 0 12px 8px;
+        width: 100%;
+      }
+      .gfont-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        background: #ede9fe;
+        color: #5b21b6;
+        border-radius: 4px;
+        padding: 2px 4px 2px 7px;
+        font-size: 11px;
+        font-family: sans-serif;
+      }
+      .gfont-tag-src {
+        font-size: 9px;
+        font-weight: 700;
+        background: #7c3aed;
+        color: #fff;
+        border-radius: 2px;
+        padding: 0 3px;
+      }
+      .gfont-tag button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #7c3aed;
+        padding: 0 1px;
+        font-size: 14px;
+        line-height: 1;
+      }
+      .setting-group--full {
+        width: 100%;
+        flex-basis: 100%;
+      }
+
       .align-btn-group {
         display: flex;
         gap: 1px;
