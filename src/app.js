@@ -1,6 +1,45 @@
 
 marked.use({ breaks: true });
+// ── Dispatcher (State Management) ──────────────────────────────────
+function dispatch(action) {
+  const skipDirty = ['ACTIVE_CARD_CHANGED', 'VIEW_MODE_CHANGED', 'INIT_LOAD'].includes(action);
+  if (!skipDirty) {
+    setDirty();
+  }
 
+  switch (action) {
+    case 'INIT_LOAD':
+    case 'ACTIVE_CARD_CHANGED':
+    case 'CARD_LIST_CHANGED':
+    case 'FULL_STATE_UPDATED':
+      renderSidebar();
+      renderEditor();
+      renderPreview();
+      break;
+    case 'CARD_MOVED':
+    case 'VIEW_MODE_CHANGED':
+      renderSidebar();
+      break;
+    case 'LAYOUT_CHANGED':
+      renderEditor();
+      renderPreview();
+      refreshAllThumbs();
+      break;
+    case 'CARD_UI_CHANGED':
+      renderEditor();
+      renderPreview();
+      break;
+    case 'CARD_CONTENT_CHANGED':
+      renderPreview();
+      break;
+    case 'CARD_TITLE_CHANGED':
+      renderSidebar();
+      renderPreview();
+      break;
+    case 'STATE_MUTATED':
+      break;
+  }
+}
 function changePreviewZoom(delta) {
   previewZoom = delta === 0 ? 1.0 : Math.round(Math.max(0.25, Math.min(3.0, previewZoom + delta)) * 100) / 100;
   renderPreview();
@@ -1091,8 +1130,7 @@ function attachPreviewDragHandlers(card) {
         handle.classList.remove("dragging");
         document.removeEventListener("mousemove", onMove);
         document.removeEventListener("mouseup", onUp);
-        setDirty();
-        renderEditor();
+        dispatch('CARD_UI_CHANGED');
       };
 
       document.addEventListener("mousemove", onMove);
@@ -1288,7 +1326,7 @@ function applyCustomCss() {
   const css = document.getElementById("custom-css-input").value;
   state.settings.customCss = css;
   document.getElementById("fc-custom-css").textContent = css;
-  setDirty();
+  dispatch('STATE_MUTATED');
   closeCssModal();
 }
 function resetCustomCss() {
@@ -1448,7 +1486,7 @@ async function migrateImages(btn) {
       }
     }
   }
-  setDirty();
+  dispatch('STATE_MUTATED');
   btn.textContent = `Done (${count} image${count !== 1 ? "s" : ""})`;
   setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
 }
@@ -1498,10 +1536,8 @@ function insertImageUrl(url) {
   const existing = card.images.find((i) => i.slot === imgModalSlot);
   if (existing) existing.url = url;
   else card.images.push({ slot: imgModalSlot, url });
-  setDirty();
   closeImgModal();
-  renderEditor();
-  renderPreview();
+  dispatch('CARD_UI_CHANGED');
 }
 
 // URL tab
@@ -1577,8 +1613,7 @@ function updateCardCss(css) {
   card.customCss = css;
   const btn = document.getElementById("card-css-btn");
   if (btn) btn.textContent = (css ? '💅✓' : '💅') + ' CSS';
-  setDirty();
-  renderPreview();
+  dispatch('CARD_CONTENT_CHANGED');
 }
 
 // ── Paste block parser ────────────────────────────────────────────
@@ -1616,8 +1651,7 @@ function parsePasteBlock(mode) {
   if (mode === "replace") card.sections = parsed;
   else card.sections = [...card.sections, ...parsed];
 
-  renderEditor();
-  renderPreview();
+  dispatch('CARD_UI_CHANGED');
 }
 
 function toggleDataArea() {
@@ -1664,10 +1698,7 @@ function saveCardData() {
     const originalId = card.id; // Chống mất/trùng ID
     const idx = state.cards.findIndex(c => c.id === originalId);
     if (idx !== -1) state.cards[idx] = { ...card, ...parsed, id: originalId };
-    setDirty();
-    renderSidebar();
-    renderEditor();
-    renderPreview();
+    dispatch('FULL_STATE_UPDATED');
   } catch (e) {
     alert("Invalid JSON:\n" + e.message);
     ta.style.outline = "2px solid #ef4444"; // Báo lỗi viền đỏ
@@ -1758,8 +1789,7 @@ function swapSlots(a, b) {
   const bImg = card.images.find((im) => im.slot === b);
   if (aImg) aImg.slot = b;
   if (bImg) bImg.slot = a;
-  renderEditor();
-  renderPreview();
+  dispatch('CARD_UI_CHANGED');
 }
 
 function attachSlotDragHandlers() {
@@ -1893,9 +1923,7 @@ async function init() {
   document.getElementById('view-grid-btn').classList.add('active');
   initPanelResize();
   initPreviewPan();
-  renderSidebar();
-  renderEditor();
-  renderPreview();
+  dispatch('INIT_LOAD');
   initUploadDropZone();
 
   // Close modals on backdrop click — disabled

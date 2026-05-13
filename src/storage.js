@@ -169,9 +169,9 @@ async function newProject() {
   state.projectName = "Untitled";
   activeCardId = null;
   currentFileName = null;
-  clearDirty();
   closeLoadModal();
-  renderSidebar(); renderEditor(); renderPreview();
+  dispatch('INIT_LOAD');
+  clearDirty();
 }
 async function loadFromRecent(id) {
   const data = await idbGet(id).catch(() => null);
@@ -435,7 +435,7 @@ async function resumeLastProject() {
     if (perm !== "granted") { alert("Permission denied."); return; }
     await _loadFileFromWorkDir(fileName);
     dismissRestoreBanner();
-    renderSidebar(); renderEditor(); renderPreview();
+    dispatch('INIT_LOAD');
   } catch (e) { alert("Could not load: " + e.message); }
 }
 
@@ -479,7 +479,8 @@ function applyLoadedData(data) {
   if (!state.settings.googleFonts) state.settings.googleFonts = [];
   applyGoogleFonts(); applySettingsToUI();
   document.getElementById("fc-custom-css").textContent = state.settings.customCss || "";
-  clearDirty(); renderSidebar(); renderEditor(); renderPreview();
+  dispatch('INIT_LOAD');
+  clearDirty();
 }
 
 function loadJSON(event) {
