@@ -10,14 +10,24 @@ const SRC = path.join(ROOT, "src");
 
 const template = fs.readFileSync(path.join(SRC, "template.html"), "utf8");
 const config = fs.readFileSync(path.join(SRC, "config.js"), "utf8");
-const css = fs.readFileSync(path.join(SRC, "style.css"), "utf8");
 const utils = fs.existsSync(path.join(SRC, "utils.js")) ? fs.readFileSync(path.join(SRC, "utils.js"), "utf8") : "";
 const state = fs.existsSync(path.join(SRC, "state.js")) ? fs.readFileSync(path.join(SRC, "state.js"), "utf8") : "";
 const storage = fs.existsSync(path.join(SRC, "storage.js")) ? fs.readFileSync(path.join(SRC, "storage.js"), "utf8") : "";
 const api = fs.existsSync(path.join(SRC, "api.js")) ? fs.readFileSync(path.join(SRC, "api.js"), "utf8") : "";
+const render = fs.existsSync(path.join(SRC, "render.js")) ? fs.readFileSync(path.join(SRC, "render.js"), "utf8") : "";
 const js = fs.readFileSync(path.join(SRC, "app.js"), "utf8");
 
-const allJs = [state, utils, storage, api, js].filter(Boolean).join("\n\n");
+const CSS_DIR = path.join(SRC, "css");
+let css = "";
+if (fs.existsSync(CSS_DIR)) {
+  const cssFiles = ["base.css", "sidebar.css", "editor.css", "preview.css", "modal.css"];
+  css = cssFiles.filter(f => fs.existsSync(path.join(CSS_DIR, f)))
+    .map(f => fs.readFileSync(path.join(CSS_DIR, f), "utf8"))
+    .join("\n\n");
+} else if (fs.existsSync(path.join(SRC, "style.css"))) {
+  css = fs.readFileSync(path.join(SRC, "style.css"), "utf8");
+}
+const allJs = [state, utils, storage, api, render, js].filter(Boolean).join("\n\n");
 
 const output = template
   .replace("    <!-- BUILD:CONFIG -->", `    <script>\n${config}\n    </script>`)

@@ -1,0 +1,361 @@
+/* ── Preview Panel ── */
+.fc-preview-panel {
+  width: 40%;
+  min-width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #e5e7eb;
+  border-left: 1px solid #d1d5db;
+}
+
+.fc-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-shrink: 0;
+  padding: 12px 16px 8px;
+  background: #e5e7eb;
+  z-index: 10;
+}
+
+.fc-preview {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: auto;
+  padding: 0 16px 16px;
+  cursor: grab;
+  user-select: none;
+}
+
+.fc-preview.panning {
+  cursor: grabbing;
+}
+
+.fc-preview-label {
+  font-size: 11px;
+  color: #6b7280;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.fc-preview-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ── Card Render (preview + print) ── */
+.fc-card {
+  background: #fff;
+  color: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.fc-image-area {
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.fc-text-area {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.fc-title {
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 8px 4px;
+  font-size: 0.85em;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.fc-sections {
+  flex: 1;
+  overflow: hidden;
+  padding: 4px 8px 6px;
+}
+
+.fc-section {
+  margin-bottom: 4px;
+}
+
+.fc-section__label {
+  font-weight: 700;
+  font-size: 0.78em;
+}
+
+.fc-section__content {
+  font-size: 0.75em;
+  line-height: 1.4;
+  display: inline;
+}
+
+.fc-section__content>p {
+  display: inline;
+  margin: 0;
+}
+
+.fc-section__content>ul,
+.fc-section__content>ol {
+  display: block;
+  padding-left: 14px;
+  margin: 1px 0 0;
+  list-style: disc;
+}
+
+.fc-section__content li {
+  margin-bottom: 1px;
+}
+
+.fc-image-slot {
+  background: #e5e7eb;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fc-image-slot .empty-placeholder {
+  color: #9ca3af;
+  font-size: 11px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.fc-image-slot>div.img-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.fc-layout-2img-2txt .fc-image-slot,
+.fc-layout-2img-4txt .fc-image-slot {
+  background: #ffffff;
+}
+
+/* Layouts Grid Overrides */
+.fc-layout-2top-1bot .fc-image-area {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+.fc-layout-2top-1bot .fc-image-slot-0 {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.fc-layout-2top-1bot .fc-image-slot-1 {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.fc-layout-2top-1bot .fc-image-slot-2 {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.fc-layout-1top-1bot .fc-image-area {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+
+.fc-layout-1top-1bot .fc-image-slot-0 {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.fc-layout-1top-1bot .fc-image-slot-1 {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.fc-layout-1top-2bot .fc-image-area {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+.fc-layout-1top-2bot .fc-image-slot-0 {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+.fc-layout-1top-2bot .fc-image-slot-1 {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.fc-layout-1top-2bot .fc-image-slot-2 {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.fc-layout-1big-2small .fc-image-area {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+}
+
+.fc-layout-1big-2small .fc-image-slot-0 {
+  grid-column: 1;
+  grid-row: 1 / -1;
+}
+
+.fc-layout-1big-2small .fc-image-slot-1 {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.fc-layout-1big-2small .fc-image-slot-2 {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.fc-layout-2x2 .fc-image-area {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+}
+
+.fc-layout-1full .fc-image-area {
+  display: block;
+}
+
+.fc-layout-1full .fc-image-slot,
+.fc-layout-fullimage .fc-image-slot {
+  width: 100%;
+  height: 100%;
+}
+
+.fc-layout-1left-2right .fc-image-area {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+}
+
+.fc-layout-1left-2right .fc-image-slot-0 {
+  grid-column: 1;
+  grid-row: 1 / -1;
+}
+
+.fc-layout-1left-2right .fc-image-slot-1 {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.fc-layout-1left-2right .fc-image-slot-2 {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.fc-layout-1top-3bot .fc-image-area {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 2fr 1fr;
+  gap: 2px;
+}
+
+.fc-layout-1top-3bot .fc-image-slot-0 {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+.fc-layout-1top-3bot .fc-image-slot-1 {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.fc-layout-1top-3bot .fc-image-slot-2 {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.fc-layout-1top-3bot .fc-image-slot-3 {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.fc-layout-1left-3right .fc-image-area {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 2px;
+}
+
+.fc-layout-1left-3right .fc-image-slot-0 {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+}
+
+.fc-layout-1left-3right .fc-image-slot-1 {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.fc-layout-1left-3right .fc-image-slot-2 {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.fc-layout-1left-3right .fc-image-slot-3 {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+/* ── Print ── */
+@media print {
+  body {
+    background: white;
+    overflow: visible;
+    height: auto;
+  }
+
+  .fc-settings-bar,
+  .fc-toolbar,
+  .fc-sidebar,
+  .fc-editor,
+  .fc-preview-header {
+    display: none !important;
+  }
+
+  .fc-main,
+  .fc-app {
+    display: block;
+    height: auto;
+  }
+
+  .fc-preview-panel {
+    width: 100% !important;
+    border: none !important;
+    background: white !important;
+  }
+
+  .fc-preview {
+    padding: 0 !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  .fc-card--print {
+    page-break-after: always;
+    break-after: page;
+  }
+}

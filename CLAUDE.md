@@ -28,6 +28,7 @@ FlashCardApp2/
 **IMPORTANT:** Always edit `src/` files, never edit `index.html` directly. Run `node build.js` before sharing or testing. `watch.js` handles auto-rebuild during development.
 
 ### Build markers (in `src/template.html`)
+
 - `<!-- BUILD:CONFIG -->` — replaced with `<script>src/config.js</script>` contents
 - `<!-- BUILD:CSS -->` — replaced with `<style>src/style.css</style>` contents
 - `<!-- BUILD:JS -->` — replaced with `<script>src/app.js</script>` contents
@@ -59,26 +60,27 @@ src/template.html
 
 ## Layouts
 
-| ID | Slots | Notes |
-|---|---|---|
-| `2top-1bot` | 3 | 2 side-by-side top, 1 large bottom |
-| `1top-2bot` | 3 | 1 large top, 2 side-by-side bottom |
-| `1big-2small` | 3 | 1 large left, 2 small stacked right |
-| `2x2` | 4 | 2×2 grid |
-| `1full` | 1 | Single full image |
-| `1left-2right` | 3 | 1 tall left, 2 stacked right |
-| `1left-3right` | 4 | 1 narrow left, 3 stacked right |
-| `1top-3bot` | 4 | 1 full-width top, 3 side-by-side bottom |
-| `1top-1bot` | 2 | 1 top, 1 bottom |
-| `fullimage` | 1 | Image only, inner padding wrapper |
-| `fulltext` | 0 | Text only, no image area |
-| `2img-2txt` | 2 | 2 images + 2 text cells in compound grid, draggable row split |
-| `2img-4txt` | 2 | Disabled (commented out in LAYOUTS array) |
-| `8img-8txt` | 8 | 8 img+text pairs; portrait 2×8, landscape 4×4 |
+| ID             | Slots | Notes                                                         |
+| -------------- | ----- | ------------------------------------------------------------- |
+| `2top-1bot`    | 3     | 2 side-by-side top, 1 large bottom                            |
+| `1top-2bot`    | 3     | 1 large top, 2 side-by-side bottom                            |
+| `1big-2small`  | 3     | 1 large left, 2 small stacked right                           |
+| `2x2`          | 4     | 2×2 grid                                                      |
+| `1full`        | 1     | Single full image                                             |
+| `1left-2right` | 3     | 1 tall left, 2 stacked right                                  |
+| `1left-3right` | 4     | 1 narrow left, 3 stacked right                                |
+| `1top-3bot`    | 4     | 1 full-width top, 3 side-by-side bottom                       |
+| `1top-1bot`    | 2     | 1 top, 1 bottom                                               |
+| `fullimage`    | 1     | Image only, inner padding wrapper                             |
+| `fulltext`     | 0     | Text only, no image area                                      |
+| `2img-2txt`    | 2     | 2 images + 2 text cells in compound grid, draggable row split |
+| `2img-4txt`    | 2     | Disabled (commented out in LAYOUTS array)                     |
+| `8img-8txt`    | 8     | 8 img+text pairs; portrait 2×8, landscape 4×4                 |
 
 **Compound layouts** (`2img-2txt`, `8img-8txt`): rendered by dedicated early-return branches in `buildCardHTML()`, not the normal image-area + text-area path. Each cell has its own border/padding. Inter-cell gap = `marginPx`.
 
 **`8img-8txt` grid structure:**
+
 - Portrait: 2 cols × 8 rows (`repeat(4, {imgFr}fr {txtFr}fr)`) — 4 pair-rows, item order: img0,img1,txt0,txt1,...
 - Landscape: 4 cols × 4 rows (`repeat(2, {imgFr}fr {txtFr}fr)`) — 2 pair-rows, item order: img0-3,txt0-3,img4-7,txt4-7
 - Image/text ratio controlled by `card.imageHeightPercent` via `fr` units (no drag handles)
@@ -119,7 +121,10 @@ init()
 ```js
 state = {
   settings: {
-    paperSize, orientation, margin, padding,
+    paperSize,
+    orientation,
+    margin,
+    padding,
     border: { width, style, color, radius },
     image: { backgroundSize, backgroundPosition },
     font: { family, size, color, lineHeight },
@@ -127,15 +132,23 @@ state = {
     contentFont: { size, color, lineHeight },
     customCss,
   },
-  cards: [ {
-    id, layout, imageHeightPercent, imageGridSplit, images, title, sections,
-    orientation,   // null = inherit global; "portrait" | "landscape" = override
-    hideTitle,     // bool — hides title in preview/print/PDF, keeps it for editor
-    titleFont,     // null = inherit global titleFont; per-card override
-    contentFont,   // null = inherit global contentFont; per-card override
-  } ],
+  cards: [
+    {
+      id,
+      layout,
+      imageHeightPercent,
+      imageGridSplit,
+      images,
+      title,
+      sections,
+      orientation, // null = inherit global; "portrait" | "landscape" = override
+      hideTitle, // bool — hides title in preview/print/PDF, keeps it for editor
+      titleFont, // null = inherit global titleFont; per-card override
+      contentFont, // null = inherit global contentFont; per-card override
+    },
+  ],
   projectName: "Untitled",
-}
+};
 ```
 
 **Saved JSON** also includes `project_name` at the top level (loaded into `state.projectName`).
@@ -149,6 +162,7 @@ state = {
    - Section content renders at `0.75em` of contentFont effective size
 
 **Per-card override:** `card.titleFont` / `card.contentFont` — merged in `buildCardHTML()`:
+
 ```js
 const titleF = { ...s.titleFont, ...(card.titleFont || {}) };
 ```
@@ -186,19 +200,19 @@ const titleF = { ...s.titleFont, ...(card.titleFont || {}) };
 ## Dirty / Autosave
 
 ```js
-setDirty()         // dirty=true, shows dot, schedules _autoSaveToFile in 1.5s
-clearDirty()       // dirty=false, removes dot
-_autoSaveToFile()  // writes to work folder, updates fc_last_file, calls clearDirty()
+setDirty(); // dirty=true, shows dot, schedules _autoSaveToFile in 1.5s
+clearDirty(); // dirty=false, removes dot
+_autoSaveToFile(); // writes to work folder, updates fc_last_file, calls clearDirty()
 ```
 
 ## Editor Behaviour by Layout
 
-| Condition | Layouts |
-|---|---|
-| Image Area Height slider **hidden** | `fullimage`, `fulltext`, `2img-2txt`, `2img-4txt` |
-| Row split display shown | `2img-2txt`, `2img-4txt` |
-| Sections list 2-column | `2img-2txt`, `2img-4txt`, `8img-8txt` (`isCompoundTextLayout`) |
-| Paired section rows (thumb + label + textarea, no add/paste btns) | `2img-2txt`, `8img-8txt` (`isImgPairedLayout`) |
+| Condition                                                         | Layouts                                                        |
+| ----------------------------------------------------------------- | -------------------------------------------------------------- |
+| Image Area Height slider **hidden**                               | `fullimage`, `fulltext`, `2img-2txt`, `2img-4txt`              |
+| Row split display shown                                           | `2img-2txt`, `2img-4txt`                                       |
+| Sections list 2-column                                            | `2img-2txt`, `2img-4txt`, `8img-8txt` (`isCompoundTextLayout`) |
+| Paired section rows (thumb + label + textarea, no add/paste btns) | `2img-2txt`, `8img-8txt` (`isImgPairedLayout`)                 |
 
 **Paired section row** (`.section-row--paired`): 44×44px `.pair-thumb` (clickable → `openImgModal(slot)`) on left, label input + textarea on right. "Add Section" and "Paste block" buttons hidden.
 
@@ -242,3 +256,15 @@ _autoSaveToFile()  // writes to work folder, updates fc_last_file, calls clearDi
 - Section label rendering conditional: empty/null label skips the `• label: ` span entirely (both `buildSectionsHtml` and `buildSectionCellHtml`).
 - Per-card font override already implemented (stale "planned" note removed).
 - Distribution folder renamed `FlashCardApp` → `FlashCardApp2`.
+
+## Session Notes (2026-05-13) - Refactoring & Modularization
+
+- **Modularization (Steps 1-3):** Split the monolithic `app.js` into specialized modules:
+  - `state.js`: Data structures, configuration, and app state.
+  - `utils.js`: Pure helper functions (`uid`, `mdParse`, image compression).
+  - `storage.js`: File System Access API, IndexedDB, and LocalStorage logic.
+  - `api.js`: Image search services (Wikimedia, iNaturalist, Pixabay).
+- **Pattern Strategy (Step 4):** Eliminated giant `if/else` chains for layouts in favor of `GRID_STRATEGIES`, `HANDLE_STRATEGIES`, and `COMPOUND_TRACK_STRATEGIES` dictionary maps.
+- **View Extraction (Step 5):** Moved all HTML rendering logic (e.g., `buildCardHTML`, `getGridTemplateStyle`) into a new `render.js` file.
+- **Build System:** Updated `build.js` to concatenate `state.js`, `utils.js`, `storage.js`, `api.js`, `render.js`, and `app.js` in strict order.
+- **Result:** `app.js` size reduced from ~2400 lines to < 1000 lines, isolating UI/Event logic from business/render logic.

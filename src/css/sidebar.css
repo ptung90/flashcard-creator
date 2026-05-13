@@ -1,0 +1,232 @@
+/* ── Sidebar ── */
+.fc-sidebar {
+  width: 120px;
+  min-width: 120px;
+  background: #ffffff;
+  border-right: 1px solid #d1d5db;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: width 0.2s ease, min-width 0.2s ease;
+}
+
+.fc-sidebar.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  border-right: none;
+}
+
+.fc-sidebar.collapsed+.fc-panel-divider {
+  display: none;
+}
+
+#sidebar-toggle-btn {
+  width: 26px;
+  padding: 0;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+#sidebar-toggle-btn.collapsed {
+  content: '▶';
+}
+
+.fc-sidebar-header {
+  padding: 8px 10px;
+  border-bottom: 1px solid #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fc-card-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.fc-card-item {
+  padding: 7px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+  border: 1px solid transparent;
+  transition: background 0.1s;
+  min-height: 34px;
+}
+
+.fc-card-item:hover {
+  background: #f3f4f6;
+}
+
+.fc-card-item.active {
+  background: #f3e8ff;
+  border-color: #6b21a8;
+}
+
+.fc-card-item .card-num {
+  font-size: 10px;
+  color: #9ca3af;
+  min-width: 18px;
+}
+
+.fc-card-item .card-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.fc-card-item .card-actions {
+  display: none;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.fc-card-item:hover .card-actions,
+.fc-card-item.active .card-actions {
+  display: flex;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+
+.icon-btn:hover {
+  color: #1a1a2e;
+  background: #e5e7eb;
+}
+
+/* ── View toggle (List / Grid) ── */
+.view-toggle {
+  display: flex;
+  gap: 2px;
+}
+
+.view-toggle-btn {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 1px 5px;
+  font-size: 14px;
+  color: #9ca3af;
+  line-height: 1;
+}
+
+.view-toggle-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.view-toggle-btn.active {
+  background: #f3e8ff;
+  color: #6b21a8;
+  border-color: #d8b4fe;
+}
+
+/* ── Grid / Thumbnail view ── */
+.fc-card-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+}
+
+.fc-card-thumb-item {
+  position: relative;
+  border: 2px solid transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  overflow: hidden;
+  background: #f9fafb;
+  transition: border-color 0.1s;
+}
+
+.fc-card-thumb-item:hover {
+  border-color: #d1d5db;
+}
+
+.fc-card-thumb-item.active {
+  border-color: #6b21a8;
+  background: #f3e8ff;
+}
+
+.card-thumb-img {
+  width: 100%;
+  aspect-ratio: 148 / 210;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.fc-card-thumb-item--landscape .card-thumb-img {
+  aspect-ratio: 210 / 148;
+}
+
+.card-thumb-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumb-loading {
+  font-size: 14px;
+  opacity: 0.4;
+  animation: fc-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes fc-pulse {
+  from {
+    opacity: 0.2;
+  }
+
+  to {
+    opacity: 0.6;
+  }
+}
+
+.card-thumb-title {
+  font-size: 10px;
+  padding: 3px 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #374151;
+}
+
+.card-thumb-actions {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: none;
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 4px;
+  padding: 1px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.fc-card-thumb-item:hover .card-thumb-actions,
+.fc-card-thumb-item.active .card-thumb-actions {
+  display: flex;
+}

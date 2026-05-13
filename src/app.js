@@ -417,14 +417,14 @@ function renderEditor() {
       <div class="image-slot-row${hidden ? " slot-hidden" : ""}" draggable="true" data-slot="${i}">
         <div class="image-slot-drag-handle" title="Drag to reorder">⠿</div>
         <div class="image-slot-thumb">
-          ${url ? `<img src="${esc(url)}" onerror="this.style.display='none'">` : "🖼"}
+          ${url ? `<img src="${esc(url)}" onerror="this.style.display='none'">` : ""}
         </div>
         <div class="image-slot-info">
           <div class="image-slot-url">${url ? esc(url) : "No image"}</div>
           ${hidden ? `<div style="font-size:10px;color:#9ca3af;margin-top:2px">slot ${i} — hidden in this layout</div>` : ""}
         </div>
         <div class="image-slot-btns">
-          ${!hidden ? `<button class="btn btn-secondary btn-sm" onclick="openImgModal(${i})">🔍 Search</button>` : ""}
+          ${!hidden ? `<button class="btn btn-secondary btn-sm" onclick="openImgModal(${i})">🔍</button>` : ""}
           ${!hidden ? `<button class="btn btn-secondary btn-sm" onclick="pasteToSlot(${i})" title="Paste image from clipboard (Ctrl+V)">📋</button>` : ""}
           ${url ? `<button class="btn btn-danger btn-sm" onclick="clearSlot(${i})">✕</button>` : ""}
         </div>
@@ -448,33 +448,39 @@ function renderEditor() {
         const thumb = img && img.url
           ? `<div style="width:100%;height:100%;background-image:url('${esc(img.url)}');background-size:cover;background-position:center;"></div>`
           : `<span style="font-size:16px">📷</span>`;
+
+        const minSections = LAYOUT_SLOTS[card.layout] || 0;
+        const disableDelete = card.sections.length <= minSections;
         return `
-    <div class="section-row section-row--paired" id="section-${s.id}">
-      <div class="pair-thumb" onclick="openImgModal(${si})" title="Click to change image">${thumb}</div>
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
-        <input class="section-label-input" value="${esc(s.label)}" placeholder="Label" oninput="updateSection('${s.id}','label',this.value)">
-        <textarea class="section-content-input" rows="4" placeholder="Text label..." oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
-      </div>
-    </div>`;
+            <div class="section-row section-row--paired" id="section-${s.id}">
+              <div class="pair-thumb" onclick="openImgModal(${si})" title="Click to change image">${thumb}</div>
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <input class="section-label-input" value="${esc(s.label)}" placeholder="Label" oninput="updateSection('${s.id}','label',this.value)">
+                  <button class="icon-btn" onclick="deleteSection('${s.id}')" title="Delete section" ${disableDelete ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>🗑</button>
+                </div>
+                <textarea class="section-content-input" rows="4" placeholder="Text label..." oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
+              </div>
+            </div>`;
       }
       return `
-    <div class="section-row" id="section-${s.id}">
-      <div class="section-row-header">
-        <input class="section-label-input" value="${esc(s.label)}" placeholder="Label" oninput="updateSection('${s.id}','label',this.value)">
-        <button class="icon-btn" onclick="moveSection('${s.id}',-1)">↑</button>
-        <button class="icon-btn" onclick="moveSection('${s.id}',1)">↓</button>
-        <button class="icon-btn" onclick="deleteSection('${s.id}')">🗑</button>
-      </div>
-      <textarea class="section-content-input" rows="${sectionRows}" placeholder="Markdown content..." oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
-    </div>`;
+          <div class="section-row" id="section-${s.id}">
+            <div class="section-row-header">
+              <input class="section-label-input" value="${esc(s.label)}" placeholder="Label" oninput="updateSection('${s.id}','label',this.value)">
+              <button class="icon-btn" onclick="moveSection('${s.id}',-1)">↑</button>
+              <button class="icon-btn" onclick="moveSection('${s.id}',1)">↓</button>
+              <button class="icon-btn" onclick="deleteSection('${s.id}')">🗑</button>
+            </div>
+            <textarea class="section-content-input" rows="${sectionRows}" placeholder="Markdown content..." oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
+          </div>`;
     })
     .join("");
 
   content.innerHTML = `
-    <div class="editor-section">
+        <div class="editor-section">
       <h3>Layout</h3>
       <div class="layout-grid">${LAYOUTS.map((l) => layoutIcon(l, l === card.layout)).join("")}</div>
-    </div>
+        </div>
 
     <div class="editor-section">
       <h3>Orientation</h3>
@@ -491,7 +497,8 @@ function renderEditor() {
           oninput="updateCardProp('imageHeightPercent',+this.value);this.nextElementSibling.textContent=this.value+'%'">
         <span class="height-val">${card.imageHeightPercent}%</span>
       </div>
-    </div>` : ''}
+    </div>` : ''
+    }
 
     ${card.layout === '2img-4txt' ? (() => {
       const sp = card.imageGridSplit;
@@ -504,7 +511,8 @@ function renderEditor() {
       <h3>Row split</h3>
       <span style="font-size:12px;color:#6b7280;font-family:monospace">${label}</span>
     </div>`;
-    })() : ''}
+    })() : ''
+    }
 
     <div class="editor-section">
       <h3>Images (${slotCount} slots)</h3>
@@ -538,6 +546,7 @@ function renderEditor() {
         ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="addSection()">+ Add Section</button>` : ''}
         ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="togglePasteBlock()">📋 Paste block</button>` : ''}
         <button class="btn btn-secondary btn-sm" onclick="toggleCardCssEditor()" id="card-css-btn">${card.customCss ? '💅✓' : '💅'} CSS</button>
+             <button class="btn btn-secondary btn-sm" onclick="toggleDataArea()">🐞 Data</button>
       </div>
       <div id="card-css-area" style="display:${card.customCss ? '' : 'none'};margin-top:8px">
         <div style="font-size:10px;color:#9ca3af;margin-bottom:4px">Scoped to this card — use .fc-title, .fc-section__content, etc.</div>
@@ -554,8 +563,16 @@ function renderEditor() {
           <button class="btn btn-danger btn-sm" onclick="togglePasteBlock()">Cancel</button>
         </div>
       </div>
-    </div>
-  `;
+          <div id="data-area" style="display:none;margin-top:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <label style="font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Current Card Data</label>
+              <div id="data-area-btns" style="display:flex;gap:4px;">
+                <button class="btn btn-secondary btn-sm" onclick="editCardData()">Edit</button>
+              </div>
+            </div>
+            <textarea id="data-area-content" class="section-content-input" style="margin-top:6px; white-space:nowrap; overflow-x:auto;" wrap="off" rows="15" readonly></textarea>
+          </div>
+        </div>`;
   attachSlotDragHandlers();
   // apply initial paste-block visibility from config
   const pba = document.getElementById("paste-block-area");
@@ -565,140 +582,140 @@ function renderEditor() {
 function layoutIcon(layout, selected) {
   const icons = {
     "2top-1bot": `
-      <div class="lo-row" style="flex:1">
+          <div class="lo-row" style="flex:1">
         <div class="lo-block"></div>
         <div class="lo-block"></div>
-      </div>
+          </div>
       <div class="lo-row" style="flex:1">
         <div class="lo-block"></div>
       </div>
       <div class="lo-text"></div>
-    `,
+  `,
 
     "1top-2bot": `
-      <div class="lo-row" style="flex:1">
-        <div class="lo-block"></div>
-      </div>
+          <div class="lo-row" style="flex:1">
+      <div class="lo-block"></div>
+          </div>
       <div class="lo-row" style="flex:1">
         <div class="lo-block"></div>
         <div class="lo-block"></div>
       </div>
       <div class="lo-text"></div>
-    `,
+  `,
 
     "1big-2small": `
-      <div class="lo-row" style="flex:2">
+          <div class="lo-row" style="flex:2">
         <div class="lo-block" style="flex:2"></div>
         <div style="flex:1;display:flex;flex-direction:column;gap:2px">
           <div class="lo-block" style="flex:1"></div>
           <div class="lo-block" style="flex:1"></div>
         </div>
-      </div>
-      <div class="lo-text"></div>
-    `,
+          </div>
+          <div class="lo-text"></div>
+  `,
 
     "2x2": `
-      <div class="lo-row" style="flex:1">
+          <div class="lo-row" style="flex:1">
         <div class="lo-block"></div>
         <div class="lo-block"></div>
-      </div>
+          </div>
       <div class="lo-row" style="flex:1">
         <div class="lo-block"></div>
         <div class="lo-block"></div>
       </div>
       <div class="lo-text"></div>
-    `,
+  `,
 
     "1full": `
-      <div class="lo-row" style="flex:2">
-        <div class="lo-block"></div>
-      </div>
-      <div class="lo-text"></div>
-    `,
+          <div class="lo-row" style="flex:2">
+            <div class="lo-block"></div>
+          </div>
+          <div class="lo-text"></div>
+  `,
 
     "1left-2right": `
-      <div class="lo-row" style="flex:2">
+          <div class="lo-row" style="flex:2">
         <div class="lo-block" style="flex:1"></div>
         <div style="flex:2;display:flex;flex-direction:column;gap:2px">
           <div class="lo-block" style="flex:1"></div>
           <div class="lo-block" style="flex:1"></div>
         </div>
-      </div>
-      <div class="lo-text"></div>
-    `,
+          </div>
+          <div class="lo-text"></div>
+  `,
 
     "1left-3right": `
-      <div class="lo-row" style="flex:2">
+          <div class="lo-row" style="flex:2">
         <div class="lo-block" style="flex:1"></div>
         <div style="flex:2;display:flex;flex-direction:column;gap:2px">
           <div class="lo-block" style="flex:1"></div>
           <div class="lo-block" style="flex:1"></div>
           <div class="lo-block" style="flex:1"></div>
         </div>
-      </div>
-      <div class="lo-text"></div>
-    `,
+          </div>
+          <div class="lo-text"></div>
+  `,
 
     "1top-3bot": `
-      <div class="lo-row" style="flex:2">
-        <div class="lo-block"></div>
-      </div>
+          <div class="lo-row" style="flex:2">
+      <div class="lo-block"></div>
+          </div>
       <div class="lo-row" style="flex:1">
         <div class="lo-block"></div>
         <div class="lo-block"></div>
         <div class="lo-block"></div>
       </div>
       <div class="lo-text"></div>
-    `,
+  `,
 
     // thêm mới
     "1top-1bot": `
-      <div class="lo-row" style="flex:1">
-        <div class="lo-block"></div>
-      </div>
+          <div class="lo-row" style="flex:1">
+      <div class="lo-block"></div>
+          </div>
       <div class="lo-row" style="flex:1">
         <div class="lo-block"></div>
       </div>
       <div class="lo-text"></div>
-    `,
+  `,
     "fullimage": `
-  <div class="lo-row" style="flex:2">
-    <div class="lo-block"></div>
-  </div>
-`,
+          <div class="lo-row" style="flex:2">
+      <div class="lo-block"></div>
+          </div>
+    `,
 
     "fulltext": `
-  <div class="lo-text" style="flex:1;height:100%"></div>
-`,
+          <div class="lo-text" style="flex:1;height:100%"></div>
+      `,
 
     "2img-2txt": `
-  <div class="lo-row" style="flex:2">
-    <div class="lo-block"></div>
-    <div class="lo-block"></div>
-  </div>
+          <div class="lo-row" style="flex:2">
+            <div class="lo-block"></div>
+            <div class="lo-block"></div>
+          </div>
 
-  <div class="lo-row" style="flex:1;align-items:stretch">
-    <div class="lo-text" style="height:auto"></div>
-    <div class="lo-text" style="height:auto"></div>
-  </div>
-`,
+          <div class="lo-row" style="flex:1;align-items:stretch">
+            <div class="lo-text" style="height:auto"></div>
+            <div class="lo-text" style="height:auto"></div>
+          </div>
+  `,
 
     "2img-4txt": `
-  <div class="lo-row" style="flex:1">
-    <div class="lo-block"></div>
-    <div class="lo-block"></div>
-  </div>
+          <div class="lo-row" style="flex:1">
+            <div class="lo-block"></div>
+            <div class="lo-block"></div>
+          </div>
 
-  <div class="lo-row" style="flex:1">
-    <div class="lo-text"></div>
-    <div class="lo-text"></div>
-  </div>
+          <div class="lo-row" style="flex:1">
+            <div class="lo-text"></div>
+            <div class="lo-text"></div>
+          </div>
 
-  <div class="lo-row" style="flex:1">
-    <div class="lo-text"></div>
-    <div class="lo-text"></div>
-  </div>
-`,
+          <div class="lo-row" style="flex:1">
+            <div class="lo-text"></div>
+            <div class="lo-text"></div>
+          </div>
+  `,
 
     "8img-8txt": (() => {
       const pair = '<div style="display:flex;flex-direction:column;gap:1px"><div class="lo-block" style="flex:2"></div><div class="lo-text"></div></div>';
@@ -707,12 +724,9 @@ function layoutIcon(layout, selected) {
   };
 
   return `
-    <div class="layout-opt ${selected ? "selected" : ""}"
-         title="${layout}"
-         onclick="setLayout('${layout}')">
-      ${icons[layout]}
-    </div>
-  `;
+        <div class="layout-opt ${selected ? "selected" : ""}" title="${layout}" onclick="setLayout('${layout}')">
+          ${icons[layout]}
+        </div>`;
 }
 
 function setLayout(layout) {
@@ -738,7 +752,7 @@ function cardOrientationControls() {
   const useCustom = !!card.orientation;
   const effective = card.orientation || state.settings.orientation;
   return `
-    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+    <div style = "display:flex;flex-wrap:wrap;gap:8px;align-items:center" >
       <label style="font-size:12px;color:#374151;display:flex;align-items:center;gap:6px">
         <input type="checkbox" ${useCustom ? "checked" : ""} onchange="toggleCardOrientation(this.checked)">
         Use custom orientation
@@ -750,8 +764,7 @@ function cardOrientationControls() {
           <option value="landscape" ${effective === "landscape" ? "selected" : ""}>Landscape</option>
         </select>
       <span style="font-size:11px;color:#6b7280">${useCustom ? "Card override active" : "Inherited from global"}</span>
-    </div>
-  `;
+    </div>`;
 }
 
 // Per-card font override controls (empty = inherit global)
@@ -765,20 +778,20 @@ function cardFontControls(key) {
   const lhVal = override.lineHeight ?? "";
   const hasColor = "color" in override;
   const computed = key === "contentFont"
-    ? `→ label: ${Math.round(effective.size * 0.78)}px · content: ${Math.round(effective.size * 0.75)}px`
-    : `→ ${effective.size}px`;
-  return `<label style="font-size:11px;color:#6b7280">Size</label>
-          <input type="number" min="8" max="28" value="${sizeVal}" placeholder="${global.size}"
-            style="width:64px;${FIS}" oninput="setCardFontProp('${key}','size',this.value===''?null:+this.value)">
-          <label style="font-size:11px;color:#6b7280">px</label>
-          <span style="font-size:10px;color:#9ca3af">${computed}</span>
-          <label style="font-size:11px;color:#6b7280;display:flex;align-items:center;gap:3px">
-            <input type="checkbox" ${hasColor ? "checked" : ""} onchange="toggleCardFontColor('${key}',this.checked)"> Color
-          </label>
-          ${hasColor ? `<input type="color" value="${override.color || global.color}" style="width:30px;height:26px;border:none;border-radius:3px;cursor:pointer;padding:0" oninput="setCardFontProp('${key}','color',this.value)">` : ""}
-          <label style="font-size:11px;color:#6b7280">LH</label>
-          <input type="number" min="1" max="3" step="0.1" value="${lhVal}" placeholder="${global.lineHeight}"
-            style="width:64px;${FIS}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value)">`;
+    ? `→ label: ${Math.round(effective.size * 0.78)} px · content: ${Math.round(effective.size * 0.75)} px`
+    : `→ ${effective.size} px`;
+  return `<label style = "font-size:11px;color:#6b7280" > Size</label >
+    <input type="number" min="8" max="28" value="${sizeVal}" placeholder="${global.size}"
+      style="width:64px;${FIS}" oninput="setCardFontProp('${key}','size',this.value===''?null:+this.value)">
+      <label style="font-size:11px;color:#6b7280">px</label>
+      <span style="font-size:10px;color:#9ca3af">${computed}</span>
+      <label style="font-size:11px;color:#6b7280;display:flex;align-items:center;gap:3px">
+        <input type="checkbox" ${hasColor ? "checked" : ""} onchange="toggleCardFontColor('${key}',this.checked)"> Color
+      </label>
+      ${hasColor ? `<input type="color" value="${override.color || global.color}" style="width:30px;height:26px;border:none;border-radius:3px;cursor:pointer;padding:0" oninput="setCardFontProp('${key}','color',this.value)">` : ""}
+      <label style="font-size:11px;color:#6b7280">LH</label>
+      <input type="number" min="1" max="3" step="0.1" value="${lhVal}" placeholder="${global.lineHeight}"
+        style="width:64px;${FIS}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value)">`;
 }
 
 function setCardFontProp(key, prop, val) {
@@ -930,350 +943,6 @@ function updateSection(id, field, val) {
   renderPreview();
 }
 
-// ── Card Render (HTML) ─────────────────────────────────────────────
-function getGridTemplateStyle(layout, sp) {
-  const { row: r, col: c, inner: n } = sp;
-
-  const R = (v) => "grid-template-rows:" + v + "% " + (100 - v) + "%;";
-
-  const C = (v) => "grid-template-columns:" + v + "% " + (100 - v) + "%;";
-
-  if (layout === "2x2") return R(r) + C(c);
-
-  if (layout === "1top-1bot") return R(r);
-  if (layout === "2top-1bot" || layout === "1top-2bot")
-    return R(r) + C(n);
-
-  if (layout === "1big-2small" || layout === "1left-2right") {
-    return C(c) + R(n);
-  }
-
-  if (layout === "1left-3right") {
-    return (
-      "grid-template-columns:" +
-      c +
-      "% " +
-      (100 - c) +
-      "%;grid-template-rows:1fr 1fr 1fr;"
-    );
-  }
-
-  if (layout === "1top-3bot") {
-    return (
-      "grid-template-rows:" +
-      r +
-      "% " +
-      (100 - r) +
-      "%;grid-template-columns:1fr 1fr 1fr;"
-    );
-  }
-
-  if (layout === "2img-2txt") {
-    return "grid-template-columns:1fr 1fr;" + R(r);
-  }
-
-  if (layout === "2img-4txt") {
-    const mid = ((100 - r) * n) / 100;
-    return (
-      "grid-template-columns:1fr 1fr;grid-template-rows:" +
-      r +
-      "% " +
-      mid +
-      "% " +
-      (100 - r - mid) +
-      "%;"
-    );
-  }
-
-  return "";
-}
-
-function buildHandles(layout, sp) {
-  if (layout === "2img-2txt") return "";
-  const { row: r, col: c, inner: n } = sp;
-
-  const H = (type, sty) =>
-    '<div class="fc-grid-handle" data-handle="' +
-    type +
-    '" style="position:absolute;z-index:20;' +
-    sty +
-    '"></div>';
-
-  const ROW = "height:28px;cursor:row-resize;transform:translateY(-50%)";
-
-  const COL = "width:28px;cursor:col-resize;transform:translateX(-50%)";
-
-  // shared vertical-split-right
-  if (layout === "1big-2small" || layout === "1left-2right") {
-    return (
-      H("col", "left:" + c + "%;top:0;bottom:0;" + COL) +
-      H("inner-row", "top:" + n + "%;left:" + c + "%;right:0;" + ROW)
-    );
-  }
-
-  if (layout === "1left-3right") {
-    return H("col", "left:" + c + "%;top:0;bottom:0;" + COL);
-  }
-
-  if (layout === "1top-3bot") {
-    return H("row", "top:" + r + "%;left:0;right:0;" + ROW);
-  }
-
-  if (layout === "2top-1bot") {
-    return (
-      H("row", "top:" + r + "%;left:0;right:0;" + ROW) +
-      H("inner-col", "left:" + n + "%;top:0;height:" + r + "%;" + COL)
-    );
-  }
-
-  if (layout === "1top-2bot") {
-    return (
-      H("row", "top:" + r + "%;left:0;right:0;" + ROW) +
-      H(
-        "inner-col",
-        "left:" + n + "%;top:" + r + "%;height:" + (100 - r) + "%;" + COL,
-      )
-    );
-  }
-
-  // thêm mới
-  if (layout === "1top-1bot") {
-    return H("row", "top:" + r + "%;left:0;right:0;" + ROW);
-  }
-
-  if (layout === "2x2") {
-    return (
-      H("row", "top:" + r + "%;left:0;right:0;" + ROW) +
-      H("col", "left:" + c + "%;top:0;bottom:0;" + COL)
-    );
-  }
-
-  if (layout === "2img-2txt") {
-    return H("row", "top:" + r + "%;left:0;right:0;" + ROW);
-  }
-
-  if (layout === "2img-4txt") {
-    const innerTop = r + ((100 - r) * n) / 100;
-    return (
-      H("row", "top:" + r + "%;left:0;right:0;" + ROW) +
-      H("inner-row", "top:" + innerTop + "%;left:0;right:0;" + ROW)
-    );
-  }
-
-  return "";
-}
-function resolveImgStyle(img, globalImgStyle) {
-  if (!img || img.size == null) return globalImgStyle;
-  return "background-size:" + img.size + ";background-position:center;" +
-    (img.size !== "cover" && img.color ? "background-color:" + img.color + ";" : "");
-}
-
-function buildSlots(card, slotCount, imgStyle) {
-  return Array.from({ length: slotCount }, (_, i) => {
-    const img = card.images.find((im) => im.slot === i);
-    if (img && img.url) {
-      return (
-        '<div class="fc-image-slot fc-image-slot-' + i +
-        '"><div class="img-bg" style="background-image:url(\'' + esc(img.url) + "\');" +
-        resolveImgStyle(img, imgStyle) +
-        'background-repeat:no-repeat;width:100%;height:100%;"></div></div>'
-      );
-    }
-    return '<div class="fc-image-slot fc-image-slot-' + i + '"><span class="empty-placeholder">📷</span></div>';
-  }).join("");
-}
-
-function buildSectionsHtml(sections) {
-  return sections
-    .map(
-      (sec) =>
-        '<div class="fc-section">' +
-        (sec.label ? '<span class="fc-section__label">• ' + esc(sec.label) + ': </span>' : '') +
-        '<div class="fc-section__content">' +
-        mdParse(sec.content) +
-        "</div></div>",
-    )
-    .join("");
-}
-
-function buildSectionCellHtml(section) {
-  if (!section) return '<div class="fc-section fc-section--empty"></div>';
-  return (
-    '<div class="fc-section">' +
-    (section.label ? '<span class="fc-section__label">• ' + esc(section.label) + ': </span>' : '') +
-    '<div class="fc-section__content">' +
-    mdParse(section.content) +
-    "</div></div>"
-  );
-}
-
-function buildCompoundCellStyle(baseStyle, options = {}) {
-  const {
-    paddingPx = 0,
-    borderWidth = 0,
-    borderCss = "",
-    borderRadiusPx = 0,
-    overflow = "auto",
-    background = "white",
-  } = options;
-  return (
-    baseStyle +
-    "box-sizing:border-box;" +
-    "background:" + background + ";" +
-    "padding:" +
-    paddingPx +
-    "px;" +
-    "overflow:" +
-    overflow +
-    ";" +
-    "border:" +
-    borderWidth +
-    "px " +
-    borderCss +
-    ";" +
-    "border-radius:" +
-    borderRadiusPx +
-    "px;"
-  );
-}
-
-function buildCompoundImageSlots(card, imgStyle, cellOptions) {
-  const slotCount = LAYOUT_SLOTS[card.layout] || 0;
-  return Array.from({ length: slotCount }, (_, i) => {
-    const img = card.images.find((im) => im.slot === i);
-    const slotStyle = buildCompoundCellStyle("", { ...cellOptions, overflow: "hidden" });
-    const content = img && img.url
-      ? '<div class="fc-compound-cell-inner" style="width:100%;height:100%;overflow:hidden;"><div class="img-bg" style="background-image:url(\'' +
-      esc(img.url) + "\');" +
-      resolveImgStyle(img, imgStyle) +
-      'background-repeat:no-repeat;width:100%;height:100%;"></div></div>'
-      : '<div class="fc-compound-cell-inner" style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden;"><span class="empty-placeholder">📷</span></div>';
-    return (
-      '<div class="fc-image-slot fc-image-slot-' +
-      i +
-      '" style="' +
-      slotStyle +
-      '">' +
-      content +
-      "</div>"
-    );
-  }).join("");
-}
-
-function buildSectionCellsHtml(sections, count, contentStyle, cellOptions) {
-  return Array.from({ length: count }, (_, i) => {
-    return (
-      '<div class="fc-sections" style="' +
-      buildCompoundCellStyle(contentStyle, cellOptions) +
-      '">' +
-      buildSectionCellHtml(sections[i]) +
-      "</div>"
-    );
-  }).join("");
-}
-
-function getCompoundGridStyle(layout, split, gapPx, imgPct) {
-  const rowsGap2 = gapPx * 2;
-  const gap = gapPx + "px";
-  if (layout === "2img-2txt") {
-    const rowPct = imgPct ?? split.row;
-    return (
-      "grid-template-columns:calc((100% - " +
-      gap +
-      ")/2) calc((100% - " +
-      gap +
-      ")/2);" +
-      "grid-template-rows:calc((100% - " +
-      gap +
-      ") * " +
-      rowPct +
-      " / 100) calc((100% - " +
-      gap +
-      ") * " +
-      (100 - rowPct) +
-      " / 100);"
-    );
-  }
-
-  if (layout === "2img-4txt") {
-    return (
-      "grid-template-columns:calc((100% - " +
-      gap +
-      ")/2) calc((100% - " +
-      gap +
-      ")/2);" +
-      "grid-template-rows:calc((100% - " +
-      rowsGap2 +
-      "px) * " +
-      split.row +
-      " / 100) calc((100% - " +
-      rowsGap2 +
-      "px) * " +
-      (((100 - split.row) * split.inner) / 100) +
-      " / 100) calc((100% - " +
-      rowsGap2 +
-      "px) * " +
-      (((100 - split.row) * (100 - split.inner)) / 100) +
-      " / 100);"
-    );
-  }
-
-  return "";
-}
-
-function getCompoundGridTracks(layout, split, gapPx) {
-  if (layout === "2img-2txt") {
-    return {
-      columns:
-        "calc((100% - " + gapPx + "px)/2) calc((100% - " + gapPx + "px)/2)",
-      rows:
-        "calc((100% - " +
-        gapPx +
-        "px) * " +
-        split.row +
-        " / 100) calc((100% - " +
-        gapPx +
-        "px) * " +
-        (100 - split.row) +
-        " / 100)",
-    };
-  }
-
-  if (layout === "2img-4txt") {
-    const remainingTop = ((100 - split.row) * split.inner) / 100;
-    const remainingBottom = ((100 - split.row) * (100 - split.inner)) / 100;
-    return {
-      columns:
-        "calc((100% - " + gapPx + "px)/2) calc((100% - " + gapPx + "px)/2)",
-      rows:
-        "calc((100% - " +
-        (gapPx * 2) +
-        "px) * " +
-        split.row +
-        " / 100) calc((100% - " +
-        (gapPx * 2) +
-        "px) * " +
-        remainingTop +
-        " / 100) calc((100% - " +
-        (gapPx * 2) +
-        "px) * " +
-        remainingBottom +
-        " / 100)",
-    };
-  }
-
-  return null;
-}
-
-function buildFontOverride(f) {
-  return (
-    (f.family ? "font-family:" + f.family + ";" : "") +
-    (f.size ? "font-size:" + f.size + "px;" : "") +
-    (f.color ? "color:" + f.color + ";" : "") +
-    (f.lineHeight ? "line-height:" + f.lineHeight + ";" : "") +
-    (f.textAlign ? "text-align:" + f.textAlign + ";" : "")
-  );
-}
 
 function setFontAlign(key, val) {
   state.settings[key].textAlign = val;
@@ -1284,290 +953,13 @@ function setFontAlign(key, val) {
   renderPreview();
 }
 
-const TEXT_VALIGN_MAP = { top: "flex-start", middle: "center", bottom: "flex-end" };
+// const TEXT_VALIGN_MAP = {top: "flex-start", middle: "center", bottom: "flex-end" };
 
 function setTextVAlign(val) {
   state.settings.textVAlign = val;
   document.querySelectorAll(".valign-btn").forEach((b) => b.classList.toggle("active", b.dataset.valign === val));
   setDirty();
   renderPreview();
-}
-
-function _scopeCardCss(css, cardId) {
-  const prefix = `.fc-card[data-id="${cardId}"]`;
-  return css.replace(/([^{}@][^{]*)\{([^}]*)\}/g, (_, sel, body) =>
-    `${prefix} ${sel.trim()} { ${body} }`
-  );
-}
-
-function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
-  const s = settings;
-  const cardStyleTag = card.customCss
-    ? '<style>' + _scopeCardCss(card.customCss, card.id) + '</style>'
-    : '';
-  const { w, h } = overridePx || getPaperPx(s.paperSize, card.orientation || s.orientation);
-  const marginPx = mmToPx(s.margin);
-  const paddingPx = mmToPx(s.padding);
-  const imgPaddingPx = mmToPx(s.imgPadding ?? 0);
-  const vAlign = s.textVAlign || "top";
-  const vAlignJustify = TEXT_VALIGN_MAP[vAlign] || "flex-start";
-  const textVAlignStyle = "justify-content:" + vAlignJustify + ";";
-  const sectionsFlexOverride = vAlign !== "top" ? "flex:none;" : "";
-  const compoundTextBase = "display:flex;flex-direction:column;" + textVAlignStyle;
-  const cardW = w - 2 * marginPx;
-  const cardH = h - 2 * marginPx;
-  const innerH = cardH - 2 * paddingPx;
-  const imgH = Math.round((innerH * card.imageHeightPercent) / 100);
-  const slotCount = LAYOUT_SLOTS[card.layout] ?? 3;
-  const split = card.imageGridSplit ||
-    LAYOUT_SPLIT_DEFAULTS[card.layout] || { row: 50, col: 50, inner: 50 };
-
-  const imgStyle =
-    "background-size:" +
-    s.image.backgroundSize +
-    ";background-position:" +
-    s.image.backgroundPosition +
-    ";";
-
-  const slots = buildSlots(card, slotCount, imgStyle);
-  const handles = forPrint ? "" : buildHandles(card.layout, split);
-  const sectionsHtml = buildSectionsHtml(card.sections);
-
-  const cls =
-    "fc-card fc-card--" +
-    (forPrint ? "print" : "preview") +
-    " fc-layout-" +
-    card.layout;
-  const borderStyle =
-    "border:" +
-    s.border.width +
-    "px " +
-    s.border.style +
-    " " +
-    s.border.color +
-    ";border-radius:" +
-    s.border.radius +
-    "px;";
-  const sizeStyle =
-    "width:" +
-    cardW +
-    "px;height:" +
-    cardH +
-    "px;margin:" +
-    marginPx +
-    "px auto;background:white;padding:" +
-    paddingPx +
-    "px;";
-  const compoundSizeStyle =
-    "width:" +
-    cardW +
-    "px;height:" +
-    cardH +
-    "px;margin:" +
-    marginPx +
-    "px auto;background:white;padding:0;";
-  const compoundWrapperStyle =
-    "width:" +
-    cardW +
-    "px;height:" +
-    cardH +
-    "px;margin:" +
-    marginPx +
-    "px auto;background:white;padding:0;border:none;";
-  const gridStyle = getGridTemplateStyle(card.layout, split);
-  const titleF = { ...s.titleFont, ...(card.titleFont || {}) };
-  const contentF = { ...s.contentFont, ...(card.contentFont || {}) };
-  const titleStyle = buildFontOverride(titleF);
-  const contentStyle = buildFontOverride(contentF);
-  const showTitle = !!card.title && !card.hideTitle;
-  const borderCss = s.border.style + " " + s.border.color;
-  const compoundCellOptions = {
-    paddingPx,
-    borderWidth: s.border.width,
-    borderCss,
-    borderRadiusPx: s.border.radius,
-  };
-  const imgCompoundCellOptions = {
-    paddingPx: imgPaddingPx,
-    borderWidth: s.border.width,
-    borderCss,
-    borderRadiusPx: s.border.radius,
-  };
-  const compoundGridStyle = getCompoundGridStyle(card.layout, split, marginPx, card.imageHeightPercent);
-
-  // fullimage: image-only card with inner padding wrapper
-  if (card.layout === 'fullimage') {
-    const borderW = s.border.width || 0;
-    const nopadStyle = "width:" + cardW + "px;height:" + cardH + "px;margin:" + marginPx + "px auto;background:white;padding:0;";
-    const innerWrapStyle =
-      "box-sizing:border-box;width:100%;height:100%;padding:" +
-      imgPaddingPx +
-      'px;';
-    return (
-      cardStyleTag +
-      '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id +
-      '" style="' + nopadStyle + borderStyle + '">' +
-      '<div style="' + innerWrapStyle + '">' +
-      '<div class="fc-image-area" style="height:' + (cardH - 2 * imgPaddingPx - 2 * borderW) + 'px;position:relative;">' +
-      slots + handles +
-      '</div></div></div>'
-    );
-  }
-
-  if (card.layout === "2img-2txt") {
-    const sectionA = buildSectionCellHtml(card.sections[0]);
-    const sectionB = buildSectionCellHtml(card.sections[1]);
-    const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions);
-    return (
-      cardStyleTag +
-      '<div class="' +
-      cls +
-      '" data-layout="' +
-      card.layout +
-      '" data-id="' +
-      card.id +
-      '" style="' +
-      compoundWrapperStyle +
-      '">' +
-      (showTitle
-        ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + "</div>"
-        : "") +
-      '<div class="fc-image-area" style="flex:1;position:relative;display:grid;overflow:hidden;gap:' +
-      marginPx +
-      "px;" +
-      compoundGridStyle +
-      '">' +
-      compoundSlots +
-      '<div class="fc-sections" style="' +
-      buildCompoundCellStyle(compoundTextBase + contentStyle, compoundCellOptions) +
-      '">' +
-      sectionA +
-      '</div>' +
-      '<div class="fc-sections" style="' +
-      buildCompoundCellStyle(compoundTextBase + contentStyle, compoundCellOptions) +
-      '">' +
-      sectionB +
-      "</div>" +
-      handles +
-      "</div></div>"
-    );
-  }
-
-  if (card.layout === "2img-4txt") {
-    const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions);
-    return (
-      cardStyleTag +
-      '<div class="' +
-      cls +
-      '" data-layout="' +
-      card.layout +
-      '" data-id="' +
-      card.id +
-      '" style="' +
-      compoundWrapperStyle +
-      '">' +
-      (showTitle
-        ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + "</div>"
-        : "") +
-      '<div class="fc-image-area" style="flex:1;position:relative;display:grid;overflow:hidden;gap:' +
-      marginPx +
-      "px;" +
-      compoundGridStyle +
-      '">' +
-      compoundSlots +
-      buildSectionCellsHtml(card.sections, 4, compoundTextBase + contentStyle, compoundCellOptions) +
-      handles +
-      "</div></div>"
-    );
-  }
-
-
-  if (card.layout === "8img-8txt") {
-    const effectiveOrientation = card.orientation || s.orientation;
-    const isLandscape = effectiveOrientation === "landscape";
-    const cols = isLandscape ? 4 : 2;
-    const pairRows = isLandscape ? 2 : 4;
-    const imgFr = card.imageHeightPercent || 65;
-    const txtFr = 100 - imgFr;
-    const rowTemplate = "repeat(" + pairRows + "," + imgFr + "fr " + txtFr + "fr)";
-
-    const imgItems = [];
-    const txtItems = [];
-    for (let i = 0; i < 8; i++) {
-      const img = card.images.find((im) => im.slot === i);
-      const section = card.sections[i];
-      const imgContent = img && img.url
-        ? '<div style="width:100%;height:100%;overflow:hidden;"><div class="img-bg" style="background-image:url(\'' +
-        esc(img.url) + '\');' + resolveImgStyle(img, imgStyle) + 'background-repeat:no-repeat;width:100%;height:100%;"></div></div>'
-        : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;"><span class="empty-placeholder">📷</span></div>';
-      imgItems.push(
-        '<div class="fc-image-slot fc-image-slot-' + i + '" style="' +
-        buildCompoundCellStyle("", { paddingPx: imgPaddingPx, borderWidth: s.border.width, borderCss, borderRadiusPx: s.border.radius, overflow: "hidden" }) + '">' +
-        imgContent + '</div>'
-      );
-      const label = section ? (section.content || "") : "";
-      txtItems.push(
-        '<div style="' +
-        buildCompoundCellStyle(compoundTextBase + "text-align:center;", { paddingPx, borderWidth: s.border.width, borderCss, borderRadiusPx: s.border.radius }) + '">' +
-        '<span style="' + titleStyle + 'overflow:hidden;">' + esc(label) + '</span></div>'
-      );
-    }
-
-    let cells = "";
-    for (let p = 0; p < pairRows; p++) {
-      for (let c = 0; c < cols; c++) cells += imgItems[p * cols + c];
-      for (let c = 0; c < cols; c++) cells += txtItems[p * cols + c];
-    }
-
-    return (
-      cardStyleTag +
-      '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id + '" style="' + compoundWrapperStyle + '">' +
-      '<div style="width:100%;height:100%;display:grid;grid-template-columns:repeat(' + cols + ',1fr);grid-template-rows:' + rowTemplate + ';gap:' + marginPx + 'px;">' +
-      cells + '</div></div>'
-    );
-  }
-
-  // fulltext: text fills entire card, no image area
-  if (card.layout === 'fulltext') {
-    return (
-      cardStyleTag +
-      '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id +
-      '" style="' + sizeStyle + borderStyle + '">' +
-      '<div class="fc-text-area" style="height:' + cardH + 'px;overflow:auto;' + textVAlignStyle + '">' +
-      (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + '</div>' : '') +
-      '<div class="fc-sections" style="' + contentStyle + sectionsFlexOverride + '">' + sectionsHtml + '</div>' +
-      '</div></div>'
-    );
-  }
-
-  return (
-    cardStyleTag +
-    '<div class="' +
-    cls +
-    '" data-layout="' +
-    card.layout +
-    '" data-id="' +
-    card.id +
-    '" style="' +
-    sizeStyle +
-    borderStyle +
-    '">' +
-    '<div class="fc-image-area" style="height:' +
-    imgH +
-    "px;position:relative;" +
-    gridStyle +
-    '">' +
-    slots +
-    handles +
-    "</div>" +
-    '<div class="fc-text-area" style="' + textVAlignStyle + '">' +
-    (showTitle
-      ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + "</div>"
-      : "") +
-    '<div class="fc-sections" style="' + contentStyle + sectionsFlexOverride + '">' +
-    sectionsHtml +
-    "</div></div></div>"
-  );
 }
 
 // ── Preview ────────────────────────────────────────────────────────
@@ -1799,19 +1191,6 @@ function _pdfName(label) {
   return `${slug}-${ts}.pdf`;
 }
 
-function buildCaptureHTML(card, settings) {
-  const { w, h } = getPaperPx(settings.paperSize, getCardOrientation(card));
-  return (
-    '<div style="width:' +
-    w +
-    "px;height:" +
-    h +
-    'px;background:white;position:relative;overflow:hidden;">' +
-    buildCardHTML(card, settings, true) +
-    "</div>"
-  );
-}
-
 async function exportOnePDF() {
   const card = getActiveCard();
   if (!card) return alert("No card selected.");
@@ -1894,595 +1273,6 @@ async function exportPDF() {
   wrap.innerHTML = origHTML;
   wrap.style.cssText = origStyle;
   renderPreview();
-}
-
-// ── IndexedDB helpers ──────────────────────────────────────────────
-let _idb = null;
-function openIDB() {
-  if (_idb) return Promise.resolve(_idb);
-  return new Promise((res, rej) => {
-    const req = indexedDB.open("fc_db", 1);
-    req.onupgradeneeded = (e) =>
-      e.target.result.createObjectStore("recents");
-    req.onsuccess = (e) => {
-      _idb = e.target.result;
-      res(_idb);
-    };
-    req.onerror = () => rej(req.error);
-  });
-}
-async function idbPut(key, val) {
-  const db = await openIDB();
-  return new Promise((res, rej) => {
-    const tx = db.transaction("recents", "readwrite");
-    tx.objectStore("recents").put(val, key);
-    tx.oncomplete = res;
-    tx.onerror = () => rej(tx.error);
-  });
-}
-async function idbGet(key) {
-  const db = await openIDB();
-  return new Promise((res, rej) => {
-    const tx = db.transaction("recents", "readonly");
-    const req = tx.objectStore("recents").get(key);
-    req.onsuccess = () => res(req.result);
-    req.onerror = () => rej(req.error);
-  });
-}
-async function idbDel(key) {
-  const db = await openIDB();
-  return new Promise((res, rej) => {
-    const tx = db.transaction("recents", "readwrite");
-    tx.objectStore("recents").delete(key);
-    tx.oncomplete = res;
-    tx.onerror = () => rej(tx.error);
-  });
-}
-
-// ── Recent metadata (localStorage) ────────────────────────────────
-function getRecentMeta() {
-  try {
-    return JSON.parse(localStorage.getItem("fc_recent") || "[]");
-  } catch {
-    return [];
-  }
-}
-function setRecentMeta(list) {
-  try {
-    localStorage.setItem("fc_recent", JSON.stringify(list));
-  } catch { }
-}
-async function addToRecent(name, dataObj) {
-  const id = "r" + Date.now();
-  const meta = getRecentMeta();
-  const kept = meta.filter((m) => m.name !== name).slice(0, 4);
-  const toDelete = meta
-    .filter((m) => m.name !== name)
-    .slice(4)
-    .map((m) => m.id);
-  setRecentMeta([
-    {
-      id,
-      name,
-      savedAt: new Date().toISOString(),
-      cardCount: (dataObj.cards || []).length,
-    },
-    ...kept,
-  ]);
-  await idbPut(id, dataObj).catch(() => { });
-  for (const old of toDelete) await idbDel(old).catch(() => { });
-}
-function formatRelDate(iso) {
-  const d = new Date(iso),
-    now = new Date(),
-    h = (now - d) / 3600000;
-  if (h < 0.02) return "Just now";
-  if (h < 1) return Math.round(h * 60) + "m ago";
-  if (h < 24) return Math.round(h) + "h ago";
-  if (h < 48) return "Yesterday";
-  return d.toLocaleDateString();
-}
-
-// ── Load modal ─────────────────────────────────────────────────────
-async function openLoadModal() {
-  // ── Folder section ──
-  const folderSection = document.getElementById("load-folder-section");
-  const folderList = document.getElementById("load-folder-list");
-  const folderNameEl = document.getElementById("load-folder-name");
-  if (workDirHandle) {
-    folderSection.style.display = "block";
-    folderNameEl.textContent = workDirHandle.name;
-    folderList.innerHTML = '<div class="recent-empty">Loading…</div>';
-    try {
-      const perm = await workDirHandle.requestPermission({
-        mode: "readwrite",
-      });
-      if (perm !== "granted")
-        throw new Error("Permission denied — click Set Folder again");
-      const files = [];
-      for await (const [name, handle] of workDirHandle.entries()) {
-        if (handle.kind === "file" && name.endsWith(".json") && name !== "user-config.json") {
-          const file = await handle.getFile();
-          let projectName = name;
-          try {
-            const data = JSON.parse(await file.text());
-            projectName = data.project_name || name;
-          } catch (_) { }
-          files.push({ name, projectName, lastModified: file.lastModified });
-        }
-      }
-      files.sort((a, b) => b.lastModified - a.lastModified);
-      if (!files.length) {
-        folderList.innerHTML =
-          '<div class="recent-empty">No JSON files in folder</div>';
-      } else {
-        folderList.innerHTML = files
-          .map((f) => {
-            const sn = JSON.stringify(f.name);
-            const isActive = f.name === currentFileName;
-            return `
-                  <div class="recent-item${isActive ? " recent-item--active" : ""}">
-                    <div class="recent-item-info">
-                      <div class="recent-item-name">${esc(f.projectName)}</div>
-                      <div class="recent-item-meta">${esc(f.name)} · ${formatRelDate(f.lastModified)}</div>
-                    </div>
-                    <div class="recent-item-btns">
-                      <button class="btn btn-primary btn-sm" onclick='loadFromFolder(${sn})'>Open</button>
-                      <button class="btn btn-danger btn-sm" onclick='deleteFromFolder(${sn},this)'>✕</button>
-                    </div>
-                  </div>`;
-          })
-          .join("");
-      }
-    } catch (err) {
-      folderList.innerHTML = `<div class="recent-empty">${esc(err.message)}</div>`;
-    }
-  } else {
-    folderSection.style.display = "none";
-  }
-
-  // ── Recent list ──
-  const meta = getRecentMeta();
-  const list = document.getElementById("load-recent-list");
-  if (!meta.length) {
-    list.innerHTML =
-      '<div class="recent-empty">No recent files — browse a JSON file to get started</div>';
-  } else {
-    list.innerHTML = meta
-      .map(
-        (m) => `
-            <div class="recent-item">
-              <div class="recent-item-info">
-                <div class="recent-item-name">${esc(m.name)}</div>
-                <div class="recent-item-meta">${m.cardCount} card${m.cardCount !== 1 ? "s" : ""} · ${formatRelDate(m.savedAt)}</div>
-              </div>
-              <div class="recent-item-btns">
-                <button class="btn btn-primary btn-sm" onclick="loadFromRecent('${m.id}')">Open</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteRecentItem('${m.id}',this)">✕</button>
-              </div>
-            </div>`,
-      )
-      .join("");
-  }
-  document.getElementById("load-modal").style.display = "flex";
-}
-function closeLoadModal() {
-  document.getElementById("load-modal").style.display = "none";
-}
-async function newProject() {
-  if (dirty) {
-    if (workDirHandle) {
-      await _autoSaveToFile();
-      if (!confirm("Start a new project? Current project has been saved.")) return;
-    } else if (!confirm("Start a new project? Unsaved changes will be lost.")) {
-      return;
-    }
-  }
-  state.cards = [];
-  state.projectName = "Untitled";
-  activeCardId = null;
-  currentFileName = null;
-  clearDirty();
-  closeLoadModal();
-  renderSidebar();
-  renderEditor();
-  renderPreview();
-}
-async function loadFromRecent(id) {
-  const data = await idbGet(id).catch(() => null);
-  if (!data)
-    return alert(
-      "Session data not found. It may have been cleared by the browser.",
-    );
-  applyLoadedData(data);
-  closeLoadModal();
-}
-async function deleteRecentItem(id, btn) {
-  const meta = getRecentMeta().filter((m) => m.id !== id);
-  setRecentMeta(meta);
-  await idbDel(id).catch(() => { });
-  btn.closest(".recent-item").remove();
-  if (!meta.length) {
-    document.getElementById("load-recent-list").innerHTML =
-      '<div class="recent-empty">No recent files</div>';
-  }
-}
-
-// ── Save / Load JSON ───────────────────────────────────────────────
-let workDirHandle = null;
-let currentFileName = null;
-
-let dirty = false;
-let _autoSaveTimer = null;
-function setDirty() {
-  dirty = true;
-  _updateLabels();
-  clearTimeout(_autoSaveTimer);
-  _autoSaveTimer = setTimeout(_autoSaveToFile, 1500);
-}
-function clearDirty() {
-  dirty = false;
-  _updateLabels();
-}
-
-let _toastTimer = null;
-function showToast(msg) {
-  const el = document.getElementById("fc-toast");
-  el.textContent = msg;
-  el.classList.add("show");
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => el.classList.remove("show"), 2000);
-}
-
-async function _autoSaveToFile() {
-  if (!workDirHandle || !state.cards.length) return;
-  if (!currentFileName) currentFileName = _defaultFileName();
-  try {
-    const dataObj = _buildDataObj();
-    await _writeToDir(currentFileName, JSON.stringify(dataObj, null, 2));
-    localStorage.setItem("fc_last_file", currentFileName);
-    clearDirty();
-    showToast("✓ Saved");
-  } catch (_) { }
-}
-
-function _updateLabels() {
-  const dirLabel = document.getElementById("work-dir-label");
-  const pnInput = document.getElementById("project-name-input");
-  const dot = document.getElementById("dirty-dot");
-  if (dirLabel)
-    dirLabel.textContent = workDirHandle ? workDirHandle.name : "Set Folder";
-  if (pnInput && pnInput !== document.activeElement)
-    pnInput.value = state.projectName || "Untitled";
-  const fileLabel = document.getElementById("current-file-label");
-  if (fileLabel) fileLabel.textContent = currentFileName || "";
-  if (dot) dot.style.display = dirty ? "inline" : "none";
-}
-
-async function _setWorkDir(handle) {
-  workDirHandle = handle;
-  await idbPut("_work_dir", handle).catch(() => { });
-  _updateLabels();
-}
-
-async function setWorkDir() {
-  if (!window.showDirectoryPicker)
-    return alert("Browser không hỗ trợ Directory Picker.");
-  try {
-    const handle = await window.showDirectoryPicker({ mode: "readwrite" });
-    await _setWorkDir(handle);
-    closeLoadModal();
-    await openLoadModal();
-  } catch (err) {
-    if (err.name === "AbortError") return;
-    console.error(err);
-    alert("Không thể mở folder: " + (err.message || err.name));
-  }
-}
-
-async function _writeToDir(fileName, json) {
-  const perm = await workDirHandle.requestPermission({
-    mode: "readwrite",
-  });
-  if (perm !== "granted") throw new Error("Permission denied");
-  const fh = await workDirHandle.getFileHandle(fileName, {
-    create: true,
-  });
-  const w = await fh.createWritable();
-  await w.write(json);
-  await w.close();
-}
-
-function _fallbackDownload(json, name) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(
-    new Blob([json], { type: "application/json" }),
-  );
-  a.download = name;
-  a.click();
-}
-
-function _buildDataObj() {
-  return { version: "1.0", project_name: state.projectName, ...state };
-}
-
-function _defaultFileName() {
-  const slug = (state.projectName || "untitled")
-    .toLowerCase().trim()
-    .replace(/[^a-z0-9À-ɏḀ-ỿ]+/g, "-")
-    .replace(/^-|-$/g, "") || "untitled";
-  return `${slug}.json`;
-}
-
-function _timestampedFileName() {
-  const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
-  const d = new Date();
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mmm = MONTHS[d.getMonth()];
-  const yy = String(d.getFullYear()).slice(-2);
-  const hhmm = String(d.getHours()).padStart(2, "0") + String(d.getMinutes()).padStart(2, "0");
-  const slug = (state.projectName || "untitled")
-    .toLowerCase().trim()
-    .replace(/[^a-z0-9À-ɏḀ-ỿ]+/g, "-")
-    .replace(/^-|-$/g, "") || "untitled";
-  return `${slug}-${dd}${mmm}${yy}-${hhmm}.json`;
-}
-
-async function saveJSON() {
-  const dataObj = _buildDataObj();
-  const json = JSON.stringify(dataObj, null, 2);
-  if (workDirHandle) {
-    if (!currentFileName) currentFileName = _defaultFileName();
-    try {
-      await _writeToDir(currentFileName, json);
-      localStorage.setItem("fc_last_file", currentFileName);
-      addToRecent(currentFileName, dataObj).catch(() => { });
-      clearDirty();
-      return;
-    } catch (err) {
-      if (err.name === "AbortError") return;
-    }
-  }
-  await saveJSONAs();
-}
-
-async function saveJSONAs() {
-  const dataObj = _buildDataObj();
-  const json = JSON.stringify(dataObj, null, 2);
-  if (workDirHandle) {
-    const raw = prompt("File name:", _timestampedFileName());
-    if (!raw) return;
-    const name = raw.endsWith(".json") ? raw : raw + ".json";
-    if (name !== currentFileName) {
-      let exists = false;
-      try {
-        await workDirHandle.getFileHandle(name, { create: false });
-        exists = true;
-      } catch (e) {
-        if (e.name !== "NotFoundError") exists = true; // unknown error → assume exists
-      }
-      if (exists && !confirm(`"${name}" already exists. Overwrite?`)) return;
-    }
-    try {
-      await _writeToDir(name, json);
-      currentFileName = name;
-      localStorage.setItem("fc_last_file", currentFileName);
-      addToRecent(name, dataObj).catch(() => { });
-      clearDirty();
-      return;
-    } catch (err) {
-      if (err.name === "AbortError") return;
-    }
-  }
-  if (window.showSaveFilePicker) {
-    try {
-      const handle = await window.showSaveFilePicker({
-        suggestedName: currentFileName || _defaultFileName(),
-        types: [
-          {
-            description: "JSON",
-            accept: { "application/json": [".json"] },
-          },
-        ],
-      });
-      const w = await handle.createWritable();
-      await w.write(json);
-      await w.close();
-      currentFileName = handle.name;
-      _updateLabels();
-      addToRecent(handle.name, dataObj).catch(() => { });
-      return;
-    } catch (err) {
-      if (err.name === "AbortError") return;
-    }
-  }
-  _fallbackDownload(json, currentFileName || "flashcards.json");
-  addToRecent(currentFileName || "flashcards.json", dataObj).catch(
-    () => { },
-  );
-}
-
-async function loadFromFolder(fileName) {
-  try {
-    const fh = await workDirHandle.getFileHandle(fileName);
-    const file = await fh.getFile();
-    const data = JSON.parse(await file.text());
-    currentFileName = fileName;
-    _updateLabels();
-    applyLoadedData(data);
-    addToRecent(fileName, data).catch(() => { });
-    closeLoadModal();
-  } catch (err) {
-    alert("Không đọc được file: " + err.message);
-  }
-}
-
-async function deleteFromFolder(fileName, btn) {
-  if (!confirm("Xóa " + fileName + "?")) return;
-  try {
-    await workDirHandle.removeEntry(fileName);
-    btn.closest(".recent-item").remove();
-  } catch (err) {
-    alert("Không xóa được: " + err.message);
-  }
-}
-
-async function openFilePicker() {
-  if (window.showOpenFilePicker) {
-    try {
-      const opts = {
-        types: [
-          {
-            description: "JSON",
-            accept: { "application/json": [".json"] },
-          },
-        ],
-      };
-      if (workDirHandle) opts.startIn = workDirHandle;
-      const [fh] = await window.showOpenFilePicker(opts);
-      const file = await fh.getFile();
-      const data = JSON.parse(await file.text());
-      currentFileName = file.name;
-      _updateLabels();
-      applyLoadedData(data);
-      addToRecent(file.name, data).catch(() => { });
-      return;
-    } catch (err) {
-      if (err.name === "AbortError") return;
-    }
-  }
-  document.getElementById("load-file").click();
-}
-
-async function restoreWorkDir() {
-  try {
-    const handle = await idbGet("_work_dir");
-    if (!handle) return;
-    workDirHandle = handle;
-    _updateLabels();
-  } catch { }
-}
-
-async function _autoRestore() {
-  if (!workDirHandle) return;
-  const lastFile = localStorage.getItem("fc_last_file");
-  if (!lastFile) return;
-  try {
-    const perm = await workDirHandle.requestPermission({ mode: "readwrite" });
-    if (perm === "granted") {
-      await _loadFileFromWorkDir(lastFile);
-    } else {
-      // requestPermission needs user gesture in some contexts — show banner fallback
-      const banner = document.getElementById("fc-restore-banner");
-      const label = document.getElementById("fc-restore-label");
-      if (banner) {
-        label.textContent = "Resume: " + lastFile;
-        banner._pendingFile = lastFile;
-        banner.style.display = "flex";
-      }
-    }
-  } catch (_) { }
-}
-
-async function _loadFileFromWorkDir(fileName) {
-  const fh = await workDirHandle.getFileHandle(fileName);
-  const file = await fh.getFile();
-  const data = JSON.parse(await file.text());
-  currentFileName = fileName;
-  applyLoadedData(data);
-}
-
-async function resumeLastProject() {
-  const banner = document.getElementById("fc-restore-banner");
-  const fileName = banner && banner._pendingFile;
-  if (!fileName || !workDirHandle) return;
-  try {
-    const perm = await workDirHandle.requestPermission({ mode: "readwrite" });
-    if (perm !== "granted") { alert("Permission denied."); return; }
-    await _loadFileFromWorkDir(fileName);
-    dismissRestoreBanner();
-    renderSidebar(); renderEditor(); renderPreview();
-  } catch (e) { alert("Could not load: " + e.message); }
-}
-
-function dismissRestoreBanner() {
-  const banner = document.getElementById("fc-restore-banner");
-  if (banner) banner.style.display = "none";
-}
-
-function toggleSidebar() {
-  const sidebar = document.getElementById("fc-sidebar");
-  const btn = document.getElementById("sidebar-toggle-btn");
-  const collapsed = sidebar.classList.toggle("collapsed");
-  btn.textContent = collapsed ? "▶" : "◀";
-  renderPreview();
-}
-
-function applyLoadedData(data) {
-  if (data.version && data.version !== "1.0") {
-    console.warn("Unknown JSON version:", data.version);
-  }
-  state.projectName = data.project_name || "Untitled";
-  if (data.settings) {
-    state.settings = { ...state.settings, ...data.settings };
-    const defaultTF = { family: "sans-serif", size: 14, color: "#1a1a1a", lineHeight: 1.0, textAlign: "left" };
-    const defaultCF = { family: "sans-serif", size: 12, color: "#1a1a1a", lineHeight: 1.1, textAlign: "left" };
-    // Migration: old data had base "font" but no titleFont/contentFont
-    const oldFont = data.settings.font || {};
-    state.settings.titleFont = { ...defaultTF, ...oldFont, ...(data.settings.titleFont || {}) };
-    state.settings.contentFont = { ...defaultCF, ...oldFont, ...(data.settings.contentFont || {}) };
-    // Drop the old base font key
-    delete state.settings.font;
-  }
-  if (Array.isArray(data.cards)) {
-    state.cards = data.cards.map((c) => {
-      const layout = LAYOUTS.includes(c.layout) ? c.layout : "1full";
-      return {
-        ...c,
-        layout,
-        hideTitle: !!c.hideTitle,
-        titleFont: c.titleFont ?? null,
-        contentFont: c.contentFont ?? null,
-        orientation: ["portrait", "landscape"].includes(c.orientation) ? c.orientation : null,
-        imageGridSplit: c.imageGridSplit || {
-          ...LAYOUT_SPLIT_DEFAULTS[layout],
-        },
-        sections: (c.sections || []).map((s) => ({
-          id: s.id || uid(),
-          ...s,
-        })),
-      };
-    });
-  }
-  activeCardId = state.cards.length ? state.cards[0].id : null;
-  if (!state.settings.googleFonts) state.settings.googleFonts = [];
-  applyGoogleFonts();
-  applySettingsToUI();
-  document.getElementById("fc-custom-css").textContent =
-    state.settings.customCss || "";
-  clearDirty();
-  renderSidebar();
-  renderEditor();
-  renderPreview();
-}
-
-function loadJSON(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      currentFileName = file.name;
-      _updateLabels();
-      applyLoadedData(data);
-      addToRecent(file.name, data).catch(() => { });
-    } catch (err) {
-      alert("Invalid JSON file: " + err.message);
-    }
-  };
-  reader.readAsText(file);
-  event.target.value = "";
 }
 
 // ── Custom CSS Modal ───────────────────────────────────────────────
@@ -2830,6 +1620,59 @@ function parsePasteBlock(mode) {
   renderPreview();
 }
 
+function toggleDataArea() {
+  const area = document.getElementById("data-area");
+  if (!area) return;
+  const open = area.style.display === "none";
+  area.style.display = open ? "" : "none";
+  if (open) {
+    cancelCardData(); // Dùng hàm cancel để load dữ liệu + reset UI
+  }
+}
+
+function editCardData() {
+  const ta = document.getElementById("data-area-content");
+  const btns = document.getElementById("data-area-btns");
+  if (!ta || !btns) return;
+  ta.removeAttribute("readonly");
+  ta.style.outline = "1px solid #6b21a8";
+  ta.style.background = "#fff";
+  btns.innerHTML = `
+    <button class="btn btn-danger btn-sm" onclick="cancelCardData()">Cancel</button>
+    <button class="btn btn-primary btn-sm" onclick="saveCardData()">Apply</button>
+  `;
+}
+
+function cancelCardData() {
+  const ta = document.getElementById("data-area-content");
+  const btns = document.getElementById("data-area-btns");
+  if (!ta || !btns) return;
+  ta.setAttribute("readonly", "true");
+  ta.style.outline = "";
+  ta.style.background = "";
+  const card = getActiveCard();
+  ta.value = JSON.stringify(card || {}, null, 2);
+  btns.innerHTML = '<button class="btn btn-secondary btn-sm" onclick="editCardData()">Edit</button>';
+}
+
+function saveCardData() {
+  const ta = document.getElementById("data-area-content");
+  const card = getActiveCard();
+  if (!ta || !card) return;
+  try {
+    const parsed = JSON.parse(ta.value);
+    const originalId = card.id; // Chống mất/trùng ID
+    const idx = state.cards.findIndex(c => c.id === originalId);
+    if (idx !== -1) state.cards[idx] = { ...card, ...parsed, id: originalId };
+    setDirty();
+    renderSidebar();
+    renderEditor();
+    renderPreview();
+  } catch (e) {
+    alert("Invalid JSON:\n" + e.message);
+    ta.style.outline = "2px solid #ef4444"; // Báo lỗi viền đỏ
+  }
+}
 
 // ── Upload (local files → base64) ─────────────────────────────────
 let uploadedImages = []; // session cache: [{name, dataURL}]

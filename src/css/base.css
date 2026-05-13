@@ -1,0 +1,373 @@
+/* ── Reset & Base ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+  background: #f0f0f2;
+  color: #1a1a2e;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── App Shell ── */
+.fc-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ── Settings Bar ── */
+.fc-settings-bar {
+  background: #ffffff;
+  border-bottom: 1px solid #d1d5db;
+  padding: 8px 12px;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.fc-settings-bar .setting-group,
+.font-settings-panel .setting-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 10px;
+  border-right: 1px solid #d1d5db;
+}
+
+.fc-settings-bar .setting-group:last-child,
+.font-settings-panel .setting-group:last-child {
+  border-right: none;
+}
+
+.fc-settings-bar label,
+.font-settings-panel label {
+  color: #6b7280;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.fc-settings-bar select,
+.fc-settings-bar input[type="number"],
+.fc-settings-bar input[type="text"],
+.font-settings-panel select,
+.font-settings-panel input[type="number"],
+.font-settings-panel input[type="text"] {
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  color: #1a1a2e;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 12px;
+  width: auto;
+}
+
+.fc-settings-bar input[type="number"],
+.font-settings-panel input[type="number"] {
+  width: 52px;
+}
+
+.fc-settings-bar input[type="color"],
+.font-settings-panel input[type="color"] {
+  width: 32px;
+  height: 24px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  background: none;
+  padding: 0;
+}
+
+.fc-settings-bar select:focus,
+.fc-settings-bar input:focus,
+.font-settings-panel select:focus,
+.font-settings-panel input:focus {
+  outline: 1px solid #6b21a8;
+}
+
+/* ── Google/Custom Font tags ── */
+.gfont-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 12px 8px;
+  width: 100%;
+}
+
+.gfont-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #ede9fe;
+  color: #5b21b6;
+  border-radius: 4px;
+  padding: 2px 4px 2px 7px;
+  font-size: 11px;
+  font-family: sans-serif;
+}
+
+.gfont-tag-src {
+  font-size: 9px;
+  font-weight: 700;
+  background: #7c3aed;
+  color: #fff;
+  border-radius: 2px;
+  padding: 0 3px;
+}
+
+.gfont-tag button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #7c3aed;
+  padding: 0 1px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.setting-group--full {
+  width: 100%;
+  flex-basis: 100%;
+}
+
+.align-btn-group {
+  display: flex;
+  gap: 1px;
+  margin-left: 4px;
+}
+
+.align-btn {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.align-btn:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.align-btn.active {
+  background: #ede9fe;
+  border-color: #a78bfa;
+  color: #6b21a8;
+}
+
+.btn-font-toggle {
+  margin-left: auto;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-font-toggle:hover {
+  background: #e5e7eb;
+}
+
+.btn-font-toggle.open {
+  background: #ede9fe;
+  border-color: #a78bfa;
+  color: #6b21a8;
+}
+
+.font-settings-panel {
+  display: none;
+  background: #f9fafb;
+  border-bottom: 1px solid #d1d5db;
+  padding: 6px 12px;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.font-settings-panel.open {
+  display: flex;
+}
+
+/* ── Restore banner ── */
+#fc-restore-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #fffbeb;
+  border-bottom: 1px solid #fcd34d;
+  font-size: 13px;
+  color: #92400e;
+}
+
+#fc-restore-label {
+  flex: 1;
+  font-weight: 500;
+}
+
+/* ── Toast ── */
+#fc-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #1a1a2e;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+  z-index: 9999;
+}
+
+#fc-toast.show {
+  opacity: 1;
+}
+
+/* ── Toolbar (action buttons) ── */
+.fc-toolbar {
+  background: #ffffff;
+  border-bottom: 1px solid #d1d5db;
+  padding: 6px 12px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.fc-toolbar .spacer {
+  flex: 1;
+}
+
+#project-name-input {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 3px 6px;
+  background: transparent;
+  width: 160px;
+  min-width: 80px;
+  text-overflow: ellipsis;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+#project-name-input:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+#project-name-input:focus {
+  outline: none;
+  border-color: #6b21a8;
+  background: #fff;
+}
+
+.recent-item--active {
+  background: #f3e8ff;
+}
+
+.btn {
+  padding: 5px 12px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+
+.btn:hover {
+  opacity: 0.85;
+}
+
+.btn-primary {
+  background: #6b21a8;
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-danger {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+.btn-sm {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+/* ── Main 3-panel layout ── */
+.fc-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Panel resize dividers ── */
+.fc-panel-divider {
+  width: 5px;
+  flex-shrink: 0;
+  background: #e5e7eb;
+  cursor: col-resize;
+  transition: background 0.15s;
+}
+
+.fc-panel-divider:hover,
+.fc-panel-divider.dragging {
+  background: #6b21a8;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e5e7eb;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6b21a8;
+}
+
+/* Custom CSS injection point */
+#fc-custom-css {}

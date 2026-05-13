@@ -16,7 +16,7 @@ function openIDB() {
 async function idbPut(key, val) {
   const db = await openIDB();
   return new Promise((res, rej) => {
-    const tx = transaction("recents", "readwrite");
+    const tx = db.transaction("recents", "readwrite");
     tx.objectStore("recents").put(val, key);
     tx.oncomplete = res;
     tx.onerror = () => rej(tx.error);

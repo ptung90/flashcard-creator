@@ -18,7 +18,6 @@
 
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-
     <!-- BUILD:CSS -->
     <style id="fc-custom-css"></style>
   </head>
@@ -124,7 +123,14 @@
           />
         </div>
 
-        <button class="btn-font-toggle" id="btn-font-toggle" onclick="toggleFontPanel()" title="Font settings">Aa ▾</button>
+        <button
+          class="btn-font-toggle"
+          id="btn-font-toggle"
+          onclick="toggleFontPanel()"
+          title="Font settings"
+        >
+          Aa ▾
+        </button>
       </div>
 
       <!-- Font Settings Panel (collapsible) -->
@@ -132,104 +138,295 @@
         <div class="setting-group">
           <label>Title</label>
           <select id="set-font-family">
-            <option value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif">Modern Sans</option>
+            <option
+              value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif"
+            >
+              Modern Sans
+            </option>
             <option value="sans-serif">Sans-serif</option>
             <option value="serif">Serif</option>
             <option value="'Georgia',serif">Georgia</option>
             <option value="'Times New Roman',serif">Times</option>
             <option value="'Courier New',monospace">Mono</option>
-            <option value="'Be Vietnam Pro','Noto Sans','Segoe UI',sans-serif">Vietnamese Sans</option>
-            <option value="'Inter','Segoe UI',Roboto,Arial,sans-serif">Inter</option>
-            <option value="'SF Pro Display','SF Pro Text','Helvetica Neue',Arial,sans-serif">SF Pro</option>
-            <option value="'Segoe UI',Tahoma,Geneva,Verdana,sans-serif">Windows UI</option>
-            <option value="Roboto,'Helvetica Neue',Arial,sans-serif">Roboto</option>
-            <option value="'Helvetica Neue',Helvetica,Arial,sans-serif">Helvetica</option>
+            <option value="'Be Vietnam Pro','Noto Sans','Segoe UI',sans-serif">
+              Vietnamese Sans
+            </option>
+            <option value="'Inter','Segoe UI',Roboto,Arial,sans-serif">
+              Inter
+            </option>
+            <option
+              value="'SF Pro Display','SF Pro Text','Helvetica Neue',Arial,sans-serif"
+            >
+              SF Pro
+            </option>
+            <option value="'Segoe UI',Tahoma,Geneva,Verdana,sans-serif">
+              Windows UI
+            </option>
+            <option value="Roboto,'Helvetica Neue',Arial,sans-serif">
+              Roboto
+            </option>
+            <option value="'Helvetica Neue',Helvetica,Arial,sans-serif">
+              Helvetica
+            </option>
             <option value="'Trebuchet MS',sans-serif">Trebuchet</option>
             <option value="Verdana,Geneva,sans-serif">Verdana</option>
             <option value="Tahoma,Geneva,sans-serif">Tahoma</option>
-            <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">Palatino</option>
-            <option value="'Lucida Console','Courier New',monospace">Lucida Console</option>
-
+            <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">
+              Palatino
+            </option>
+            <option value="'Lucida Console','Courier New',monospace">
+              Lucida Console
+            </option>
           </select>
-          <input type="number" id="set-font-size" min="8" max="28" style="width:46px" title="Size (px)" />
+          <input
+            type="number"
+            id="set-font-size"
+            min="8"
+            max="28"
+            style="width: 46px"
+            title="Size (px)"
+          />
           <label>px</label>
           <input type="color" id="set-font-color" title="Text color" />
           <label>LH</label>
-          <input type="number" id="set-font-lh" min="1" max="3" step="0.1" style="width:46px" title="Line height" />
+          <input
+            type="number"
+            id="set-font-lh"
+            min="1"
+            max="3"
+            step="0.1"
+            style="width: 46px"
+            title="Line height"
+          />
           <div class="align-btn-group">
-            <button class="align-btn" data-key="titleFont" data-align="left"    onclick="setFontAlign('titleFont','left')"    title="Left">&#8676;</button>
-            <button class="align-btn" data-key="titleFont" data-align="center"  onclick="setFontAlign('titleFont','center')"  title="Center">&#8596;</button>
-            <button class="align-btn" data-key="titleFont" data-align="right"   onclick="setFontAlign('titleFont','right')"   title="Right">&#8677;</button>
-            <button class="align-btn" data-key="titleFont" data-align="justify" onclick="setFontAlign('titleFont','justify')" title="Justify">&#8644;</button>
+            <button
+              class="align-btn"
+              data-key="titleFont"
+              data-align="left"
+              onclick="setFontAlign('titleFont', 'left')"
+              title="Left"
+            >
+              &#8676;
+            </button>
+            <button
+              class="align-btn"
+              data-key="titleFont"
+              data-align="center"
+              onclick="setFontAlign('titleFont', 'center')"
+              title="Center"
+            >
+              &#8596;
+            </button>
+            <button
+              class="align-btn"
+              data-key="titleFont"
+              data-align="right"
+              onclick="setFontAlign('titleFont', 'right')"
+              title="Right"
+            >
+              &#8677;
+            </button>
+            <button
+              class="align-btn"
+              data-key="titleFont"
+              data-align="justify"
+              onclick="setFontAlign('titleFont', 'justify')"
+              title="Justify"
+            >
+              &#8644;
+            </button>
           </div>
         </div>
         <div class="setting-group">
           <label>Content</label>
           <select id="set-cfont-family">
-            <option value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif">Modern Sans</option>
+            <option
+              value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif"
+            >
+              Modern Sans
+            </option>
             <option value="sans-serif">Sans-serif</option>
             <option value="serif">Serif</option>
             <option value="'Georgia',serif">Georgia</option>
             <option value="'Times New Roman',serif">Times</option>
             <option value="'Courier New',monospace">Mono</option>
-            <option value="'Be Vietnam Pro','Noto Sans','Segoe UI',sans-serif">Vietnamese Sans</option>
-            <option value="'Inter','Segoe UI',Roboto,Arial,sans-serif">Inter</option>
-            <option value="'SF Pro Display','SF Pro Text','Helvetica Neue',Arial,sans-serif">SF Pro</option>
-            <option value="'Segoe UI',Tahoma,Geneva,Verdana,sans-serif">Windows UI</option>
-            <option value="Roboto,'Helvetica Neue',Arial,sans-serif">Roboto</option>
-            <option value="'Helvetica Neue',Helvetica,Arial,sans-serif">Helvetica</option>
+            <option value="'Be Vietnam Pro','Noto Sans','Segoe UI',sans-serif">
+              Vietnamese Sans
+            </option>
+            <option value="'Inter','Segoe UI',Roboto,Arial,sans-serif">
+              Inter
+            </option>
+            <option
+              value="'SF Pro Display','SF Pro Text','Helvetica Neue',Arial,sans-serif"
+            >
+              SF Pro
+            </option>
+            <option value="'Segoe UI',Tahoma,Geneva,Verdana,sans-serif">
+              Windows UI
+            </option>
+            <option value="Roboto,'Helvetica Neue',Arial,sans-serif">
+              Roboto
+            </option>
+            <option value="'Helvetica Neue',Helvetica,Arial,sans-serif">
+              Helvetica
+            </option>
             <option value="'Trebuchet MS',sans-serif">Trebuchet</option>
             <option value="Verdana,Geneva,sans-serif">Verdana</option>
             <option value="Tahoma,Geneva,sans-serif">Tahoma</option>
-            <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">Palatino</option>
-            <option value="'Lucida Console','Courier New',monospace">Lucida Console</option>
-
+            <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">
+              Palatino
+            </option>
+            <option value="'Lucida Console','Courier New',monospace">
+              Lucida Console
+            </option>
           </select>
-          <input type="number" id="set-cfont-size" min="8" max="28" style="width:46px" title="Size (px)" />
+          <input
+            type="number"
+            id="set-cfont-size"
+            min="8"
+            max="28"
+            style="width: 46px"
+            title="Size (px)"
+          />
           <label>px</label>
           <input type="color" id="set-cfont-color" title="Text color" />
           <label>LH</label>
-          <input type="number" id="set-cfont-lh" min="1" max="3" step="0.1" style="width:46px" title="Line height" />
+          <input
+            type="number"
+            id="set-cfont-lh"
+            min="1"
+            max="3"
+            step="0.1"
+            style="width: 46px"
+            title="Line height"
+          />
           <div class="align-btn-group">
-            <button class="align-btn" data-key="contentFont" data-align="left"    onclick="setFontAlign('contentFont','left')"    title="Left">&#8676;</button>
-            <button class="align-btn" data-key="contentFont" data-align="center"  onclick="setFontAlign('contentFont','center')"  title="Center">&#8596;</button>
-            <button class="align-btn" data-key="contentFont" data-align="right"   onclick="setFontAlign('contentFont','right')"   title="Right">&#8677;</button>
-            <button class="align-btn" data-key="contentFont" data-align="justify" onclick="setFontAlign('contentFont','justify')" title="Justify">&#8644;</button>
+            <button
+              class="align-btn"
+              data-key="contentFont"
+              data-align="left"
+              onclick="setFontAlign('contentFont', 'left')"
+              title="Left"
+            >
+              &#8676;
+            </button>
+            <button
+              class="align-btn"
+              data-key="contentFont"
+              data-align="center"
+              onclick="setFontAlign('contentFont', 'center')"
+              title="Center"
+            >
+              &#8596;
+            </button>
+            <button
+              class="align-btn"
+              data-key="contentFont"
+              data-align="right"
+              onclick="setFontAlign('contentFont', 'right')"
+              title="Right"
+            >
+              &#8677;
+            </button>
+            <button
+              class="align-btn"
+              data-key="contentFont"
+              data-align="justify"
+              onclick="setFontAlign('contentFont', 'justify')"
+              title="Justify"
+            >
+              &#8644;
+            </button>
           </div>
         </div>
         <div class="setting-group">
           <label>V-Align</label>
           <div class="align-btn-group">
-            <button class="valign-btn align-btn" data-valign="top"    onclick="setTextVAlign('top')"    title="Top">&#8869;</button>
-            <button class="valign-btn align-btn" data-valign="middle" onclick="setTextVAlign('middle')" title="Middle">&#8861;</button>
-            <button class="valign-btn align-btn" data-valign="bottom" onclick="setTextVAlign('bottom')" title="Bottom">&#8868;</button>
+            <button
+              class="valign-btn align-btn"
+              data-valign="top"
+              onclick="setTextVAlign('top')"
+              title="Top"
+            >
+              &#8869;
+            </button>
+            <button
+              class="valign-btn align-btn"
+              data-valign="middle"
+              onclick="setTextVAlign('middle')"
+              title="Middle"
+            >
+              &#8861;
+            </button>
+            <button
+              class="valign-btn align-btn"
+              data-valign="bottom"
+              onclick="setTextVAlign('bottom')"
+              title="Bottom"
+            >
+              &#8868;
+            </button>
           </div>
         </div>
         <div class="setting-group setting-group--full">
           <label>Load Font</label>
-          <input type="text" id="gfont-input" placeholder="Nunito, Pacifico…"
-            style="flex:1;min-width:100px"
-            onkeydown="if(event.key==='Enter')addGoogleFont('google')">
-          <button class="btn btn-secondary btn-sm" onclick="addGoogleFont('google')" title="Load from Google Fonts CDN">Google</button>
-          <button class="btn btn-secondary btn-sm" onclick="addGoogleFont('custom')" title="Add name only (font defined in Custom CSS)">Custom</button>
+          <input
+            type="text"
+            id="gfont-input"
+            placeholder="Nunito, Pacifico…"
+            style="flex: 1; min-width: 100px"
+            onkeydown="if (event.key === 'Enter') addGoogleFont('google');"
+          />
+          <button
+            class="btn btn-secondary btn-sm"
+            onclick="addGoogleFont('google')"
+            title="Load from Google Fonts CDN"
+          >
+            Google
+          </button>
+          <button
+            class="btn btn-secondary btn-sm"
+            onclick="addGoogleFont('custom')"
+            title="Add name only (font defined in Custom CSS)"
+          >
+            Custom
+          </button>
         </div>
         <div id="gfont-tags" class="gfont-tags"></div>
       </div>
 
       <!-- Restore banner (shown when permission not yet granted) -->
-      <div id="fc-restore-banner" style="display:none">
+      <div id="fc-restore-banner" style="display: none">
         <span id="fc-restore-label"></span>
-        <button class="btn btn-primary btn-sm" onclick="resumeLastProject()">Resume</button>
-        <button class="btn btn-secondary btn-sm" onclick="dismissRestoreBanner()">Dismiss</button>
+        <button class="btn btn-primary btn-sm" onclick="resumeLastProject()">
+          Resume
+        </button>
+        <button
+          class="btn btn-secondary btn-sm"
+          onclick="dismissRestoreBanner()"
+        >
+          Dismiss
+        </button>
       </div>
 
       <!-- Toolbar -->
       <div class="fc-toolbar">
-        <button class="btn btn-secondary btn-sm btn-icon" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">◀</button>
+        <button
+          class="btn btn-secondary btn-sm btn-icon"
+          id="sidebar-toggle-btn"
+          onclick="toggleSidebar()"
+          title="Toggle sidebar"
+        >
+          ◀
+        </button>
         <button class="btn btn-primary btn-sm" onclick="addCard()">
           + New Card
         </button>
-        <button class="btn btn-secondary btn-sm" onclick="refreshAllThumbs()" title="Regenerate all sidebar thumbnails">
+        <button
+          class="btn btn-secondary btn-sm"
+          onclick="refreshAllThumbs()"
+          title="Regenerate all sidebar thumbnails"
+        >
           ↻ Thumbs
         </button>
         <div class="spacer"></div>
@@ -307,10 +504,32 @@
         <!-- Sidebar: Card List -->
         <div class="fc-sidebar" id="fc-sidebar">
           <div class="fc-sidebar-header">
-            <span>Cards <span id="card-count" style="color:#9ca3af;font-weight:normal">0</span></span>
+            <span
+              >Cards
+              <span id="card-count" style="color: #9ca3af; font-weight: normal"
+                >0</span
+              ></span
+            >
             <div class="view-toggle">
-              <button class="view-toggle-btn" id="view-list-btn" onclick="setViewMode('list')" title="List view">☰</button>
-              <button class="view-toggle-btn" id="view-grid-btn" onclick="setViewMode('grid')" title="Grid view">⊞</button>
+              <button
+                class="view-toggle-btn"
+                id="view-list-btn"
+                onclick="setViewMode('list')"
+                title="List view"
+              >
+                ☰
+              </button>
+              <button
+                class="view-toggle-btn"
+                id="view-grid-btn"
+                onclick="setViewMode('grid')"
+                title="Grid view"
+              >
+                ⊞
+              </button>
+            </div>
+            <div class="search-tab" data-tab="data" onclick="switchTab(this)">
+              Data
             </div>
           </div>
           <div class="fc-card-list" id="card-list"></div>
@@ -331,11 +550,34 @@
         <!-- Preview -->
         <div class="fc-preview-panel" id="fc-preview-panel">
           <div class="fc-preview-header">
-            <div style="display:flex;align-items:center;gap:6px">
+            <div style="display: flex; align-items: center; gap: 6px">
               <div class="fc-preview-label">Preview</div>
-              <button class="btn btn-secondary btn-sm" onclick="changePreviewZoom(-0.25)">−</button>
-              <span id="preview-zoom-label" onclick="changePreviewZoom(0)" title="Reset zoom" style="cursor:pointer;min-width:32px;text-align:center;font-size:11px;color:#374151;user-select:none">100%</span>
-              <button class="btn btn-secondary btn-sm" onclick="changePreviewZoom(0.25)">+</button>
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="changePreviewZoom(-0.25)"
+              >
+                −
+              </button>
+              <span
+                id="preview-zoom-label"
+                onclick="changePreviewZoom(0)"
+                title="Reset zoom"
+                style="
+                  cursor: pointer;
+                  min-width: 32px;
+                  text-align: center;
+                  font-size: 11px;
+                  color: #374151;
+                  user-select: none;
+                "
+                >100%</span
+              >
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="changePreviewZoom(0.25)"
+              >
+                +
+              </button>
             </div>
             <div class="fc-preview-actions">
               <button class="btn btn-secondary btn-sm" onclick="printOne()">
@@ -348,6 +590,30 @@
           </div>
           <div class="fc-preview" id="fc-preview">
             <div id="preview-card-wrap"></div>
+          </div>
+
+          <div id="tab-data" style="display: none">
+            <div class="url-input-area">
+              <label style="color: #888; font-size: 12px"
+                >Current Slot & Card Data:</label
+              >
+              <textarea
+                id="data-tab-content"
+                style="
+                  width: 100%;
+                  height: 250px;
+                  background: #f9fafb;
+                  border: 1px solid #d1d5db;
+                  color: #1a1a2e;
+                  border-radius: 5px;
+                  padding: 10px;
+                  font-family: monospace;
+                  font-size: 12px;
+                  resize: vertical;
+                "
+                readonly
+              ></textarea>
+            </div>
           </div>
         </div>
       </div>
@@ -505,6 +771,30 @@
               <button class="btn btn-primary" onclick="insertUrl()">
                 Insert Image
               </button>
+            </div>
+          </div>
+
+          <div id="tab-data" style="display: none">
+            <div class="url-input-area">
+              <label style="color: #888; font-size: 12px"
+                >Current Slot & Card Data:</label
+              >
+              <textarea
+                id="data-tab-content"
+                style="
+                  width: 100%;
+                  height: 250px;
+                  background: #f9fafb;
+                  border: 1px solid #d1d5db;
+                  color: #1a1a2e;
+                  border-radius: 5px;
+                  padding: 10px;
+                  font-family: monospace;
+                  font-size: 12px;
+                  resize: vertical;
+                "
+                readonly
+              ></textarea>
             </div>
           </div>
         </div>
