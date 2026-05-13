@@ -1972,6 +1972,19 @@ function _pdfName(label) {
   return `${slug}-${ts}.pdf`;
 }
 
+function buildCaptureHTML(card, settings) {
+  const { w, h } = getPaperPx(settings.paperSize, getCardOrientation(card));
+  return (
+    '<div style="width:' +
+    w +
+    "px;height:" +
+    h +
+    'px;background:white;position:relative;overflow:hidden;">' +
+    buildCardHTML(card, settings, true) +
+    "</div>"
+  );
+}
+
 async function exportOnePDF() {
   const card = getActiveCard();
   if (!card) return alert("No card selected.");
@@ -1986,7 +1999,9 @@ async function exportOnePDF() {
   });
   const wrap = document.getElementById("preview-card-wrap");
   const origHTML = wrap.innerHTML;
-  wrap.innerHTML = buildCardHTML(card, s, true);
+  const origStyle = wrap.style.cssText;
+  wrap.style.cssText = "width:auto;min-width:0;display:block;";
+  wrap.innerHTML = buildCaptureHTML(card, s);
   const el = wrap.firstElementChild;
   await new Promise((r) => setTimeout(r, 80));
   const canvas = await html2canvas(el, {
@@ -2005,6 +2020,7 @@ async function exportOnePDF() {
   );
   pdf.save(_pdfName(card.title || state.projectName));
   wrap.innerHTML = origHTML;
+  wrap.style.cssText = origStyle;
   renderPreview();
 }
 
@@ -2024,12 +2040,14 @@ async function exportPDF() {
 
   const wrap = document.getElementById("preview-card-wrap");
   const origHTML = wrap.innerHTML;
+  const origStyle = wrap.style.cssText;
+  wrap.style.cssText = "width:auto;min-width:0;display:block;";
 
   for (let i = 0; i < state.cards.length; i++) {
     const card = state.cards[i];
     const orientation = getCardOrientation(card);
     const { w: pw, h: ph } = getPaperMm(s.paperSize, orientation);
-    wrap.innerHTML = buildCardHTML(card, s, true);
+    wrap.innerHTML = buildCaptureHTML(card, s);
     const el = wrap.firstElementChild;
 
     await new Promise((r) => setTimeout(r, 80));
@@ -2047,6 +2065,7 @@ async function exportPDF() {
 
   pdf.save(_pdfName(state.projectName));
   wrap.innerHTML = origHTML;
+  wrap.style.cssText = origStyle;
   renderPreview();
 }
 
@@ -3407,4 +3426,3 @@ async function init() {
 }
 
 init();
-
