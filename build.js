@@ -11,12 +11,18 @@ const SRC = path.join(ROOT, "src");
 const template = fs.readFileSync(path.join(SRC, "template.html"), "utf8");
 const config = fs.readFileSync(path.join(SRC, "config.js"), "utf8");
 const css = fs.readFileSync(path.join(SRC, "style.css"), "utf8");
+const utils = fs.existsSync(path.join(SRC, "utils.js")) ? fs.readFileSync(path.join(SRC, "utils.js"), "utf8") : "";
+const state = fs.existsSync(path.join(SRC, "state.js")) ? fs.readFileSync(path.join(SRC, "state.js"), "utf8") : "";
+const storage = fs.existsSync(path.join(SRC, "storage.js")) ? fs.readFileSync(path.join(SRC, "storage.js"), "utf8") : "";
+const api = fs.existsSync(path.join(SRC, "api.js")) ? fs.readFileSync(path.join(SRC, "api.js"), "utf8") : "";
 const js = fs.readFileSync(path.join(SRC, "app.js"), "utf8");
+
+const allJs = [state, utils, storage, api, js].filter(Boolean).join("\n\n");
 
 const output = template
   .replace("    <!-- BUILD:CONFIG -->", `    <script>\n${config}\n    </script>`)
   .replace("    <!-- BUILD:CSS -->", `    <style>\n${css}\n    </style>`)
-  .replace("    <!-- BUILD:JS -->", `    <script>\n${js}\n    </script>`);
+  .replace("    <!-- BUILD:JS -->", `    <script>\n${allJs}\n    </script>`);
 
 fs.writeFileSync(path.join(ROOT, "index.html"), output, "utf8");
 

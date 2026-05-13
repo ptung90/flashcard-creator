@@ -1,178 +1,9 @@
 
 marked.use({ breaks: true });
 
-// ── State ──────────────────────────────────────────────────────────
-const LAYOUTS = [
-  "2top-1bot",
-  "1top-2bot",
-  "1big-2small",
-  "2x2",
-  "1full",
-  "1left-2right",
-  "1left-3right",
-  "1top-3bot",
-  "1top-1bot",
-  "fullimage",
-  "fulltext",
-  "2img-2txt",
-  // "2img-4txt",
-  "8img-8txt",
-];
-
-const LAYOUT_SPLIT_DEFAULTS = {
-  "2top-1bot": { row: 50, col: 50, inner: 50 },
-  "1top-2bot": { row: 50, col: 50, inner: 50 },
-  "1big-2small": { row: 50, col: 67, inner: 50 },
-  "2x2": { row: 50, col: 50, inner: 50 },
-  "1full": { row: 100, col: 100, inner: 50 },
-  "fullimage": { row: 100, col: 100, inner: 50 },
-  "fulltext": { row: 0, col: 50, inner: 50 },
-  "1left-2right": { row: 50, col: 33, inner: 50 },
-  "1left-3right": { row: 50, col: 33, inner: 50 },
-  "1top-3bot": { row: 67, col: 50, inner: 50 },
-  "1top-1bot": { row: 50, col: 50, inner: 50 },
-  "2img-2txt": { row: 50, col: 50, inner: 50 },
-  "2img-4txt": { row: 33, col: 50, inner: 50 },
-  "8img-8txt": { row: 50, col: 50, inner: 50 },
-};
-
-const LAYOUT_SLOTS = {
-  "2top-1bot": 3,
-  "1top-2bot": 3,
-  "1big-2small": 3,
-  "2x2": 4,
-  "1full": 1,
-  "fullimage": 1,
-  "fulltext": 0,
-  "1left-2right": 3,
-  "1left-3right": 4,
-  "1top-3bot": 4,
-  "1top-1bot": 2,
-  "2img-2txt": 2,
-  "2img-4txt": 2,
-  "8img-8txt": 8,
-};
-const PAPER_MM = {
-  A4: { w: 210, h: 297 },
-  A5: { w: 148, h: 210 },
-  A6: { w: 105, h: 148 },
-  Letter: { w: 216, h: 279 },
-};
-
-// ── Merge user config from localStorage into FC_CONFIG (sync, before state init) ──
-(function () {
-  try {
-    const raw = localStorage.getItem("fc_user_config");
-    if (!raw) return;
-    const saved = JSON.parse(raw);
-    const cfg = window.FC_CONFIG || {};
-    // Deep merge one level for object values
-    for (const [k, v] of Object.entries(saved)) {
-      if (v !== null && typeof v === "object" && !Array.isArray(v)) {
-        cfg[k] = Object.assign({}, cfg[k] || {}, v);
-      } else {
-        cfg[k] = v;
-      }
-    }
-    window.FC_CONFIG = cfg;
-  } catch (e) {
-    console.warn("fc_user_config parse error:", e);
-  }
-})();
-
-const _cfg = window.FC_CONFIG || {};
-let state = {
-  settings: {
-    paperSize: _cfg.paperSize ?? "A5",
-    orientation: _cfg.orientation ?? "portrait",
-    margin: _cfg.margin ?? 9,
-    padding: _cfg.padding ?? 2,
-    imgPadding: _cfg.imgPadding ?? 0,
-    textVAlign: _cfg.textVAlign ?? "middle",
-    googleFonts: [],
-    border: {
-      width: 4,
-      style: "double",
-      color: "#6B21A8",
-      radius: 0,
-      ...(_cfg.border || {}),
-    },
-    image: {
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      ...(_cfg.image || {}),
-    },
-    titleFont: {
-      family: "sans-serif",
-      size: 14,
-      color: "#1a1a1a",
-      lineHeight: 1.0,
-      ...(_cfg.titleFont || {}),
-    },
-    contentFont: {
-      family: "sans-serif",
-      size: 12,
-      color: "#1a1a1a",
-      lineHeight: 1.1,
-      ...(_cfg.contentFont || {}),
-    },
-    customCss: _cfg.customCss ?? "",
-  },
-  cards: [],
-  projectName: "Untitled",
-};
-let activeCardId = null;
-let imgModalSlot = 0;
-let activeTab = "wikimedia";
-let sidebarView = 'grid';
-let previewZoom = 1.0;
-
 function changePreviewZoom(delta) {
   previewZoom = delta === 0 ? 1.0 : Math.round(Math.max(0.25, Math.min(3.0, previewZoom + delta)) * 100) / 100;
   renderPreview();
-}
-let _thumbGenId = 0;
-let _thumbRefreshTimer = null;
-let _thumbDirtyVersion = 0;
-let _thumbRenderedVersion = 0;
-let _pendingThumbCardId = undefined; // undefined=idle, null=all, string=specific card
-
-// ── Helpers ────────────────────────────────────────────────────────
-function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
-
-function getPaperPx(paperSize, orientation) {
-  const PPI = 96;
-  const MM_PER_IN = 25.4;
-  let { w, h } = PAPER_MM[paperSize] || PAPER_MM.A4;
-  if (orientation === "landscape") {
-    [w, h] = [h, w];
-  }
-  return {
-    w: Math.round((w / MM_PER_IN) * PPI),
-    h: Math.round((h / MM_PER_IN) * PPI),
-  };
-}
-
-function getPaperMm(paperSize, orientation) {
-  let { w, h } = PAPER_MM[paperSize] || PAPER_MM.A4;
-  if (orientation === "landscape") {
-    [w, h] = [h, w];
-  }
-  return { w, h };
-}
-
-function mmToPx(mm) {
-  return Math.round((mm / 25.4) * 96);
-}
-
-function getActiveCard() {
-  return state.cards.find((c) => c.id === activeCardId);
-}
-
-function getCardOrientation(card) {
-  return card?.orientation || state.settings.orientation;
 }
 
 // ── Google / Custom Fonts ─────────────────────────────────────────
@@ -1460,10 +1291,6 @@ function setTextVAlign(val) {
   document.querySelectorAll(".valign-btn").forEach((b) => b.classList.toggle("active", b.dataset.valign === val));
   setDirty();
   renderPreview();
-}
-
-function mdParse(text) {
-  return marked.parse((text || "").replace(/^ +/gm, (m) => " ".repeat(m.length)));
 }
 
 function _scopeCardCss(css, cardId) {
@@ -2887,116 +2714,6 @@ function insertImageUrl(url) {
   renderPreview();
 }
 
-// Wikimedia Commons
-async function searchWikimedia() {
-  const q = document.getElementById("search-wikimedia").value.trim();
-  if (!q) return;
-  const res = document.getElementById("results-wikimedia");
-  res.innerHTML = '<div class="search-status">Searching...</div>';
-  try {
-    const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=20&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=300&format=json&origin=*`;
-    const r = await fetch(url);
-    const data = await r.json();
-    const pages = Object.values(data.query?.pages || {});
-    if (!pages.length) {
-      res.innerHTML = '<div class="search-status">No results</div>';
-      return;
-    }
-    res.innerHTML = pages
-      .map((p) => {
-        const info = p.imageinfo?.[0];
-        if (!info) return "";
-        const thumb = info.thumburl || info.url;
-        const full = info.url;
-        return `<div class="search-result-item" onclick="insertImageUrl('${esc(full)}')"><img src="${esc(thumb)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`;
-      })
-      .join("");
-  } catch (e) {
-    res.innerHTML = `<div class="search-status">Error: ${e.message}</div>`;
-  }
-}
-
-// iNaturalist
-async function searchINaturalist() {
-  const q = document.getElementById("search-inaturalist").value.trim();
-  if (!q) return;
-  const res = document.getElementById("results-inaturalist");
-  res.innerHTML = '<div class="search-status">Searching...</div>';
-  try {
-    const url = `https://api.inaturalist.org/v1/observations?q=${encodeURIComponent(q)}&per_page=24&photos=true&order_by=votes`;
-    const r = await fetch(url);
-    const data = await r.json();
-    const items = data.results || [];
-    if (!items.length) {
-      res.innerHTML = '<div class="search-status">No results</div>';
-      return;
-    }
-    const imgs = [];
-    for (const obs of items) {
-      for (const photo of obs.photos || []) {
-        const thumb = photo.url?.replace("square", "medium");
-        const full = photo.url?.replace("square", "large");
-        if (thumb && full) imgs.push({ thumb, full });
-      }
-    }
-    if (!imgs.length) {
-      res.innerHTML = '<div class="search-status">No images found</div>';
-      return;
-    }
-    res.innerHTML = imgs
-      .map(
-        (img) =>
-          `<div class="search-result-item" onclick="insertImageUrl('${esc(img.full)}')"><img src="${esc(img.thumb)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`,
-      )
-      .join("");
-  } catch (e) {
-    res.innerHTML = `<div class="search-status">Error: ${e.message}</div>`;
-  }
-}
-
-// Pixabay
-function savePixabayKey() {
-  const key = document.getElementById("pixabay-key").value.trim();
-  localStorage.setItem("pixabay-key", key);
-}
-
-async function searchPixabay() {
-  const key =
-    document.getElementById("pixabay-key").value.trim() ||
-    localStorage.getItem("pixabay-key") ||
-    "";
-  if (!key) {
-    alert("Please enter your Pixabay API key first.");
-    return;
-  }
-  const q = document.getElementById("search-pixabay").value.trim();
-  if (!q) return;
-  const res = document.getElementById("results-pixabay");
-  res.innerHTML = '<div class="search-status">Searching...</div>';
-  try {
-    const url = `https://pixabay.com/api/?key=${encodeURIComponent(key)}&q=${encodeURIComponent(q)}&per_page=20&safesearch=true`;
-    const r = await fetch(url);
-    const data = await r.json();
-    if (data.error) {
-      res.innerHTML = `<div class="search-status">Error: ${data.error}</div>`;
-      return;
-    }
-    const hits = data.hits || [];
-    if (!hits.length) {
-      res.innerHTML = '<div class="search-status">No results</div>';
-      return;
-    }
-    res.innerHTML = hits
-      .map(
-        (h) =>
-          `<div class="search-result-item" onclick="insertImageUrl('${esc(h.largeImageURL)}')"><img src="${esc(h.previewURL)}" loading="lazy"></div>`,
-      )
-      .join("");
-  } catch (e) {
-    res.innerHTML = `<div class="search-status">Error: ${e.message}</div>`;
-  }
-}
-
 // URL tab
 function previewUrlInput() {
   const url = document.getElementById("url-input").value.trim();
@@ -3113,31 +2830,6 @@ function parsePasteBlock(mode) {
   renderPreview();
 }
 
-// ── Image compression ─────────────────────────────────────────────
-// A4 @ 150 DPI = 1240px — enough for print, kills 4K bloat
-let MAX_IMG_PX = (window.FC_CONFIG || {}).maxImgPx ?? 1240;
-
-function _compressImage(dataURL, maxPx = MAX_IMG_PX, quality = 0.82) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const { naturalWidth: w, naturalHeight: h } = img;
-      const scale = Math.min(1, maxPx / Math.max(w, h));
-      const cw = Math.round(w * scale);
-      const ch = Math.round(h * scale);
-      const canvas = document.createElement("canvas");
-      canvas.width = cw;
-      canvas.height = ch;
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, cw, ch);
-      ctx.drawImage(img, 0, 0, cw, ch);
-      resolve(canvas.toDataURL("image/jpeg", quality));
-    };
-    img.onerror = () => resolve(dataURL); // fallback: keep original
-    img.src = dataURL;
-  });
-}
 
 // ── Upload (local files → base64) ─────────────────────────────────
 let uploadedImages = []; // session cache: [{name, dataURL}]
@@ -3280,14 +2972,6 @@ function attachSlotDragHandlers() {
   });
 }
 
-// ── Escape HTML ────────────────────────────────────────────────────
-function esc(str) {
-  return String(str || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
 
 // ── Panel resize ──────────────────────────────────────────────────
 function initPanelResize() {
