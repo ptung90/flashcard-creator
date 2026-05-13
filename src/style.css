@@ -369,7 +369,7 @@
         border-right: none;
       }
 
-      .fc-sidebar.collapsed + .fc-panel-divider {
+      .fc-sidebar.collapsed+.fc-panel-divider {
         display: none;
       }
 
@@ -380,7 +380,9 @@
         flex-shrink: 0;
       }
 
-      #sidebar-toggle-btn.collapsed { content: '▶'; }
+      #sidebar-toggle-btn.collapsed {
+        content: '▶';
+      }
 
       .fc-sidebar-header {
         padding: 8px 10px;
@@ -613,7 +615,7 @@
       .layout-grid {
         display: grid;
         grid-template-columns: repeat(13, 1fr);
-        gap: 6px;
+        gap: 4px;
       }
 
       .layout-opt {
