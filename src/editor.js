@@ -48,10 +48,8 @@ function renderEditor() {
   const slots = activeSlots + hiddenSlots;
   const isCompoundTextLayout =
     card.layout === "2img-2txt" || card.layout === "2img-4txt" || card.layout === "8img-8txt";
-  card.layout === "2img-2txt" || card.layout === "2img-4txt" || card.layout === "8img-8txt" || card.layout === "3img-3txt";
   const isImgPairedLayout =
     card.layout === "2img-2txt" || card.layout === "8img-8txt";
-  card.layout === "2img-2txt" || card.layout === "8img-8txt" || card.layout === "3img-3txt";
   const sectionRows = card.layout === "fulltext" ? 10 : 4;
 
   const sections = card.sections
@@ -347,8 +345,7 @@ function setLayout(layout) {
   card.layout = layout;
   card.imageGridSplit = { ...LAYOUT_SPLIT_DEFAULTS[layout] };
   if (layout === "8img-8txt") {
-    while (card.sections.length < 8) card.sections.push({ label: "", content: "" });
-    while (card.sections.length < 8) card.sections.push({ id: uid(), label: "Section", content: "" });
+    while (card.sections.length < 8) card.sections.push({ id: uid(), label: "", content: "" });
   } else if (layout === "3img-3txt") {
     while (card.sections.length < 3) card.sections.push({ id: uid(), label: "Section", content: "" });
   }
