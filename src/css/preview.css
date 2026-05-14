@@ -139,7 +139,8 @@
 }
 
 .fc-layout-2img-2txt .fc-image-slot,
-.fc-layout-2img-4txt .fc-image-slot {
+.fc-layout-2img-4txt .fc-image-slot,
+.fc-layout-3img-3txt .fc-image-slot {
   background: #ffffff;
 }
 

@@ -29,11 +29,12 @@ const HANDLE_STRATEGIES = {
   "1top-2bot": (r, c, n) => _H("row", `top:${r}%;left:0;right:0;${_ROW}`) + _H("inner-col", `left:${n}%;top:${r}%;height:${100 - r}%;${_COL}`),
   "1top-1bot": (r, c, n) => _H("row", `top:${r}%;left:0;right:0;${_ROW}`),
   "2x2": (r, c, n) => _H("row", `top:${r}%;left:0;right:0;${_ROW}`) + _H("col", `left:${c}%;top:0;bottom:0;${_COL}`),
-  "2img-4txt": (r, c, n) => _H("row", `top:${r}%;left:0;right:0;${_ROW}`) + _H("inner-row", `top:${r + ((100 - r) * n / 100)}%;left:0;right:0;${_ROW}`)
+  "2img-4txt": (r, c, n) => "",
+  "2img-2txt": (r, c, n) => "",
+  "3img-3txt": (r, c, n) => ""
 };
 
 function buildHandles(layout, sp) {
-  if (layout === "2img-2txt") return "";
   const generator = HANDLE_STRATEGIES[layout];
   return generator ? generator(sp.row, sp.col, sp.inner) : "";
 }
@@ -152,6 +153,10 @@ const COMPOUND_TRACK_STRATEGIES = {
     columns: `calc((100% - ${gap}px)/2) calc((100% - ${gap}px)/2)`,
     rows: `calc((100% - ${gap}px) * ${sp.row} / 100) calc((100% - ${gap}px) * ${100 - sp.row} / 100)`
   }),
+  "3img-3txt": (sp, gap) => ({
+    columns: `calc((100% - ${gap * 2}px)/3) calc((100% - ${gap * 2}px)/3) calc((100% - ${gap * 2}px)/3)`,
+    rows: `calc((100% - ${gap}px) * ${sp.row} / 100) calc((100% - ${gap}px) * ${100 - sp.row} / 100)`
+  }),
   "2img-4txt": (sp, gap) => {
     const rTop = ((100 - sp.row) * sp.inner) / 100;
     const rBot = ((100 - sp.row) * (100 - sp.inner)) / 100;
@@ -163,7 +168,7 @@ const COMPOUND_TRACK_STRATEGIES = {
 };
 
 function getCompoundGridStyle(layout, split, gapPx, imgPct) {
-  const sp = layout === "2img-2txt" && imgPct != null ? { ...split, row: imgPct } : split;
+  const sp = (layout === "2img-2txt" || layout === "3img-3txt") && imgPct != null ? { ...split, row: imgPct } : split;
   const tracks = getCompoundGridTracks(layout, sp, gapPx);
   return tracks ? `grid-template-columns:${tracks.columns};grid-template-rows:${tracks.rows};` : "";
 }
@@ -340,6 +345,39 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
       '">' +
       sectionB +
       "</div>" +
+      handles +
+      "</div></div>"
+    );
+  }
+
+  if (card.layout === "3img-3txt") {
+    const sectionA = buildSectionCellHtml(card.sections[0]);
+    const sectionB = buildSectionCellHtml(card.sections[1]);
+    const sectionC = buildSectionCellHtml(card.sections[2]);
+    const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions);
+    return (
+      cardStyleTag +
+      '<div class="' +
+      cls +
+      '" data-layout="' +
+      card.layout +
+      '" data-id="' +
+      card.id +
+      '" style="' +
+      compoundWrapperStyle +
+      '">' +
+      (showTitle
+        ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + "</div>"
+        : "") +
+      '<div class="fc-image-area" style="flex:1;position:relative;display:grid;overflow:hidden;gap:' +
+      marginPx +
+      "px;" +
+      compoundGridStyle +
+      '">' +
+      compoundSlots +
+      '<div class="fc-sections" style="' + buildCompoundCellStyle(compoundTextBase + contentStyle, compoundCellOptions) + '">' + sectionA + '</div>' +
+      '<div class="fc-sections" style="' + buildCompoundCellStyle(compoundTextBase + contentStyle, compoundCellOptions) + '">' + sectionB + '</div>' +
+      '<div class="fc-sections" style="' + buildCompoundCellStyle(compoundTextBase + contentStyle, compoundCellOptions) + '">' + sectionC + '</div>' +
       handles +
       "</div></div>"
     );
