@@ -15,6 +15,9 @@ const state = fs.existsSync(path.join(SRC, "state.js")) ? fs.readFileSync(path.j
 const storage = fs.existsSync(path.join(SRC, "storage.js")) ? fs.readFileSync(path.join(SRC, "storage.js"), "utf8") : "";
 const api = fs.existsSync(path.join(SRC, "api.js")) ? fs.readFileSync(path.join(SRC, "api.js"), "utf8") : "";
 const render = fs.existsSync(path.join(SRC, "render.js")) ? fs.readFileSync(path.join(SRC, "render.js"), "utf8") : "";
+const editor = fs.existsSync(path.join(SRC, "editor.js")) ? fs.readFileSync(path.join(SRC, "editor.js"), "utf8") : "";
+const preview = fs.existsSync(path.join(SRC, "preview.js")) ? fs.readFileSync(path.join(SRC, "preview.js"), "utf8") : "";
+const modals = fs.existsSync(path.join(SRC, "modals.js")) ? fs.readFileSync(path.join(SRC, "modals.js"), "utf8") : "";
 const js = fs.readFileSync(path.join(SRC, "app.js"), "utf8");
 
 const CSS_DIR = path.join(SRC, "css");
@@ -27,7 +30,7 @@ if (fs.existsSync(CSS_DIR)) {
 } else if (fs.existsSync(path.join(SRC, "style.css"))) {
   css = fs.readFileSync(path.join(SRC, "style.css"), "utf8");
 }
-const allJs = [state, utils, storage, api, render, js].filter(Boolean).join("\n\n");
+const allJs = [state, utils, storage, api, render, editor, preview, modals, js].filter(Boolean).join("\n\n");
 
 const output = template
   .replace("    <!-- BUILD:CONFIG -->", `    <script>\n${config}\n    </script>`)
