@@ -46,18 +46,18 @@ window.FC_CONFIG = {
     layout: "2top-1bot", // 2top-1bot | 1top-2bot | 1big-2small | 2x2 | 1full | 1left-2right | 1left-3right | 1top-3bot | 1top-1bot
     imageHeightPercent: 80, // 20–80
     defaultSections: [
-      { label: "Đặc điểm", content: "" },
-      { label: "Môi trường", content: "" },
+      { label: "Feature", content: "" },
+      { label: "Habitat", content: "" },
     ],
   },
 
   // ── Text vertical alignment ───────────────────────────────────────
   textVAlign: "middle", // top | middle | bottom
 
-  // ── Paste block (false = ẩn textarea, bấm nút để bật) ───────────
+  // ── Paste block (false = hidden by default, click button to show) ──
   pasteBlock: false,
 
-  // ── Max image size khi paste/upload (px, cạnh dài nhất) ──────────
+  // ── Max image size on paste/upload (px, longest edge) ────────────
   // A4 @ 150 DPI = 1240 | A4 @ 200 DPI = 1654 | A4 @ 300 DPI = 2480
   maxImgPx: 1240,
 

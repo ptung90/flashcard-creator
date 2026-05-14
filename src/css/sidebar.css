@@ -39,7 +39,7 @@
   align-items: center;
   justify-content: space-between;
   font-size: 11px;
-  color: #6b7280;
+  color: #4b5563;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -131,7 +131,7 @@
 
 .view-toggle-btn:hover {
   background: #f3f4f6;
-  color: #374151;
+  color: #1f2937;
 }
 
 .view-toggle-btn.active {
@@ -211,7 +211,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #374151;
+  color: #1f2937;
 }
 
 .card-thumb-actions {

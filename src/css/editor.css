@@ -20,7 +20,7 @@
 
 .editor-section h3 {
   font-size: 11px;
-  color: #6b7280;
+  color: #4b5563;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 8px;
@@ -310,7 +310,7 @@
   border-radius: 4px;
   padding: 1px 4px;
   background: #f9fafb;
-  color: #374151;
+  color: #1f2937;
 }
 
 .image-slot-drag-handle {

@@ -153,7 +153,7 @@ function renderEditor() {
       </div>
       <div id="paste-block-area" style="display:none;margin-top:8px">
         <textarea id="paste-block-input" class="section-content-input" rows="6"
-          placeholder="Đặc điểm: Dạng tai, màu nâu sẫm&#10;Môi trường: Mọc trên thân cây gỗ mục&#10;Thường dùng trong canh, nem (mỗi dòng = 1 section)"></textarea>
+          placeholder="Feature: Broad cap, dark brown&#10;Habitat: Grows on rotting wood&#10;Each line becomes one section"></textarea>
         <div style="display:flex;gap:6px;margin-top:6px">
           <button class="btn btn-primary btn-sm" onclick="parsePasteBlock('replace')">Replace sections</button>
           <button class="btn btn-secondary btn-sm" onclick="parsePasteBlock('append')">Append</button>
