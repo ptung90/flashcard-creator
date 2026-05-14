@@ -50,7 +50,7 @@ function renderEditor() {
     card.layout === "2img-2txt" || card.layout === "2img-4txt" || card.layout === "8img-8txt";
   const isImgPairedLayout =
     card.layout === "2img-2txt" || card.layout === "8img-8txt";
-  const sectionRows = card.layout === "fulltext" ? 10 : 4;
+  const sectionRows = card.layout === "fulltext" ? 6 : 4;
 
   const sections = card.sections
     .map((s, si) => {
@@ -153,7 +153,7 @@ function renderEditor() {
       </div>
       <div id="paste-block-area" style="display:none;margin-top:8px">
         <textarea id="paste-block-input" class="section-content-input" rows="6"
-          placeholder="• Đặc điểm: Dạng tai, màu nâu sẫm...&#10;• Môi trường: Mọc trên thân cây gỗ mục...&#10;• Ghi chú: Thường dùng trong canh, nem."></textarea>
+          placeholder="Đặc điểm: Dạng tai, màu nâu sẫm&#10;Môi trường: Mọc trên thân cây gỗ mục&#10;Thường dùng trong canh, nem (mỗi dòng = 1 section)"></textarea>
         <div style="display:flex;gap:6px;margin-top:6px">
           <button class="btn btn-primary btn-sm" onclick="parsePasteBlock('replace')">Replace sections</button>
           <button class="btn btn-secondary btn-sm" onclick="parsePasteBlock('append')">Append</button>
@@ -364,19 +364,24 @@ function cardOrientationControls() {
   if (!card) return "";
   const useCustom = !!card.orientation;
   const effective = card.orientation || state.settings.orientation;
+  const btnStyle = (val) => {
+    const active = effective === val;
+    const base = "btn btn-secondary btn-sm";
+    const activeStyle = active ? "background:#ede9fe;border-color:#a78bfa;color:#6b21a8;" : "";
+    const disabledStyle = useCustom ? "" : "opacity:0.4;pointer-events:none;";
+    return `class="${base}" style="${activeStyle}${disabledStyle}"`;
+  };
   return `
-    <div style = "display:flex;flex-wrap:wrap;gap:8px;align-items:center" >
-      <label style="font-size:12px;color:#374151;display:flex;align-items:center;gap:6px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#374151;cursor:pointer">
         <input type="checkbox" ${useCustom ? "checked" : ""} onchange="toggleCardOrientation(this.checked)">
-        Use custom orientation
+        Override
       </label>
-
-        <label style="font-size:11px;color:#6b7280">Card</label>
-        <select style="${FIS};min-width:110px" onchange="setCardOrientation(this.value)" ${useCustom ? "" : "disabled"}>
-          <option value="portrait" ${effective === "portrait" ? "selected" : ""}>Portrait</option>
-          <option value="landscape" ${effective === "landscape" ? "selected" : ""}>Landscape</option>
-        </select>
-      <span style="font-size:11px;color:#6b7280">${useCustom ? "Card override active" : "Inherited from global"}</span>
+      <div style="display:flex;gap:2px">
+        <button ${btnStyle("portrait")} onclick="setCardOrientation('portrait')">Portrait</button>
+        <button ${btnStyle("landscape")} onclick="setCardOrientation('landscape')">Landscape</button>
+      </div>
+      ${useCustom ? "" : '<span style="font-size:11px;color:#9ca3af">↑ from global</span>'}
     </div>`;
 }
 
@@ -479,6 +484,29 @@ function toggleFontPanel() {
   const open = panel.classList.toggle("open");
   btn.classList.toggle("open", open);
   btn.textContent = open ? "Aa ▴" : "Aa ▾";
+}
+
+function _syncBdSwatch() {
+  const swatch = document.getElementById("bd-swatch");
+  const color = document.getElementById("set-bc")?.value;
+  if (swatch && color) swatch.style.background = color;
+}
+
+function toggleBorderPanel() {
+  const panel = document.getElementById("border-settings-panel");
+  const btn = document.getElementById("btn-border-toggle");
+  const open = panel.classList.toggle("open");
+  btn.classList.toggle("open", open);
+  const arrow = document.getElementById("bd-arrow");
+  if (arrow) arrow.textContent = open ? "▴" : "▾";
+}
+
+function toggleImgPanel() {
+  const panel = document.getElementById("img-settings-panel");
+  const btn = document.getElementById("btn-img-toggle");
+  const open = panel.classList.toggle("open");
+  btn.classList.toggle("open", open);
+  btn.textContent = open ? "Img ▴" : "Img ▾";
 }
 
 function toggleImgOverride(slot, enabled) {
@@ -600,16 +628,12 @@ function parsePasteBlock(mode) {
     const clean = line.replace(/^[\s•\-*]+/, "").trim();
     if (!clean || /^_{2,}$/.test(clean)) continue;
     const colonIdx = clean.indexOf(":");
-    if (colonIdx > 0 && colonIdx < 40) {
-      parsed.push({
-        id: uid(),
-        label: clean.slice(0, colonIdx).trim(),
-        content: clean.slice(colonIdx + 1).trim(),
-      });
-    } else if (parsed.length) {
-      // continuation line — append to last section
-      parsed[parsed.length - 1].content += "\n" + clean;
-    }
+    const hasLabel = colonIdx > 0 && colonIdx < 40;
+    parsed.push({
+      id: uid(),
+      label: hasLabel ? clean.slice(0, colonIdx).trim() : "",
+      content: hasLabel ? clean.slice(colonIdx + 1).trim() : clean,
+    });
   }
 
   if (!parsed.length) return;

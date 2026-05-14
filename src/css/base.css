@@ -39,7 +39,8 @@ body {
 }
 
 .fc-settings-bar .setting-group,
-.font-settings-panel .setting-group {
+.font-settings-panel .setting-group,
+.border-settings-panel .setting-group {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -48,12 +49,14 @@ body {
 }
 
 .fc-settings-bar .setting-group:last-child,
-.font-settings-panel .setting-group:last-child {
+.font-settings-panel .setting-group:last-child,
+.border-settings-panel .setting-group:last-child {
   border-right: none;
 }
 
 .fc-settings-bar label,
-.font-settings-panel label {
+.font-settings-panel label,
+.border-settings-panel label {
   color: #6b7280;
   font-size: 11px;
   white-space: nowrap;
@@ -64,7 +67,10 @@ body {
 .fc-settings-bar input[type="text"],
 .font-settings-panel select,
 .font-settings-panel input[type="number"],
-.font-settings-panel input[type="text"] {
+.font-settings-panel input[type="text"],
+.border-settings-panel select,
+.border-settings-panel input[type="number"],
+.border-settings-panel input[type="text"] {
   background: #f9fafb;
   border: 1px solid #d1d5db;
   color: #1a1a2e;
@@ -75,12 +81,14 @@ body {
 }
 
 .fc-settings-bar input[type="number"],
-.font-settings-panel input[type="number"] {
+.font-settings-panel input[type="number"],
+.border-settings-panel input[type="number"] {
   width: 52px;
 }
 
 .fc-settings-bar input[type="color"],
-.font-settings-panel input[type="color"] {
+.font-settings-panel input[type="color"],
+.border-settings-panel input[type="color"] {
   width: 32px;
   height: 24px;
   border: none;
@@ -93,7 +101,9 @@ body {
 .fc-settings-bar select:focus,
 .fc-settings-bar input:focus,
 .font-settings-panel select:focus,
-.font-settings-panel input:focus {
+.font-settings-panel input:focus,
+.border-settings-panel select:focus,
+.border-settings-panel input:focus {
   outline: 1px solid #6b21a8;
 }
 
@@ -176,7 +186,6 @@ body {
 }
 
 .btn-font-toggle {
-  margin-left: auto;
   background: #f3f4f6;
   border: 1px solid #d1d5db;
   border-radius: 4px;
@@ -212,6 +221,32 @@ body {
 .font-settings-panel.open {
   display: flex;
 }
+
+.btn-border-toggle {
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-border-toggle:hover { background: #e5e7eb; }
+.btn-border-toggle.open { background: #ede9fe; border-color: #a78bfa; color: #6b21a8; }
+
+.border-settings-panel {
+  display: none;
+  background: #f9fafb;
+  border-bottom: 1px solid #d1d5db;
+  padding: 6px 12px;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.border-settings-panel.open { display: flex; }
 
 /* ── Restore banner ── */
 #fc-restore-banner {

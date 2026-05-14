@@ -1,5 +1,17 @@
 
-marked.use({ breaks: true });
+marked.use({
+  breaks: true,
+  extensions: [{
+    name: "underline",
+    level: "inline",
+    start: (src) => src.indexOf("++"),
+    tokenizer(src) {
+      const match = src.match(/^\+\+([^+]+)\+\+/);
+      if (match) return { type: "underline", raw: match[0], text: match[1] };
+    },
+    renderer: (token) => `<u>${token.text}</u>`,
+  }],
+});
 // ── Dispatcher (State Management) ──────────────────────────────────
 function dispatch(action) {
   const skipDirty = ['ACTIVE_CARD_CHANGED', 'VIEW_MODE_CHANGED', 'INIT_LOAD'].includes(action);
@@ -43,6 +55,22 @@ function dispatch(action) {
 function changePreviewZoom(delta) {
   previewZoom = delta === 0 ? 1.0 : Math.round(Math.max(0.25, Math.min(3.0, previewZoom + delta)) * 100) / 100;
   renderPreview();
+}
+
+let uiZoom = parseFloat(localStorage.getItem("fc_ui_zoom") || "1");
+function applyUIZoom() {
+  uiZoom = Math.round(Math.max(0.7, Math.min(1.5, uiZoom)) * 10) / 10;
+  const app = document.querySelector(".fc-app");
+  app.style.zoom = uiZoom;
+  app.style.height = `calc(${(100 / uiZoom).toFixed(4)}vh)`;
+  const lbl = document.getElementById("ui-zoom-label");
+  if (lbl) lbl.textContent = Math.round(uiZoom * 100) + "%";
+  localStorage.setItem("fc_ui_zoom", uiZoom);
+  renderPreview();
+}
+function changeUIZoom(delta) {
+  uiZoom = delta === 0 ? 1.0 : uiZoom + delta;
+  applyUIZoom();
 }
 
 // ── Google / Custom Fonts ─────────────────────────────────────────
@@ -131,7 +159,7 @@ function bindSettings() {
     "set-padding": (v) => (state.settings.padding = +v),
     "set-bw": (v) => (state.settings.border.width = +v),
     "set-bs": (v) => (state.settings.border.style = v),
-    "set-bc": (v) => (state.settings.border.color = v),
+    "set-bc": (v) => { state.settings.border.color = v; _syncBdSwatch(); },
     "set-br": (v) => (state.settings.border.radius = +v),
     "set-imgsize": (v) => (state.settings.image.backgroundSize = v),
     "set-imgpos": (v) => (state.settings.image.backgroundPosition = v),
@@ -187,6 +215,7 @@ function applySettingsToUI() {
   document.getElementById("fc-custom-css").textContent =
     s.customCss || "";
   renderGFontTags();
+  _syncBdSwatch();
 }
 
 // ── Card Management ────────────────────────────────────────────────
@@ -497,6 +526,7 @@ async function init() {
   bindSettings();
   applyGoogleFonts();
   applySettingsToUI();
+  applyUIZoom();
   document.getElementById('view-grid-btn').classList.add('active');
   initPanelResize();
   initPreviewPan();

@@ -70,58 +70,18 @@
           />
           <label>mm</label>
         </div>
-        <div class="setting-group">
-          <label>Border</label>
-          <input
-            type="number"
-            id="set-bw"
-            value="2"
-            min="0"
-            max="10"
-            title="px"
-            style="width: 40px"
-          />
-          <label>px</label>
-          <select id="set-bs">
-            <option value="dashed" selected>Dashed</option>
-            <option value="solid">Solid</option>
-            <option value="dotted">Dotted</option>
-            <option value="double">Double</option>
-            <option value="none">None</option>
-          </select>
-          <input
-            type="color"
-            id="set-bc"
-            value="#6B21A8"
-            title="Border color"
-          />
-          <label>R</label>
-          <input
-            type="number"
-            id="set-br"
-            value="0"
-            min="0"
-            max="40"
-            title="radius px"
-            style="width: 40px"
-          />
-          <label>px</label>
-        </div>
-        <div class="setting-group" style="display: none">
-          <label>Img size</label>
-          <select id="set-imgsize">
-            <option value="cover">Cover</option>
-            <option value="contain">Contain</option>
-          </select>
-          <label>pos</label>
-          <input
-            type="text"
-            id="set-imgpos"
-            value="center"
-            style="width: 60px"
-            title="CSS background-position"
-          />
-        </div>
+        <button
+          class="btn-border-toggle"
+          id="btn-border-toggle"
+          onclick="toggleBorderPanel()"
+          title="Border settings"
+        ><span id="bd-swatch" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#6B21A8;margin-right:3px;vertical-align:middle;flex-shrink:0"></span>Bd <span id="bd-arrow">▾</span></button>
+        <button
+          class="btn-border-toggle"
+          id="btn-img-toggle"
+          onclick="toggleImgPanel()"
+          title="Image settings"
+        >Img ▾</button>
 
         <button
           class="btn-font-toggle"
@@ -131,6 +91,25 @@
         >
           Aa ▾
         </button>
+        <span
+          style="display: flex; align-items: center; gap: 2px; margin-left: auto"
+        >
+          <button
+            class="btn btn-secondary btn-sm btn-icon"
+            onclick="changeUIZoom(-0.1)"
+            title="Decrease UI size"
+          >
+            A−
+          </button>
+          <!-- <button class="btn btn-secondary btn-sm" onclick="changeUIZoom(0)" id="ui-zoom-label" title="Reset UI size" style="min-width:42px;font-size:11px">100%</button> -->
+          <button
+            class="btn btn-secondary btn-sm btn-icon"
+            onclick="changeUIZoom(0.1)"
+            title="Increase UI size"
+          >
+            A+
+          </button>
+        </span>
       </div>
 
       <!-- Font Settings Panel (collapsible) -->
@@ -393,6 +372,76 @@
           </button>
         </div>
         <div id="gfont-tags" class="gfont-tags"></div>
+      </div>
+
+      <!-- Image Settings Panel (collapsible) -->
+      <div id="img-settings-panel" class="border-settings-panel">
+        <div class="setting-group">
+          <label>Fit</label>
+          <select id="set-imgsize">
+            <option value="cover">Cover</option>
+            <option value="contain">Contain</option>
+            <option value="auto">Auto</option>
+            <option value="100% 100%">Stretch</option>
+            <option value="100% auto">100% w</option>
+            <option value="auto 100%">100% h</option>
+            <option value="50%">50%</option>
+            <option value="75%">75%</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label>Position</label>
+          <input type="text" id="set-imgpos" value="center" style="width:80px" title="CSS background-position" />
+        </div>
+      </div>
+
+      <!-- Border Settings Panel (collapsible) -->
+      <div id="border-settings-panel" class="border-settings-panel">
+        <div class="setting-group">
+          <label>Width</label>
+          <input
+            type="number"
+            id="set-bw"
+            value="2"
+            min="0"
+            max="10"
+            title="px"
+            style="width: 40px"
+          />
+          <label>px</label>
+        </div>
+        <div class="setting-group">
+          <label>Style</label>
+          <select id="set-bs">
+            <option value="dashed" selected>Dashed</option>
+            <option value="solid">Solid</option>
+            <option value="dotted">Dotted</option>
+            <option value="double">Double</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label>Color</label>
+          <input
+            type="color"
+            id="set-bc"
+            value="#6B21A8"
+            title="Border color"
+          />
+        </div>
+        <div class="setting-group">
+          <label>Radius</label>
+          <input
+            type="number"
+            id="set-br"
+            value="0"
+            min="0"
+            max="40"
+            title="radius px"
+            style="width: 40px"
+          />
+          <label>px</label>
+        </div>
       </div>
 
       <!-- Restore banner (shown when permission not yet granted) -->
@@ -1077,6 +1126,12 @@
               <select id="cfg-img-size">
                 <option value="cover">cover</option>
                 <option value="contain">contain</option>
+                <option value="auto">auto</option>
+                <option value="100% 100%">stretch (100% 100%)</option>
+                <option value="100% auto">100% width</option>
+                <option value="auto 100%">100% height</option>
+                <option value="50%">50%</option>
+                <option value="75%">75%</option>
               </select>
             </div>
             <div class="cfg-row">
