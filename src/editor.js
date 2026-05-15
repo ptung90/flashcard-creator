@@ -47,10 +47,8 @@ function renderEditor() {
   const hiddenImgs = card.images.filter((im) => im.slot >= slotCount);
   const hiddenSlots = hiddenImgs.map((im) => slotRow(im.slot, true)).join("");
   const slots = activeSlots + hiddenSlots;
-  const isCompoundTextLayout =
-    card.layout === "2img-2txt" || card.layout === "2img-4txt" || card.layout === "8img-8txt";
-  const isImgPairedLayout =
-    card.layout === "2img-2txt" || card.layout === "8img-8txt";
+  const isCompoundTextLayout = ["2img-2txt", "2img-4txt", "3img-3txt", "8img-8txt"].includes(card.layout);
+  const isImgPairedLayout = ["2img-2txt", "3img-3txt", "8img-8txt"].includes(card.layout);
   const sectionRows = card.layout === "fulltext" ? 6 : 4;
 
   const sections = card.sections

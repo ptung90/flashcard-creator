@@ -301,6 +301,7 @@ function copySlot(slot) {
 function _pasteFromImgClipboard(slot) {
   const card = getActiveCard();
   if (!card || !_imgClipboard) return;
+  pushUndo();
   const existing = card.images.find((i) => i.slot === slot);
   const newImg = { ..._imgClipboard, slot };
   if (existing) Object.assign(existing, newImg);
