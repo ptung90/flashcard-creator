@@ -67,6 +67,185 @@ async function searchINaturalist() {
   }
 }
 
+// Unsplash
+function saveUnsplashKey() {
+  const key = document.getElementById("unsplash-key").value.trim();
+  localStorage.setItem("unsplash-key", key);
+}
+
+async function searchUnsplash() {
+  const key =
+    document.getElementById("unsplash-key").value.trim() ||
+    localStorage.getItem("unsplash-key") ||
+    "";
+  if (!key) {
+    alert("Please enter your Unsplash Access Key first.");
+    return;
+  }
+  const q = document.getElementById("search-unsplash").value.trim();
+  if (!q) return;
+  const res = document.getElementById("results-unsplash");
+  res.innerHTML = '<div class="search-status">Searching...</div>';
+  try {
+    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=20&client_id=${encodeURIComponent(key)}`;
+    const r = await fetch(url);
+    if (r.status === 401) {
+      res.innerHTML = '<div class="search-status">Invalid Access Key</div>';
+      return;
+    }
+    const data = await r.json();
+    const results = data.results || [];
+    if (!results.length) {
+      res.innerHTML = '<div class="search-status">No results</div>';
+      return;
+    }
+    res.innerHTML = results
+      .map((p) => {
+        const thumb = p.urls.small;
+        const full = p.urls.regular;
+        const author = p.user?.name || "";
+        return `<div class="search-result-item" title="${esc(author)}" onclick="insertImageUrl('${esc(full)}')"><img src="${esc(thumb)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`;
+      })
+      .join("");
+  } catch (e) {
+    res.innerHTML = `<div class="search-status">Error: ${e.message}</div>`;
+  }
+}
+
+// ── AI Generate ────────────────────────────────────────────────────
+let _aiProvider = localStorage.getItem("ai-provider") || "gemini";
+
+function saveAiKey(provider) {
+  const key = document.getElementById(`${provider}-key`).value.trim();
+  localStorage.setItem(`${provider}-key`, key);
+  showToast(t('ai.keySaved'));
+}
+
+function switchAiProvider(provider) {
+  _aiProvider = provider;
+  localStorage.setItem("ai-provider", provider);
+  document.querySelectorAll(".ai-provider-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.provider === provider)
+  );
+  document.getElementById("ai-key-gemini").style.display = provider === "gemini" ? "" : "none";
+  document.getElementById("ai-key-openai").style.display = provider === "openai" ? "" : "none";
+}
+
+function toggleAiSection() {
+  const body = document.getElementById("ai-section-body");
+  const chevron = document.getElementById("ai-section-chevron");
+  const open = body.style.display === "none";
+  body.style.display = open ? "block" : "none";
+  chevron.textContent = open ? "▾" : "▸";
+  if (open) switchAiProvider(_aiProvider); // sync UI on open
+}
+
+function _buildAiPrompt(subject, snapshot) {
+  return `You are a flashcard content generator. Rewrite the flashcard project JSON below for the new subject: "${subject}".
+
+Rules:
+- Keep identical JSON structure (same number of cards, same layouts, same number of sections per card)
+- Keep all section label names unchanged
+- Replace title and section content with accurate, concise information about the new subject
+- Keep all settings, fonts, and layout configurations unchanged
+- Set "project_name" to the new subject
+- Return ONLY valid JSON matching the exact same schema, no explanation
+
+Project JSON:
+${JSON.stringify(snapshot, null, 2)}`;
+}
+
+async function _callOpenAI(key, prompt) {
+  const r = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      response_format: { type: "json_object" },
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  if (r.status === 401) throw Object.assign(new Error(t('ai.badKey')), { handled: true });
+  if (r.status === 429) throw Object.assign(new Error(t('ai.rateLimit')), { handled: true });
+  if (!r.ok) {
+    let msg = `Error ${r.status}`;
+    try { const e = await r.json(); msg = e.error?.message || msg; } catch {}
+    throw new Error(msg);
+  }
+  const data = await r.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error(t('ai.emptyResponse'));
+  return JSON.parse(content);
+}
+
+async function _callGemini(key, prompt) {
+  const model = (document.getElementById("gemini-model")?.value.trim()
+    || localStorage.getItem("gemini-model") || "gemini-2.0-flash");
+  const r = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json" }
+      })
+    }
+  );
+  if (!r.ok) {
+    let detail = "";
+    try { const e = await r.json(); detail = e.error?.message || ""; } catch {}
+    if (r.status === 400 && !detail) throw new Error(t('ai.badKey'));
+    if (r.status === 429 || r.status === 403)
+      throw new Error(`${t('ai.rateLimit')}${detail ? ": " + detail : ""}`);
+    throw new Error(detail || `Error ${r.status}`);
+  }
+  const data = await r.json();
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!content) throw new Error(t('ai.emptyResponse'));
+  return JSON.parse(content);
+}
+
+async function aiGenerateProject() {
+  const key = document.getElementById(`${_aiProvider}-key`).value.trim()
+    || localStorage.getItem(`${_aiProvider}-key`) || "";
+  if (!key) { showToast(t('ai.noKey')); return; }
+
+  const subject = document.getElementById("ai-subject").value.trim();
+  if (!subject) { showToast(t('ai.noSubject')); return; }
+
+  const statusEl = document.getElementById("ai-status");
+  const btn = document.getElementById("ai-generate-btn");
+  btn.disabled = true;
+  btn.textContent = "…";
+  statusEl.textContent = t('ai.generating');
+
+  const snapshot = JSON.parse(JSON.stringify({
+    project_name: state.projectName, settings: state.settings, cards: state.cards
+  }));
+  snapshot.cards.forEach(card => {
+    card.images = (card.images || []).map(img =>
+      img?.url?.startsWith("data:") ? { ...img, url: "" } : img
+    );
+  });
+
+  try {
+    const prompt = _buildAiPrompt(subject, snapshot);
+    const newProject = _aiProvider === "gemini"
+      ? await _callGemini(key, prompt)
+      : await _callOpenAI(key, prompt);
+    closeJsonModal();
+    currentFileName = null;
+    applyLoadedData(newProject);
+    showToast(`✦ ${t('ai.done')} "${subject}"`);
+  } catch (e) {
+    statusEl.textContent = e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "✦ Go";
+  }
+}
+
 // Pixabay
 function savePixabayKey() {
   const key = document.getElementById("pixabay-key").value.trim();

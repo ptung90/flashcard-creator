@@ -26,7 +26,7 @@
       <!-- Settings Bar -->
       <div class="fc-settings-bar">
         <div class="setting-group">
-          <label>Paper</label>
+          <label data-i18n="set.paper">Paper</label>
           <select id="set-paper">
             <option value="A4">A4</option>
             <option value="A5">A5</option>
@@ -39,7 +39,7 @@
           </select>
         </div>
         <div class="setting-group">
-          <label>Margin</label>
+          <label data-i18n="set.margin">Margin</label>
           <input
             type="number"
             id="set-margin"
@@ -48,8 +48,8 @@
             max="40"
             title="mm"
           />
-          <label>mm</label>
-          <label style="margin-left: 6px">Text Pad</label>
+          <label data-i18n="set.mm">mm</label>
+          <label style="margin-left: 6px" data-i18n="set.textPad">Text Pad</label>
           <input
             type="number"
             id="set-padding"
@@ -58,8 +58,8 @@
             max="40"
             title="mm"
           />
-          <label>mm</label>
-          <label style="margin-left: 6px">Img Pad</label>
+          <label data-i18n="set.mm">mm</label>
+          <label style="margin-left: 6px" data-i18n="set.imgPad">Img Pad</label>
           <input
             type="number"
             id="set-img-padding"
@@ -68,54 +68,51 @@
             max="20"
             title="mm"
           />
-          <label>mm</label>
+          <label data-i18n="set.mm">mm</label>
         </div>
         <button
           class="btn-border-toggle"
           id="btn-border-toggle"
           onclick="toggleBorderPanel()"
-          title="Border settings"
+          data-i18n-title="set.bd.title" title="Border settings"
         ><span id="bd-swatch" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#6B21A8;margin-right:3px;vertical-align:middle;flex-shrink:0"></span>Bd <span id="bd-arrow">▾</span></button>
         <button
           class="btn-border-toggle"
           id="btn-img-toggle"
           onclick="toggleImgPanel()"
-          title="Image settings"
+          data-i18n-title="set.img.title" title="Image settings"
         >Img ▾</button>
 
         <button
           class="btn-font-toggle"
           id="btn-font-toggle"
           onclick="toggleFontPanel()"
-          title="Font settings"
+          data-i18n-title="set.font.title" title="Font settings"
         >
           Aa ▾
         </button>
         <span
           style="display: flex; align-items: center; gap: 2px; margin-left: auto; order: 99"
         >
+          <button class="btn btn-secondary btn-sm lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+          <button class="btn btn-secondary btn-sm lang-btn" data-lang="vi" onclick="setLang('vi')">VI</button>
           <button
             class="btn btn-secondary btn-sm btn-icon"
             onclick="changeUIZoom(-0.1)"
-            title="Decrease UI size"
-          >
-            A−
-          </button>
-          <!-- <button class="btn btn-secondary btn-sm" onclick="changeUIZoom(0)" id="ui-zoom-label" title="Reset UI size" style="min-width:42px;font-size:11px">100%</button> -->
+            data-i18n-title="set.zoom.dec" title="Decrease UI size"
+          >A−</button>
           <button
             class="btn btn-secondary btn-sm btn-icon"
             onclick="changeUIZoom(0.1)"
-            title="Increase UI size"
-          >
-            A+
-          </button>
+            data-i18n-title="set.zoom.inc" title="Increase UI size"
+          >A+</button>
         </span>
       </div>
 
       <!-- Font Settings Panel (collapsible) -->
       <div id="font-settings-panel" class="font-settings-panel">
         <div class="setting-group">
-          <label>Title</label>
+          <label data-i18n="font.title">Title</label>
           <select id="set-font-family">
             <option
               value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif"
@@ -167,7 +164,7 @@
           />
           <label>px</label>
           <input type="color" id="set-font-color" title="Text color" />
-          <label>LH</label>
+          <label data-i18n="font.lh">LH</label>
           <input
             type="number"
             id="set-font-lh"
@@ -217,7 +214,7 @@
           </div>
         </div>
         <div class="setting-group">
-          <label>Content</label>
+          <label data-i18n="font.content">Content</label>
           <select id="set-cfont-family">
             <option
               value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif"
@@ -269,7 +266,7 @@
           />
           <label>px</label>
           <input type="color" id="set-cfont-color" title="Text color" />
-          <label>LH</label>
+          <label data-i18n="font.lh">LH</label>
           <input
             type="number"
             id="set-cfont-lh"
@@ -377,7 +374,7 @@
       <!-- Image Settings Panel (collapsible) -->
       <div id="img-settings-panel" class="border-settings-panel">
         <div class="setting-group">
-          <label>Fit</label>
+          <label data-i18n="img.fit">Fit</label>
           <select id="set-imgsize">
             <option value="cover">Cover</option>
             <option value="contain">Contain</option>
@@ -390,7 +387,7 @@
           </select>
         </div>
         <div class="setting-group">
-          <label>Position</label>
+          <label data-i18n="img.pos">Position</label>
           <input type="text" id="set-imgpos" value="center" style="width:80px" title="CSS background-position" />
         </div>
       </div>
@@ -398,7 +395,7 @@
       <!-- Border Settings Panel (collapsible) -->
       <div id="border-settings-panel" class="border-settings-panel">
         <div class="setting-group">
-          <label>Width</label>
+          <label data-i18n="bd.width">Width</label>
           <input
             type="number"
             id="set-bw"
@@ -411,7 +408,7 @@
           <label>px</label>
         </div>
         <div class="setting-group">
-          <label>Style</label>
+          <label data-i18n="bd.style">Style</label>
           <select id="set-bs">
             <option value="dashed" selected>Dashed</option>
             <option value="solid">Solid</option>
@@ -421,7 +418,7 @@
           </select>
         </div>
         <div class="setting-group">
-          <label>Color</label>
+          <label data-i18n="bd.color">Color</label>
           <input
             type="color"
             id="set-bc"
@@ -430,7 +427,7 @@
           />
         </div>
         <div class="setting-group">
-          <label>Radius</label>
+          <label data-i18n="bd.radius">Radius</label>
           <input
             type="number"
             id="set-br"
@@ -440,22 +437,15 @@
             title="radius px"
             style="width: 40px"
           />
-          <label>px</label>
+          <label data-i18n="font.px">px</label>
         </div>
       </div>
 
       <!-- Restore banner (shown when permission not yet granted) -->
       <div id="fc-restore-banner" style="display: none">
         <span id="fc-restore-label"></span>
-        <button class="btn btn-primary btn-sm" onclick="resumeLastProject()">
-          Resume
-        </button>
-        <button
-          class="btn btn-secondary btn-sm"
-          onclick="dismissRestoreBanner()"
-        >
-          Dismiss
-        </button>
+        <button class="btn btn-primary btn-sm" onclick="resumeLastProject()" data-i18n="restore.resume">Resume</button>
+        <button class="btn btn-secondary btn-sm" onclick="dismissRestoreBanner()" data-i18n="restore.dismiss">Dismiss</button>
       </div>
 
       <!-- Toolbar -->
@@ -464,49 +454,22 @@
           class="btn btn-secondary btn-sm btn-icon"
           id="sidebar-toggle-btn"
           onclick="toggleSidebar()"
-          title="Toggle sidebar"
+          data-i18n-title="toolbar.toggleSidebar" title="Toggle sidebar"
         >
           ◀
         </button>
-        <button class="btn btn-primary btn-sm" onclick="addCard()">
-          + New Card
-        </button>
-        <button
-          class="btn btn-secondary btn-sm"
-          onclick="refreshAllThumbs()"
-          title="Regenerate all sidebar thumbnails"
-        >
-          ↻ Thumbs
-        </button>
+        <button class="btn btn-primary btn-sm" onclick="addCard()" data-i18n="toolbar.newCard">+ New Card</button>
+        <button class="btn btn-secondary btn-sm" onclick="refreshAllThumbs()" title="Regenerate all sidebar thumbnails" data-i18n="toolbar.thumbs">↻ Thumbs</button>
         <div class="spacer"></div>
-        <button
-          class="btn btn-secondary btn-sm"
-          onclick="openSettingsModal()"
-          title="App settings"
-        >
-          ⚙️ Settings
-        </button>
-        <button class="btn btn-secondary btn-sm" onclick="openCssModal()">
-          Custom CSS
-        </button>
-        <button
-          class="btn btn-secondary btn-sm"
-          onclick="setWorkDir()"
-          id="work-dir-btn"
-          title="Chọn folder làm việc"
-        >
-          📁 <span id="work-dir-label">Set Folder</span>
+        <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()" title="App settings" data-i18n="toolbar.settings">⚙️ Settings</button>
+        <button class="btn btn-secondary btn-sm" onclick="openCssModal()" data-i18n="toolbar.customCss">Custom CSS</button>
+        <button class="btn btn-secondary btn-sm" onclick="setWorkDir()" id="work-dir-btn" title="Set work folder">
+          📁 <span id="work-dir-label" data-i18n="toolbar.setFolder">Set Folder</span>
         </button>
         <button class="btn btn-secondary btn-sm" onclick="saveJSON()">
-          💾 Save<span
-            id="dirty-dot"
-            style="display: none; color: #ef4444; margin-left: 3px"
-            >●</span
-          >
+          💾 <span data-i18n="toolbar.save">Save</span><span id="dirty-dot" style="display: none; color: #ef4444; margin-left: 3px">●</span>
         </button>
-        <button class="btn btn-secondary btn-sm" onclick="saveJSONAs()">
-          💾 Save As
-        </button>
+        <button class="btn btn-secondary btn-sm" onclick="saveJSONAs()" data-i18n="toolbar.saveAs">💾 Save As</button>
         <div style="display: flex; flex-direction: column; gap: 1px">
           <input
             id="project-name-input"
@@ -521,9 +484,7 @@
           />
           <!-- <span id="current-file-label" style="font-size:10px;color:#9ca3af;padding-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px"></span> -->
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="openLoadModal()">
-          📂 Load
-        </button>
+        <button class="btn btn-secondary btn-sm" onclick="openLoadModal()" data-i18n="toolbar.load">📂 Load</button>
         <input
           type="file"
           id="load-file"
@@ -531,12 +492,9 @@
           style="display: none"
           onchange="loadJSON(event)"
         />
-        <button class="btn btn-secondary btn-sm" onclick="printAll()">
-          🖨 Print All
-        </button>
-        <button class="btn btn-primary btn-sm" onclick="exportPDF()">
-          ⬇ PDF All
-        </button>
+        <button class="btn btn-secondary btn-sm" onclick="printAll()" data-i18n="toolbar.printAll">🖨 Print All</button>
+        <button class="btn btn-primary btn-sm" onclick="exportPDF()" data-i18n="toolbar.pdfAll">⬇ PDF All</button>
+        <button class="btn btn-secondary btn-sm" onclick="openJsonModal()" data-i18n-title="json.btnTitle">⎘ JSON</button>
         <span
           id="app-version"
           style="
@@ -553,18 +511,16 @@
         <!-- Sidebar: Card List -->
         <div class="fc-sidebar" id="fc-sidebar">
           <div class="fc-sidebar-header">
-            <span
-              >Cards
-              <span id="card-count" style="color: #9ca3af; font-weight: normal"
-                >0</span
-              ></span
-            >
+            <span>
+              <span data-i18n="sidebar.cards">Cards</span>
+              <span id="card-count" style="color: #9ca3af; font-weight: normal">0</span>
+            </span>
             <div class="view-toggle">
               <button
                 class="view-toggle-btn"
                 id="view-list-btn"
                 onclick="setViewMode('list')"
-                title="List view"
+                data-i18n-title="sidebar.listView" title="List view"
               >
                 ☰
               </button>
@@ -572,7 +528,7 @@
                 class="view-toggle-btn"
                 id="view-grid-btn"
                 onclick="setViewMode('grid')"
-                title="Grid view"
+                data-i18n-title="sidebar.gridView" title="Grid view"
               >
                 ⊞
               </button>
@@ -588,7 +544,7 @@
 
         <!-- Editor -->
         <div class="fc-editor" id="fc-editor">
-          <div class="fc-editor-empty" id="editor-empty">
+          <div class="fc-editor-empty" id="editor-empty" data-i18n="editor.empty">
             Select a card to edit, or click "+ New Card"
           </div>
           <div id="editor-content" style="display: none"></div>
@@ -600,7 +556,7 @@
         <div class="fc-preview-panel" id="fc-preview-panel">
           <div class="fc-preview-header">
             <div style="display: flex; align-items: center; gap: 6px">
-              <div class="fc-preview-label">Preview</div>
+              <div class="fc-preview-label" data-i18n="preview.label">Preview</div>
               <button
                 class="btn btn-secondary btn-sm"
                 onclick="changePreviewZoom(-0.25)"
@@ -629,12 +585,8 @@
               </button>
             </div>
             <div class="fc-preview-actions">
-              <button class="btn btn-secondary btn-sm" onclick="printOne()">
-                🖨 Print
-              </button>
-              <button class="btn btn-primary btn-sm" onclick="exportOnePDF()">
-                ⬇ Export PDF
-              </button>
+              <button class="btn btn-secondary btn-sm" onclick="printOne()" data-i18n="preview.print">🖨 Print</button>
+              <button class="btn btn-primary btn-sm" onclick="exportOnePDF()" data-i18n="preview.export">⬇ Export PDF</button>
             </div>
           </div>
           <div class="fc-preview" id="fc-preview">
@@ -679,6 +631,13 @@
           <div class="search-tabs">
             <div
               class="search-tab active"
+              data-tab="unsplash"
+              onclick="switchTab(this)"
+            >
+              Unsplash
+            </div>
+            <div
+              class="search-tab"
               data-tab="wikimedia"
               onclick="switchTab(this)"
             >
@@ -706,7 +665,7 @@
             </div>
           </div>
 
-          <div id="tab-wikimedia">
+          <div id="tab-wikimedia" style="display: none">
             <div class="search-bar">
               <input
                 type="text"
@@ -775,6 +734,37 @@
             </div>
             <div class="search-results" id="results-pixabay">
               <div class="search-status">Enter API key and search</div>
+            </div>
+          </div>
+
+          <div id="tab-unsplash">
+            <div class="pixabay-key-row">
+              <span>Access Key:</span>
+              <input
+                type="text"
+                id="unsplash-key"
+                placeholder="Enter Unsplash Access Key..."
+              />
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="saveUnsplashKey()"
+              >
+                Save
+              </button>
+            </div>
+            <div class="search-bar">
+              <input
+                type="text"
+                id="search-unsplash"
+                placeholder="Search Unsplash..."
+                onkeydown="if (event.key === 'Enter') searchUnsplash();"
+              />
+              <button class="btn btn-primary btn-sm" onclick="searchUnsplash()">
+                Search
+              </button>
+            </div>
+            <div class="search-results" id="results-unsplash">
+              <div class="search-status">Enter Access Key and search</div>
             </div>
           </div>
 
@@ -881,6 +871,87 @@
           <button class="btn btn-primary btn-sm" onclick="applyCustomCss()">
             Apply
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- JSON Export Modal -->
+    <div class="modal-backdrop" id="json-modal" style="display: none">
+      <div class="modal" style="max-width: 340px">
+        <div class="modal-header">
+          <span data-i18n="json.modalTitle">Export / Copy JSON</span>
+          <button class="modal-close" onclick="closeJsonModal()">×</button>
+        </div>
+        <div class="modal-body" style="padding: 12px; display: flex; flex-direction: column; gap: 8px">
+          <button class="btn btn-secondary json-action-btn" onclick="exportJsonFile()">
+            <span class="json-action-icon">⬇</span>
+            <span>
+              <span class="json-action-label" data-i18n="json.exportFile">Export to file</span>
+              <span class="json-action-desc" data-i18n="json.exportFileDesc">Download as .json</span>
+            </span>
+          </button>
+          <button class="btn btn-secondary json-action-btn" onclick="copyJsonFull()">
+            <span class="json-action-icon">⎘</span>
+            <span>
+              <span class="json-action-label" data-i18n="json.copyFull">Copy JSON</span>
+              <span class="json-action-desc" data-i18n="json.copyFullDesc">Full project including images</span>
+            </span>
+          </button>
+          <button class="btn btn-secondary json-action-btn" onclick="copyJsonNoImg()">
+            <span class="json-action-icon">⎘</span>
+            <span>
+              <span class="json-action-label" data-i18n="json.copyNoImg">Copy JSON (no images)</span>
+              <span class="json-action-desc" data-i18n="json.copyNoImgDesc">Images replaced with placeholder URL</span>
+            </span>
+          </button>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 4px 0">
+          <button class="btn btn-secondary json-action-btn" onclick="pasteJsonLoad()">
+            <span class="json-action-icon">📋</span>
+            <span>
+              <span class="json-action-label" data-i18n="json.pasteLoad">Paste & Load</span>
+              <span class="json-action-desc" data-i18n="json.pasteLoadDesc">Load project from clipboard JSON</span>
+            </span>
+          </button>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 4px 0">
+          <div class="ai-section">
+            <div class="ai-section-header" onclick="toggleAiSection()">
+              <span>✦ AI Generate</span>
+              <span id="ai-section-chevron">▸</span>
+            </div>
+            <div id="ai-section-body" style="display:none">
+              <div class="ai-provider-row">
+                <button class="btn btn-secondary btn-sm ai-provider-btn active" data-provider="gemini" onclick="switchAiProvider('gemini')">Gemini</button>
+                <button class="btn btn-secondary btn-sm ai-provider-btn" data-provider="openai" onclick="switchAiProvider('openai')">OpenAI</button>
+              </div>
+              <div id="ai-key-gemini" class="pixabay-key-row">
+                <span>API Key:</span>
+                <input type="password" id="gemini-key" placeholder="AIza..." />
+                <input type="text" id="gemini-model"
+                  list="gemini-model-list"
+                  placeholder="gemini-2.0-flash"
+                  onchange="localStorage.setItem('gemini-model',this.value)"
+                  style="font-size:11px;padding:2px 6px;border:1px solid #d1d5db;border-radius:4px;background:#f9fafb;width:160px" />
+                <datalist id="gemini-model-list">
+                  <option value="gemini-2.0-flash">
+                  <option value="gemini-2.5-flash-preview-05-20">
+                  <option value="gemini-2.5-pro-preview-05-06">
+                </datalist>
+                <button class="btn btn-secondary btn-sm" onclick="saveAiKey('gemini')">Save</button>
+              </div>
+              <div id="ai-key-openai" class="pixabay-key-row" style="display:none">
+                <span>API Key:</span>
+                <input type="password" id="openai-key" placeholder="sk-..." />
+                <button class="btn btn-secondary btn-sm" onclick="saveAiKey('openai')">Save</button>
+              </div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input type="text" id="ai-subject" class="ai-subject-input"
+                  placeholder="New subject (e.g. Tiger, Blue whale...)"
+                  onkeydown="if(event.key==='Enter') aiGenerateProject()" />
+                <button class="btn btn-primary btn-sm" id="ai-generate-btn" onclick="aiGenerateProject()">✦ Go</button>
+              </div>
+              <div id="ai-status" class="ai-status"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

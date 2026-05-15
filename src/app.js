@@ -228,7 +228,7 @@ function addCard() {
     imageHeightPercent: nc.imageHeightPercent ?? 55,
     imageGridSplit: { ...LAYOUT_SPLIT_DEFAULTS[layout] },
     images: [],
-    title: "New Card",
+    title: t('card.new'),
     hideTitle: false,
     titleFont: null,
     contentFont: null,
@@ -305,12 +305,12 @@ function _renderListSidebar() {
       (c, i) => `
     <div class="fc-card-item ${c.id === activeCardId ? "active" : ""}" onclick="setActive('${c.id}')">
       <span class="card-num">${i + 1}</span>
-      <span class="card-title">${esc(c.title || "Untitled")}</span>
+      <span class="card-title">${esc(c.title || t('card.untitled'))}</span>
       <span class="card-actions">
-        <button class="icon-btn" title="Move up" onclick="event.stopPropagation();moveCard('${c.id}',-1)">↑</button>
-        <button class="icon-btn" title="Move down" onclick="event.stopPropagation();moveCard('${c.id}',1)">↓</button>
-        <button class="icon-btn" title="Clone" onclick="event.stopPropagation();cloneCard('${c.id}')">⧉</button>
-        <button class="icon-btn" title="Delete" onclick="event.stopPropagation();if(confirm('Delete this card?'))deleteCard('${c.id}')">🗑</button>
+        <button class="icon-btn" title="${t('misc.moveUp')}" onclick="event.stopPropagation();moveCard('${c.id}',-1)">↑</button>
+        <button class="icon-btn" title="${t('misc.moveDown')}" onclick="event.stopPropagation();moveCard('${c.id}',1)">↓</button>
+        <button class="icon-btn" title="${t('misc.clone')}" onclick="event.stopPropagation();cloneCard('${c.id}')">⧉</button>
+        <button class="icon-btn" title="${t('misc.delete')}" onclick="event.stopPropagation();if(confirm(t('confirm.deleteCard')))deleteCard('${c.id}')">🗑</button>
       </span>
     </div>
   `,
@@ -331,8 +331,8 @@ function _renderGridSidebar() {
       el.classList.toggle('active', state.cards[i].id === activeCardId);
       el.classList.toggle('fc-card-thumb-item--landscape', getCardOrientation(state.cards[i]) === 'landscape');
       el.classList.toggle('fc-card-thumb-item--portrait', getCardOrientation(state.cards[i]) !== 'landscape');
-      const t = el.querySelector('.card-thumb-title');
-      if (t) t.textContent = state.cards[i].title || 'Untitled';
+      const titleEl = el.querySelector('.card-thumb-title');
+      if (titleEl) titleEl.textContent = state.cards[i].title || t('card.untitled');
     });
     if (_thumbRenderedVersion !== _thumbDirtyVersion) {
       _requestThumbGeneration(items);
@@ -346,10 +346,10 @@ function _renderGridSidebar() {
     <div class="fc-card-thumb-item ${c.id === activeCardId ? "active" : ""} ${getCardOrientation(c) === "landscape" ? "fc-card-thumb-item--landscape" : "fc-card-thumb-item--portrait"}"
          onclick="setActive('${c.id}')" data-id="${c.id}">
       <div class="card-thumb-img thumb-loading"></div>
-      <div class="card-thumb-title">${esc(c.title || "Untitled")}</div>
+      <div class="card-thumb-title">${esc(c.title || t('card.untitled'))}</div>
       <div class="card-thumb-actions">
-        <button class="icon-btn" title="Clone" onclick="event.stopPropagation();cloneCard('${c.id}')">⧉</button>
-        <button class="icon-btn" title="Delete" onclick="event.stopPropagation();if(confirm('Delete this card?'))deleteCard('${c.id}')">🗑</button>
+        <button class="icon-btn" title="${t('misc.clone')}" onclick="event.stopPropagation();cloneCard('${c.id}')">⧉</button>
+        <button class="icon-btn" title="${t('misc.delete')}" onclick="event.stopPropagation();if(confirm(t('confirm.deleteCard')))deleteCard('${c.id}')">🗑</button>
       </div>
     </div>
   `).join("") + '</div>';
@@ -517,6 +517,86 @@ function initUploadDropZone() {
   });
 }
 
+// ── JSON Export Modal ───────────────────────────────────────────────
+function openJsonModal() {
+  document.getElementById("json-modal").style.display = "flex";
+}
+function closeJsonModal() {
+  document.getElementById("json-modal").style.display = "none";
+}
+
+function _fullSnapshot() {
+  return JSON.parse(JSON.stringify({ project_name: state.projectName, settings: state.settings, cards: state.cards }));
+}
+
+function _clipboardWrite(text, toastKey) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(t(toastKey));
+  }).catch(() => {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    showToast(t(toastKey));
+  });
+}
+
+function exportJsonFile() {
+  const json = JSON.stringify(_fullSnapshot(), null, 2);
+  const slug = state.projectName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "project";
+  const name = `${slug}.json`;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  closeJsonModal();
+  showToast(t('toast.jsonExported'));
+}
+
+function copyJsonFull() {
+  _clipboardWrite(JSON.stringify(_fullSnapshot(), null, 2), 'toast.jsonCopiedFull');
+  closeJsonModal();
+}
+
+function copyJsonNoImg() {
+  const snapshot = _fullSnapshot();
+  snapshot.cards.forEach(card => {
+    card.images = (card.images || []).map(img => {
+      if (img?.url?.startsWith("data:"))
+        return { ...img, url: "https://placehold.co/800x600/e5e7eb/9ca3af?text=Image" };
+      return img;
+    });
+  });
+  _clipboardWrite(JSON.stringify(snapshot, null, 2), 'toast.jsonCopied');
+  closeJsonModal();
+}
+
+async function pasteJsonLoad() {
+  let text;
+  try {
+    text = await navigator.clipboard.readText();
+  } catch {
+    showToast(t('toast.clipboardDenied'));
+    return;
+  }
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    showToast(t('toast.jsonInvalid'));
+    return;
+  }
+  closeJsonModal();
+  currentFileName = null;
+  applyLoadedData(data);
+  showToast(t('toast.jsonLoaded'));
+}
+
 // ── Init ───────────────────────────────────────────────────────────
 async function init() {
   const vEl = document.getElementById("app-version");
@@ -527,6 +607,8 @@ async function init() {
   applyGoogleFonts();
   applySettingsToUI();
   applyUIZoom();
+  applyI18n();
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === getLang()));
   document.getElementById('view-grid-btn').classList.add('active');
   initPanelResize();
   initPreviewPan();

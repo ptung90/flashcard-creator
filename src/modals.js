@@ -193,9 +193,16 @@ function openImgModal(slot) {
   imgModalSlot = slot;
   document.getElementById("modal-slot-num").textContent = slot;
   document.getElementById("img-modal").style.display = "flex";
-  // load saved pixabay key
   document.getElementById("pixabay-key").value =
     localStorage.getItem("pixabay-key") || "";
+  document.getElementById("unsplash-key").value =
+    localStorage.getItem("unsplash-key") || "";
+  document.getElementById("openai-key").value =
+    localStorage.getItem("openai-key") || "";
+  document.getElementById("gemini-key").value =
+    localStorage.getItem("gemini-key") || "";
+  const gModel = document.getElementById("gemini-model");
+  if (gModel) gModel.value = localStorage.getItem("gemini-model") || "gemini-2.0-flash";
 }
 function closeImgModal() {
   document.getElementById("img-modal").style.display = "none";

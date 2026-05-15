@@ -14,6 +14,7 @@ const utils = fs.existsSync(path.join(SRC, "utils.js")) ? fs.readFileSync(path.j
 const state = fs.existsSync(path.join(SRC, "state.js")) ? fs.readFileSync(path.join(SRC, "state.js"), "utf8") : "";
 const storage = fs.existsSync(path.join(SRC, "storage.js")) ? fs.readFileSync(path.join(SRC, "storage.js"), "utf8") : "";
 const api = fs.existsSync(path.join(SRC, "api.js")) ? fs.readFileSync(path.join(SRC, "api.js"), "utf8") : "";
+const i18n = fs.existsSync(path.join(SRC, "i18n.js")) ? fs.readFileSync(path.join(SRC, "i18n.js"), "utf8") : "";
 const render = fs.existsSync(path.join(SRC, "render.js")) ? fs.readFileSync(path.join(SRC, "render.js"), "utf8") : "";
 const editor = fs.existsSync(path.join(SRC, "editor.js")) ? fs.readFileSync(path.join(SRC, "editor.js"), "utf8") : "";
 const preview = fs.existsSync(path.join(SRC, "preview.js")) ? fs.readFileSync(path.join(SRC, "preview.js"), "utf8") : "";
@@ -30,7 +31,7 @@ if (fs.existsSync(CSS_DIR)) {
 } else if (fs.existsSync(path.join(SRC, "style.css"))) {
   css = fs.readFileSync(path.join(SRC, "style.css"), "utf8");
 }
-const allJs = [state, utils, storage, api, render, editor, preview, modals, js].filter(Boolean).join("\n\n");
+const allJs = [state, utils, storage, api, i18n, render, editor, preview, modals, js].filter(Boolean).join("\n\n");
 
 const output = template
   .replace("    <!-- BUILD:CONFIG -->", `    <script>\n${config}\n    </script>`)

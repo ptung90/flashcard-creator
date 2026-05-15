@@ -403,5 +403,20 @@ body {
   background: #6b21a8;
 }
 
+/* Language switcher */
+.lang-btn {
+  font-size: 11px;
+  padding: 2px 5px;
+  min-width: 26px;
+  color: #4b5563;
+}
+
+.lang-btn.active {
+  background: #ede9fe;
+  border-color: #a78bfa;
+  color: #6b21a8;
+  font-weight: 600;
+}
+
 /* Custom CSS injection point */
 #fc-custom-css {}

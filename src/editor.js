@@ -19,20 +19,20 @@ function renderEditor() {
     const sizeOpts = [["cover", "Cover"], ["contain", "Contain"], ["100% auto", "Fit width"], ["auto 100%", "Fit height"]];
     const overrideHtml = url && !hidden ? `<div class="img-override-row">
         <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;white-space:nowrap">
-          <input type="checkbox" ${hasOverride ? "checked" : ""} onchange="toggleImgOverride(${i},this.checked)">Custom</label>
+          <input type="checkbox" ${hasOverride ? "checked" : ""} onchange="toggleImgOverride(${i},this.checked)">${t('editor.custom')}</label>
         ${hasOverride ? `<select class="img-override-select" onchange="updateImgProp(${i},'size',this.value)">${sizeOpts.map(([v, l]) => `<option value="${v}"${img.size === v ? " selected" : ""}>${l}</option>`).join("")
         }</select>` : ""}
-        ${hasOverride && img.size !== "cover" ? `<input type="color" value="${img.color || "#e5e7eb"}" onchange="updateImgProp(${i},'color',this.value)" title="Background color" style="width:26px;height:22px;padding:0;border:1px solid #d1d5db;border-radius:3px;cursor:pointer">` : ""}
+        ${hasOverride && img.size !== "cover" ? `<input type="color" value="${img.color || "#e5e7eb"}" onchange="updateImgProp(${i},'color',this.value)" title="${t('editor.bgColor')}" style="width:26px;height:22px;padding:0;border:1px solid #d1d5db;border-radius:3px;cursor:pointer">` : ""}
       </div>` : "";
     return `
       <div class="image-slot-row${hidden ? " slot-hidden" : ""}" draggable="true" data-slot="${i}">
-        <div class="image-slot-drag-handle" title="Drag to reorder">⠿</div>
+        <div class="image-slot-drag-handle" title="${t('editor.dragHandle')}">⠿</div>
         <div class="image-slot-thumb">
           ${url ? `<img src="${esc(url)}" onerror="this.style.display='none'">` : ""}
         </div>
         <div class="image-slot-info">
-          <div class="image-slot-url">${url ? esc(url) : "No image"}</div>
-          ${hidden ? `<div style="font-size:10px;color:#9ca3af;margin-top:2px">slot ${i} — hidden in this layout</div>` : ""}
+          <div class="image-slot-url">${url ? esc(url) : t('editor.noImage')}</div>
+          ${hidden ? `<div style="font-size:10px;color:#9ca3af;margin-top:2px">${t('editor.hiddenSlot').replace('{n}', i)}</div>` : ""}
         </div>
         <div class="image-slot-btns">
           ${!hidden ? `<button class="btn btn-secondary btn-sm" onclick="openImgModal(${i})">🔍</button>` : ""}
@@ -64,37 +64,37 @@ function renderEditor() {
         const disableDelete = card.sections.length <= minSections;
         return `
             <div class="section-row section-row--paired" id="section-${s.id}">
-              <div class="pair-thumb" onclick="openImgModal(${si})" title="Click to change image">${thumb}</div>
+              <div class="pair-thumb" onclick="openImgModal(${si})" title="${t('editor.clickImg')}">${thumb}</div>
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
                 <div style="display:flex;align-items:center;gap:6px">
-                  <input class="section-label-input" value="${esc(s.label)}" placeholder="Label" oninput="updateSection('${s.id}','label',this.value)">
-                  <button class="icon-btn" onclick="deleteSection('${s.id}')" title="Delete section" ${disableDelete ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>🗑</button>
+                  <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" oninput="updateSection('${s.id}','label',this.value)">
+                  <button class="icon-btn" onclick="deleteSection('${s.id}')" title="${t('misc.delete')}" ${disableDelete ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>🗑</button>
                 </div>
-                <textarea class="section-content-input" rows="4" placeholder="Text label..." oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
+                <textarea class="section-content-input" rows="4" placeholder="${t('editor.pairedPh')}" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
               </div>
             </div>`;
       }
       return `
           <div class="section-row" id="section-${s.id}">
             <div class="section-row-header">
-              <input class="section-label-input" value="${esc(s.label)}" placeholder="Label" oninput="updateSection('${s.id}','label',this.value)">
-              <button class="icon-btn" onclick="moveSection('${s.id}',-1)">↑</button>
-              <button class="icon-btn" onclick="moveSection('${s.id}',1)">↓</button>
-              <button class="icon-btn" onclick="deleteSection('${s.id}')">🗑</button>
+              <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" oninput="updateSection('${s.id}','label',this.value)">
+              <button class="icon-btn" onclick="moveSection('${s.id}',-1)" title="${t('misc.moveUp')}">↑</button>
+              <button class="icon-btn" onclick="moveSection('${s.id}',1)" title="${t('misc.moveDown')}">↓</button>
+              <button class="icon-btn" onclick="deleteSection('${s.id}')" title="${t('misc.delete')}">🗑</button>
             </div>
-            <textarea class="section-content-input" rows="${sectionRows}" placeholder="Markdown content..." oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
+            <textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
           </div>`;
     })
     .join("");
 
   content.innerHTML = `
-        <div class="editor-section">
-      <h3>Layout</h3>
+    <div class="editor-section">
+      <h3>${t('editor.layout')}</h3>
       <div class="layout-grid">${LAYOUTS.map((l) => layoutIcon(l, l === card.layout)).join("")}</div>
-        </div>
+    </div>
 
     <div class="editor-section">
-      <h3>Orientation</h3>
+      <h3>${t('editor.orientation')}</h3>
       ${cardOrientationControls()}
     </div>
 
@@ -102,29 +102,28 @@ function renderEditor() {
       card.layout !== 'fulltext' &&
       card.layout !== '2img-4txt' ? `
     <div class="editor-section">
-      <h3>Image Area Height</h3>
+      <h3>${t('editor.imgHeight')}</h3>
       <div class="height-slider-row">
         <input type="range" min="20" max="90" value="${card.imageHeightPercent}"
           oninput="updateCardProp('imageHeightPercent',+this.value);this.nextElementSibling.textContent=this.value+'%'">
         <span class="height-val">${card.imageHeightPercent}%</span>
       </div>
-    </div>` : ''
-    }
+    </div>` : ''}
 
     <div class="editor-section">
-      <h3>Images (${slotCount} slots)</h3>
+      <h3>${t('editor.images')} (${slotCount} ${t('editor.slots')})</h3>
       <div class="image-slots">${slots}</div>
     </div>
 
     <div class="editor-section">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-        <h3 style="margin:0">Title</h3>
-        <label style="font-size:12px;color:#374151;display:flex;align-items:center;gap:6px">
+        <h3 style="margin:0">${t('editor.title')}</h3>
+        <label style="font-size:12px;color:#1f2937;display:flex;align-items:center;gap:6px">
           <input type="checkbox" ${card.hideTitle ? "checked" : ""} onchange="updateCardProp('hideTitle',this.checked)">
-          Hide in card
+          ${t('editor.hideTitle')}
         </label>
       </div>
-      <input class="title-input" type="text" value="${esc(card.title)}" placeholder="Card title..."
+      <input class="title-input" type="text" value="${esc(card.title)}" placeholder="${t('editor.titlePh')}"
         oninput="updateCardProp('title',this.value)">
       <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px">
         ${cardFontControls("titleFont")}
@@ -132,44 +131,44 @@ function renderEditor() {
     </div>
 
     <div class="editor-section">
-      <h3>Sections</h3>
+      <h3>${t('editor.sections')}</h3>
       <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px">
         ${cardFontControls("contentFont")}
       </div>
       <div class="sections-list ${isCompoundTextLayout ? "sections-list--2col" : ""}" id="sections-list">
-        ${sections || '<div style="color:#555;font-size:12px;padding:8px 0">No sections — add one below</div>'}
+        ${sections || `<div style="color:#555;font-size:12px;padding:8px 0">${t('editor.noSections')}</div>`}
       </div>
       <div style="margin-top:8px;display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap">
-        ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="addSection()">+ Add Section</button>` : ''}
-        ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="togglePasteBlock()">📋 Paste block</button>` : ''}
-        <button class="btn btn-secondary btn-sm" onclick="toggleCardCssEditor()" id="card-css-btn">${card.customCss ? '💅✓' : '💅'} CSS</button>
-             <button class="btn btn-secondary btn-sm" onclick="toggleDataArea()">🐞 Data</button>
+        ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="addSection()">${t('editor.addSection')}</button>` : ''}
+        ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="togglePasteBlock()">${t('editor.pasteBlock')}</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="toggleCardCssEditor()" id="card-css-btn">${card.customCss ? '💅✓' : '💅'} ${t('editor.css')}</button>
+        <button class="btn btn-secondary btn-sm" onclick="toggleDataArea()">${t('editor.data')}</button>
       </div>
       <div id="card-css-area" style="display:${card.customCss ? '' : 'none'};margin-top:8px">
-        <div style="font-size:10px;color:#9ca3af;margin-bottom:4px">Scoped to this card — use .fc-title, .fc-section__content, etc.</div>
+        <div style="font-size:10px;color:#9ca3af;margin-bottom:4px">${t('editor.cssHint')}</div>
         <textarea id="card-css-input" class="section-content-input" rows="5"
           placeholder=".fc-title { font-size: 20px; color: #6b21a8; }&#10;.fc-section__content { line-height: 1.8; }"
           oninput="updateCardCss(this.value)">${esc(card.customCss || '')}</textarea>
       </div>
       <div id="paste-block-area" style="display:none;margin-top:8px">
         <textarea id="paste-block-input" class="section-content-input" rows="6"
-          placeholder="Feature: Broad cap, dark brown&#10;Habitat: Grows on rotting wood&#10;Each line becomes one section"></textarea>
+          placeholder="${t('editor.pasteBlockPh').replace(/\n/g, '&#10;')}"></textarea>
         <div style="display:flex;gap:6px;margin-top:6px">
-          <button class="btn btn-primary btn-sm" onclick="parsePasteBlock('replace')">Replace sections</button>
-          <button class="btn btn-secondary btn-sm" onclick="parsePasteBlock('append')">Append</button>
-          <button class="btn btn-danger btn-sm" onclick="togglePasteBlock()">Cancel</button>
+          <button class="btn btn-primary btn-sm" onclick="parsePasteBlock('replace')">${t('editor.replaceSection')}</button>
+          <button class="btn btn-secondary btn-sm" onclick="parsePasteBlock('append')">${t('editor.append')}</button>
+          <button class="btn btn-danger btn-sm" onclick="togglePasteBlock()">${t('editor.cancel')}</button>
         </div>
       </div>
-          <div id="data-area" style="display:none;margin-top:12px">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-              <label style="font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Current Card Data</label>
-              <div id="data-area-btns" style="display:flex;gap:4px;">
-                <button class="btn btn-secondary btn-sm" onclick="editCardData()">Edit</button>
-              </div>
-            </div>
-            <textarea id="data-area-content" class="section-content-input" style="margin-top:6px; white-space:nowrap; overflow-x:auto;" wrap="off" rows="15" readonly></textarea>
+      <div id="data-area" style="display:none;margin-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <label style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">${t('editor.cardData')}</label>
+          <div id="data-area-btns" style="display:flex;gap:4px;">
+            <button class="btn btn-secondary btn-sm" onclick="editCardData()">${t('editor.edit')}</button>
           </div>
-        </div>`;
+        </div>
+        <textarea id="data-area-content" class="section-content-input" style="margin-top:6px;white-space:nowrap;overflow-x:auto;" wrap="off" rows="15" readonly></textarea>
+      </div>
+    </div>`;
   attachSlotDragHandlers();
   // apply initial paste-block visibility from config
   const pba = document.getElementById("paste-block-area");
@@ -375,13 +374,13 @@ function cardOrientationControls() {
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#374151;cursor:pointer">
         <input type="checkbox" ${useCustom ? "checked" : ""} onchange="toggleCardOrientation(this.checked)">
-        Override
+        ${t('editor.override')}
       </label>
       <div style="display:flex;gap:2px">
-        <button ${btnStyle("portrait")} onclick="setCardOrientation('portrait')">Portrait</button>
-        <button ${btnStyle("landscape")} onclick="setCardOrientation('landscape')">Landscape</button>
+        <button ${btnStyle("portrait")} onclick="setCardOrientation('portrait')">${t('orient.portrait')}</button>
+        <button ${btnStyle("landscape")} onclick="setCardOrientation('landscape')">${t('orient.landscape')}</button>
       </div>
-      ${useCustom ? "" : '<span style="font-size:11px;color:#9ca3af">↑ from global</span>'}
+      ${useCustom ? "" : `<span style="font-size:11px;color:#9ca3af">${t('editor.fromGlobal')}</span>`}
     </div>`;
 }
 
