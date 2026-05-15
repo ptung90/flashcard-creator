@@ -154,7 +154,6 @@ function removeGoogleFont(name) {
 function bindSettings() {
   const ids = {
     "set-paper": (v) => (state.settings.paperSize = v),
-    "set-orient": (v) => (state.settings.orientation = v),
     "set-margin": (v) => (state.settings.margin = +v),
     "set-padding": (v) => (state.settings.padding = +v),
     "set-bw": (v) => (state.settings.border.width = +v),
@@ -182,10 +181,19 @@ function bindSettings() {
   }
 }
 
+function setGlobalOrient(val) {
+  state.settings.orientation = val;
+  applySettingsToUI();
+  setDirty();
+  renderPreview();
+}
+
 function applySettingsToUI() {
   const s = state.settings;
   document.getElementById("set-paper").value = s.paperSize;
-  document.getElementById("set-orient").value = s.orientation;
+  document.querySelectorAll("#set-orient-group .orient-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.val === s.orientation)
+  );
   document.getElementById("set-margin").value = s.margin;
   document.getElementById("set-padding").value = s.padding;
   document.getElementById("set-bw").value = s.border.width;
@@ -303,12 +311,10 @@ function _renderListSidebar() {
   list.innerHTML = state.cards
     .map(
       (c, i) => `
-    <div class="fc-card-item ${c.id === activeCardId ? "active" : ""}" onclick="setActive('${c.id}')">
+    <div class="fc-card-item ${c.id === activeCardId ? "active" : ""}" draggable="true" onclick="setActive('${c.id}')" data-id="${c.id}">
       <span class="card-num">${i + 1}</span>
       <span class="card-title">${esc(c.title || t('card.untitled'))}</span>
       <span class="card-actions">
-        <button class="icon-btn" title="${t('misc.moveUp')}" onclick="event.stopPropagation();moveCard('${c.id}',-1)">↑</button>
-        <button class="icon-btn" title="${t('misc.moveDown')}" onclick="event.stopPropagation();moveCard('${c.id}',1)">↓</button>
         <button class="icon-btn" title="${t('misc.clone')}" onclick="event.stopPropagation();cloneCard('${c.id}')">⧉</button>
         <button class="icon-btn" title="${t('misc.delete')}" onclick="event.stopPropagation();if(confirm(t('confirm.deleteCard')))deleteCard('${c.id}')">🗑</button>
       </span>
@@ -316,6 +322,7 @@ function _renderListSidebar() {
   `,
     )
     .join("");
+  _attachCardDrag('.fc-card-item');
 }
 
 function _renderGridSidebar() {
@@ -333,6 +340,8 @@ function _renderGridSidebar() {
       el.classList.toggle('fc-card-thumb-item--portrait', getCardOrientation(state.cards[i]) !== 'landscape');
       const titleEl = el.querySelector('.card-thumb-title');
       if (titleEl) titleEl.textContent = state.cards[i].title || t('card.untitled');
+      const numEl = el.querySelector('.card-thumb-num');
+      if (numEl) numEl.textContent = i + 1;
     });
     if (_thumbRenderedVersion !== _thumbDirtyVersion) {
       _requestThumbGeneration(items);
@@ -342,10 +351,11 @@ function _renderGridSidebar() {
 
   // Full rebuild needed (cards added/removed/reordered)
   const genId = ++_thumbGenId;
-  list.innerHTML = '<div class="fc-card-grid">' + state.cards.map((c) => `
+  list.innerHTML = '<div class="fc-card-grid">' + state.cards.map((c, i) => `
     <div class="fc-card-thumb-item ${c.id === activeCardId ? "active" : ""} ${getCardOrientation(c) === "landscape" ? "fc-card-thumb-item--landscape" : "fc-card-thumb-item--portrait"}"
-         onclick="setActive('${c.id}')" data-id="${c.id}">
+         draggable="true" onclick="setActive('${c.id}')" data-id="${c.id}">
       <div class="card-thumb-img thumb-loading"></div>
+      <span class="card-thumb-num">${i + 1}</span>
       <div class="card-thumb-title">${esc(c.title || t('card.untitled'))}</div>
       <div class="card-thumb-actions">
         <button class="icon-btn" title="${t('misc.clone')}" onclick="event.stopPropagation();cloneCard('${c.id}')">⧉</button>
@@ -354,6 +364,41 @@ function _renderGridSidebar() {
     </div>
   `).join("") + '</div>';
   _generateThumbs(genId);
+  _attachCardDrag('.fc-card-thumb-item');
+}
+
+function _attachCardDrag(selector) {
+  let dragId = null;
+  document.querySelectorAll(selector).forEach(el => {
+    el.addEventListener('dragstart', e => {
+      dragId = el.dataset.id;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => el.classList.add('card-dragging'), 0);
+    });
+    el.addEventListener('dragend', () => {
+      dragId = null;
+      document.querySelectorAll(selector).forEach(e =>
+        e.classList.remove('card-dragging', 'card-drag-over'));
+    });
+    el.addEventListener('dragover', e => {
+      if (!dragId || el.dataset.id === dragId) return;
+      e.preventDefault();
+      document.querySelectorAll(selector).forEach(e => e.classList.remove('card-drag-over'));
+      el.classList.add('card-drag-over');
+    });
+    el.addEventListener('dragleave', () => el.classList.remove('card-drag-over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!dragId || el.dataset.id === dragId) return;
+      const fromIdx = state.cards.findIndex(c => c.id === dragId);
+      const toIdx = state.cards.findIndex(c => c.id === el.dataset.id);
+      if (fromIdx < 0 || toIdx < 0) return;
+      const [card] = state.cards.splice(fromIdx, 1);
+      state.cards.splice(toIdx, 0, card);
+      dispatch('CARD_MOVED');
+      setDirty();
+    });
+  });
 }
 
 function _requestThumbGeneration(items = null) {
@@ -526,7 +571,61 @@ function closeJsonModal() {
 }
 
 function _fullSnapshot() {
-  return JSON.parse(JSON.stringify({ project_name: state.projectName, settings: state.settings, cards: state.cards }));
+  return JSON.parse(JSON.stringify({ project_name: state.projectName, project_icon: state.projectIcon, settings: state.settings, cards: state.cards }));
+}
+
+// ── Project Icon Emoji Picker ───────────────────────────────────────
+const _EMOJI_CATS = [
+  { label: "Mammals", emojis: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐵","🦍","🦧","🐘","🦒","🦓","🦏","🦛","🐃","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐈","🐇","🦝","🦨","🦡","🦦","🦥","🐿️","🦔","🦭","🐺","🐴","🦄"] },
+  { label: "Birds", emojis: ["🐔","🐧","🦆","🦅","🦉","🦜","🦢","🦩","🕊️","🦃","🦤","🦚","🐦","🪿","🐓"] },
+  { label: "Reptiles & Sea", emojis: ["🐸","🐢","🐍","🦎","🐊","🦖","🦕","🐠","🐟","🐡","🦈","🐬","🐳","🐋","🦭","🐙","🦑","🦐","🦞","🦀","🐚"] },
+  { label: "Insects", emojis: ["🐝","🦋","🐛","🐌","🐞","🐜","🦗","🕷️","🦂","🪲","🪰","🦟","🦠"] },
+  { label: "Nature", emojis: ["🌸","🌺","🌻","🌹","🌷","🌿","🍀","🍁","🍃","🌾","🌵","🌴","🌲","🌳","🌊","🌋","🏔️","🏝️","🌍","🌏"] },
+  { label: "Science", emojis: ["🔬","🧪","🧬","🔭","🧲","💡","🔮","🗺️","📐","📏","📚","📖","🎓","🏛️","⚗️","📡","🧫","🔋","⚙️","🖥️"] },
+  { label: "Food", emojis: ["🍎","🍊","🍋","🍇","🍓","🥑","🥕","🌽","🍄","🍕","🍔","🍜","🍣","🍵","☕","🧁","🍰","🎂","🥐","🍱"] },
+  { label: "Objects", emojis: ["📱","💻","🖥️","📷","🎥","🎙️","🎧","📻","📺","🔦","🔑","🗝️","🔒","🗃️","🎒","💼","🧰","🛠️","⚒️","🧭"] },
+  { label: "Arts", emojis: ["🎨","🖌️","🖍️","✏️","📝","🎭","🎬","🎤","🎵","🎶","🎷","🎸","🎹","🎺","🥁","🎪","🎠","🎡","🎢","🎟️"] },
+  { label: "Sports", emojis: ["⚽","🏀","🏈","⚾","🎾","🏐","🥊","🥋","🎯","🎳","🎮","🎲","🃏","🎴","🧩","🏆","🥇","🎖️","🏅","🎗️"] },
+  { label: "Places", emojis: ["🏠","🏡","🏢","🏥","🏦","🏨","🏫","🏭","🗼","🏰","🗽","🗿","🏯","⛩️","🕌","🛕","🏟️","🏕️","🌉","🌃"] },
+  { label: "Symbols", emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","⭐","🌟","💫","✨","🔥","💥","🎯","👑","🔱","⚜️","🌈","🎆"] },
+];
+
+let _emojiPickerBuilt = false;
+
+function _buildEmojiPicker() {
+  if (_emojiPickerBuilt) return;
+  const picker = document.getElementById("emoji-picker");
+  const grid = _EMOJI_CATS.map(cat =>
+    `<div class="ep-cat-label">${cat.label}</div><div class="ep-grid">${
+      cat.emojis.map(e => `<button class="ep-btn" data-emoji="${e}" onclick="selectProjectIcon(this.dataset.emoji)">${e}</button>`).join("")
+    }</div>`
+  ).join("");
+  picker.innerHTML =
+    `<input id="ep-custom-input" class="ep-custom-input" maxlength="8" placeholder="type or paste any emoji…"
+      oninput="if(this.value.trim()){state.projectIcon=this.value.trim();document.getElementById('project-icon-btn').textContent=this.value.trim();setDirty();}"
+    />${grid}`;
+  _emojiPickerBuilt = true;
+}
+
+function toggleEmojiPicker(event) {
+  event.stopPropagation();
+  _buildEmojiPicker();
+  const picker = document.getElementById("emoji-picker");
+  const isOpen = picker.style.display !== "none";
+  picker.style.display = isOpen ? "none" : "block";
+  if (!isOpen) {
+    const inp = document.getElementById("ep-custom-input");
+    if (inp) { inp.value = state.projectIcon || "🗂️"; inp.focus(); inp.select(); }
+  }
+}
+
+function selectProjectIcon(emoji) {
+  state.projectIcon = emoji;
+  document.getElementById("project-icon-btn").textContent = emoji;
+  const inp = document.getElementById("ep-custom-input");
+  if (inp) inp.value = emoji;
+  document.getElementById("emoji-picker").style.display = "none";
+  setDirty();
 }
 
 function _clipboardWrite(text, toastKey) {
@@ -576,6 +675,82 @@ function copyJsonNoImg() {
   closeJsonModal();
 }
 
+function copyJsonForAI() {
+  const subject = prompt("Generate project about:");
+  if (!subject?.trim()) return;
+  const snapshot = _fullSnapshot();
+  snapshot.cards.forEach(card => {
+    card.images = (card.images || []).map(img =>
+      img?.url?.startsWith("data:") ? { ...img, url: "" } : img
+    );
+  });
+  _clipboardWrite(_buildAiPrompt(subject.trim(), snapshot), 'toast.jsonCopied');
+  closeJsonModal();
+}
+
+function openJsonPreview(text) {
+  document.getElementById("json-preview-textarea").value = text;
+  document.getElementById("json-preview-status").textContent = "";
+  document.getElementById("json-preview-modal").style.display = "flex";
+}
+
+function closeJsonPreview() {
+  document.getElementById("json-preview-modal").style.display = "none";
+}
+
+function validateJsonPreview() {
+  const status = document.getElementById("json-preview-status");
+  try {
+    JSON.parse(document.getElementById("json-preview-textarea").value);
+    status.textContent = "✓ Valid JSON";
+    status.style.color = "#16a34a";
+  } catch (e) {
+    status.textContent = "✗ " + e.message;
+    status.style.color = "#dc2626";
+  }
+}
+
+function applyJsonPreview() {
+  const status = document.getElementById("json-preview-status");
+  let data;
+  try {
+    data = JSON.parse(document.getElementById("json-preview-textarea").value);
+  } catch (e) {
+    status.textContent = "✗ " + e.message;
+    status.style.color = "#dc2626";
+    return;
+  }
+  closeJsonPreview();
+  currentFileName = null;
+  applyLoadedData(data);
+  showToast(t('toast.jsonLoaded'));
+  _autoFetchImages();
+  refreshAllThumbs();
+}
+
+async function _autoFetchImages() {
+  const pending = [];
+  for (const card of state.cards) {
+    for (const img of card.images || []) {
+      if (img.search_query && !img.url) pending.push(img);
+    }
+  }
+  if (!pending.length) return;
+  showToast(`🔍 Fetching ${pending.length} image${pending.length > 1 ? "s" : ""}…`);
+  let filled = 0;
+  await Promise.all(pending.map(async img => {
+    try {
+      const url = await _wikimediaFirstResult(img.search_query);
+      if (url) { img.url = url; filled++; }
+    } catch {}
+  }));
+  if (filled) {
+    dispatch('CARD_UI_CHANGED');
+    setDirty();
+    showToast(`✓ ${filled} image${filled > 1 ? "s" : ""} fetched`);
+  }
+}
+
 async function pasteJsonLoad() {
   let text;
   try {
@@ -584,17 +759,9 @@ async function pasteJsonLoad() {
     showToast(t('toast.clipboardDenied'));
     return;
   }
-  let data;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    showToast(t('toast.jsonInvalid'));
-    return;
-  }
+  if (!text?.trim()) { showToast(t('toast.jsonInvalid')); return; }
   closeJsonModal();
-  currentFileName = null;
-  applyLoadedData(data);
-  showToast(t('toast.jsonLoaded'));
+  openJsonPreview(text.trim());
 }
 
 // ── Init ───────────────────────────────────────────────────────────
@@ -629,6 +796,12 @@ async function init() {
   //   if (e.target === e.currentTarget) closeSettingsModal();
   // });
 
+
+  // Close emoji picker on outside click
+  document.addEventListener("click", () => {
+    const picker = document.getElementById("emoji-picker");
+    if (picker) picker.style.display = "none";
+  });
 
   // Paste image from clipboard — no permission prompt needed
   document.addEventListener("paste", (e) => {

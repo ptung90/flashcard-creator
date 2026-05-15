@@ -78,45 +78,73 @@ function closeSettingsModal() {
   document.getElementById("settings-modal").style.display = "none";
 }
 
+function toggleCfgSection(cb) {
+  const section = cb.closest('.cfg-section');
+  const disabled = !cb.checked;
+  section.classList.toggle('cfg-section--disabled', disabled);
+  section.querySelectorAll('input:not(.cfg-section-chk), select, textarea').forEach(el => {
+    el.disabled = disabled;
+  });
+}
+
+function _sectionEnabled(name) {
+  const el = document.querySelector(`.cfg-section[data-section="${name}"] .cfg-section-chk`);
+  return el ? el.checked : true;
+}
+
 function applyAndSaveSettings() {
   const get = (id) => document.getElementById(id)?.value ?? "";
   const chk = (id) => document.getElementById(id)?.checked ?? false;
+  const on = _sectionEnabled;
 
-  const patch = {
-    pasteBlock: chk("cfg-pasteBlock"),
-    maxImgPx: parseInt(get("cfg-maxImgPx"), 10) || 1240,
-    newCard: {
+  const patch = {};
+  if (on("behaviour")) {
+    patch.pasteBlock = chk("cfg-pasteBlock");
+    patch.maxImgPx = parseInt(get("cfg-maxImgPx"), 10) || 1240;
+  }
+  if (on("newcard")) {
+    patch.newCard = {
       ...((window.FC_CONFIG || {}).newCard || {}),
       layout: get("cfg-newCard-layout"),
       imageHeightPercent: parseInt(get("cfg-newCard-ihp"), 10) || 80,
-    },
-    paperSize: get("cfg-paperSize"),
-    orientation: get("cfg-orientation"),
-    margin: parseFloat(get("cfg-margin")) || 0,
-    padding: parseFloat(get("cfg-padding")) || 0,
-    border: {
+    };
+  }
+  if (on("paper")) {
+    patch.paperSize = get("cfg-paperSize");
+    patch.orientation = get("cfg-orientation");
+    patch.margin = parseFloat(get("cfg-margin")) || 0;
+    patch.padding = parseFloat(get("cfg-padding")) || 0;
+  }
+  if (on("border")) {
+    patch.border = {
       width: parseInt(get("cfg-border-width"), 10) || 0,
       style: get("cfg-border-style"),
       color: get("cfg-border-color"),
       radius: parseInt(get("cfg-border-radius"), 10) || 0,
-    },
-    image: {
+    };
+  }
+  if (on("image")) {
+    patch.image = {
       backgroundSize: get("cfg-img-size"),
       backgroundPosition: get("cfg-img-pos") || "center",
-    },
-    titleFont: {
+    };
+  }
+  if (on("tfont")) {
+    patch.titleFont = {
       family: get("cfg-font-family") || "sans-serif",
       size: parseInt(get("cfg-font-size"), 10) || 14,
       color: get("cfg-font-color"),
       lineHeight: parseFloat(get("cfg-font-lh")) || 1.0,
-    },
-    contentFont: {
+    };
+  }
+  if (on("cfont")) {
+    patch.contentFont = {
       family: get("cfg-cfont-family") || "sans-serif",
       size: parseInt(get("cfg-cfont-size"), 10) || 12,
       color: get("cfg-cfont-color"),
       lineHeight: parseFloat(get("cfg-cfont-lh")) || 1.1,
-    },
-  };
+    };
+  }
 
   // Merge into FC_CONFIG
   const cfg = window.FC_CONFIG || {};
@@ -143,16 +171,18 @@ function applyAndSaveSettings() {
     );
   }
 
-  // Apply paper/spacing settings to current session
-  state.settings.paperSize = cfg.paperSize;
-  state.settings.orientation = cfg.orientation;
-  state.settings.margin = cfg.margin;
-  state.settings.padding = cfg.padding;
-  state.settings.border = { ...cfg.border };
-  state.settings.image = { ...cfg.image };
-  state.settings.titleFont = { ...cfg.titleFont };
-  state.settings.contentFont = { ...cfg.contentFont };
-  MAX_IMG_PX = cfg.maxImgPx ?? 1240;
+  // Apply only enabled sections to current session
+  if (on("paper")) {
+    state.settings.paperSize = cfg.paperSize;
+    state.settings.orientation = cfg.orientation;
+    state.settings.margin = cfg.margin;
+    state.settings.padding = cfg.padding;
+  }
+  if (on("border")) state.settings.border = { ...cfg.border };
+  if (on("image")) state.settings.image = { ...cfg.image };
+  if (on("tfont")) state.settings.titleFont = { ...cfg.titleFont };
+  if (on("cfont")) state.settings.contentFont = { ...cfg.contentFont };
+  if (on("behaviour")) MAX_IMG_PX = cfg.maxImgPx ?? 1240;
   applySettingsToUI();
   renderPreview();
   closeSettingsModal();
@@ -252,8 +282,28 @@ function insertUrl() {
   document.getElementById("url-preview-img").style.display = "none";
 }
 
-// ── Paste image to specific slot ──────────────────────────────────
+// ── Copy / Paste image between slots ──────────────────────────────
 let pendingPasteSlot = null;
+let _imgClipboard = null;
+
+function copySlot(slot) {
+  const card = getActiveCard();
+  if (!card) return;
+  const img = card.images.find((i) => i.slot === slot);
+  if (!img || !img.url) return;
+  _imgClipboard = { ...img };
+  showToast('Image copied');
+}
+
+function _pasteFromImgClipboard(slot) {
+  const card = getActiveCard();
+  if (!card || !_imgClipboard) return;
+  const existing = card.images.find((i) => i.slot === slot);
+  const newImg = { ..._imgClipboard, slot };
+  if (existing) Object.assign(existing, newImg);
+  else card.images.push(newImg);
+  dispatch('CARD_UI_CHANGED');
+}
 
 async function pasteToSlot(slot) {
   imgModalSlot = slot;
@@ -273,19 +323,23 @@ async function pasteToSlot(slot) {
         return;
       }
     }
+    // Clipboard readable but no image — use internal clipboard
+    if (_imgClipboard) { _pasteFromImgClipboard(slot); return; }
   } catch {
-    // Permission denied or no image — fall back to passive paste listener
-    pendingPasteSlot = slot;
-    document.querySelectorAll(".image-slot-row").forEach((r, i) => {
-      r.style.outline = i === slot ? "2px solid #a855f7" : "";
-    });
-    setTimeout(() => {
-      if (pendingPasteSlot === slot) {
-        pendingPasteSlot = null;
-        document
-          .querySelectorAll(".image-slot-row")
-          .forEach((r) => (r.style.outline = ""));
-      }
-    }, 10000);
+    // Permission denied — use internal clipboard if available
+    if (_imgClipboard) { _pasteFromImgClipboard(slot); return; }
   }
+  // Last resort: passive paste listener
+  pendingPasteSlot = slot;
+  document.querySelectorAll(".image-slot-row").forEach((r, i) => {
+    r.style.outline = i === slot ? "2px solid #a855f7" : "";
+  });
+  setTimeout(() => {
+    if (pendingPasteSlot === slot) {
+      pendingPasteSlot = null;
+      document
+        .querySelectorAll(".image-slot-row")
+        .forEach((r) => (r.style.outline = ""));
+    }
+  }, 10000);
 }

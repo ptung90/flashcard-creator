@@ -295,6 +295,9 @@
 }
 
 .cfg-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -303,6 +306,19 @@
   border-bottom: 1px solid #e9d5ff;
   padding-bottom: 4px;
   margin-bottom: 8px;
+}
+
+.cfg-section-chk {
+  width: 13px;
+  height: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+  accent-color: #6b21a8;
+}
+
+.cfg-section--disabled .cfg-row {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 .cfg-row {
@@ -358,6 +374,129 @@
 
 .cfg-color-row input[type="text"] {
   flex: 1;
+}
+
+/* Load modal folder navigation */
+.load-folder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  margin-bottom: 6px;
+}
+
+.load-folder-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.breadcrumb-back {
+  /* color: #6b21a8; */
+  cursor: pointer;
+}
+
+
+/* .breadcrumb-back:hover {
+  text-decoration: underline;
+} */
+
+.breadcrumb-sep {
+  color: #9ca3af;
+}
+
+.breadcrumb-cur {
+  color: #1f2937;
+  opacity: 0.5;
+}
+
+.folder-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.folder-item:hover {
+  background: #ede9fe;
+}
+
+.folder-tree {
+  color: #d1d5db;
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-right: -4px;
+}
+
+.folder-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.folder-item-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.folder-item-arrow {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.recent-path {
+  color: #6b21a8;
+  font-weight: 500;
+}
+
+/* Move file menu */
+.move-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  z-index: 100;
+  min-width: 140px;
+  overflow: hidden;
+}
+
+.move-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 7px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #1f2937;
+}
+
+.move-menu-item:hover {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.folder-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 6px 0;
 }
 
 /* JSON Export Modal */

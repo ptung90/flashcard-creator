@@ -98,6 +98,7 @@ let state = {
   },
   cards: [],
   projectName: "Untitled",
+  projectIcon: "🗂️",
 };
 
 let activeCardId = null;

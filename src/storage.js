@@ -54,7 +54,7 @@ function setRecentMeta(list) {
     localStorage.setItem("fc_recent", JSON.stringify(list));
   } catch { }
 }
-async function addToRecent(name, dataObj) {
+async function addToRecent(name, dataObj, path) {
   const id = "r" + Date.now();
   const meta = getRecentMeta();
   const kept = meta.filter((m) => m.name !== name).slice(0, 4);
@@ -66,6 +66,7 @@ async function addToRecent(name, dataObj) {
     {
       id,
       name,
+      path: path || name,
       savedAt: new Date().toISOString(),
       cardCount: (dataObj.cards || []).length,
     },
@@ -87,73 +88,118 @@ function formatRelDate(iso) {
 
 // ── Load modal ─────────────────────────────────────────────────────
 async function openLoadModal() {
-  const folderSection = document.getElementById("load-folder-section");
-  const folderList = document.getElementById("load-folder-list");
-  const folderNameEl = document.getElementById("load-folder-name");
-  if (workDirHandle) {
-    folderSection.style.display = "block";
-    folderNameEl.textContent = workDirHandle.name;
-    folderList.innerHTML = '<div class="recent-empty">Loading…</div>';
-    try {
-      const perm = await workDirHandle.requestPermission({ mode: "readwrite" });
-      if (perm !== "granted") throw new Error("Permission denied — click Set Folder again");
-      const files = [];
-      for await (const [name, handle] of workDirHandle.entries()) {
-        if (handle.kind === "file" && name.endsWith(".json") && name !== "user-config.json") {
-          const file = await handle.getFile();
-          let projectName = name;
-          try {
-            const data = JSON.parse(await file.text());
-            projectName = data.project_name || name;
-          } catch (_) { }
-          files.push({ name, projectName, lastModified: file.lastModified });
-        }
-      }
-      files.sort((a, b) => b.lastModified - a.lastModified);
-      if (!files.length) {
-        folderList.innerHTML = '<div class="recent-empty">No JSON files in folder</div>';
-      } else {
-        folderList.innerHTML = files.map((f) => {
-          const sn = JSON.stringify(f.name);
-          const isActive = f.name === currentFileName;
-          return `
-                  <div class="recent-item${isActive ? " recent-item--active" : ""}">
-                    <div class="recent-item-info">
-                      <div class="recent-item-name">${esc(f.projectName)}</div>
-                      <div class="recent-item-meta">${esc(f.name)} · ${formatRelDate(f.lastModified)}</div>
-                    </div>
-                    <div class="recent-item-btns">
-                      <button class="btn btn-primary btn-sm" onclick='loadFromFolder(${sn})'>Open</button>
-                      <button class="btn btn-danger btn-sm" onclick='deleteFromFolder(${sn},this)'>✕</button>
-                    </div>
-                  </div>`;
-        }).join("");
-      }
-    } catch (err) {
-      folderList.innerHTML = `<div class="recent-empty">${esc(err.message)}</div>`;
-    }
-  } else {
-    folderSection.style.display = "none";
-  }
+  _modalSubfolder = currentSubfolder;
+  document.getElementById("load-modal").style.display = "flex";
+  await _renderFolderSection();
+  _renderRecentList();
+}
 
+function _renderRecentList() {
   const meta = getRecentMeta();
   const list = document.getElementById("load-recent-list");
-  if (!meta.length) {
-    list.innerHTML = '<div class="recent-empty">No recent files — browse a JSON file to get started</div>';
+  list.innerHTML = meta.length ? meta.map((m) => `
+    <div class="recent-item">
+      <div class="recent-item-info">
+        <div class="recent-item-name">${esc(m.name)}</div>
+        <div class="recent-item-meta">${m.path && m.path !== m.name ? `<span class="recent-path">${esc(m.path)}</span> · ` : ""}${m.cardCount} card${m.cardCount !== 1 ? "s" : ""} · ${formatRelDate(m.savedAt)}</div>
+      </div>
+      <div class="recent-item-btns">
+        <button class="btn btn-primary btn-sm" onclick="loadFromRecent('${m.id}')">Open</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRecentItem('${m.id}',this)">✕</button>
+      </div>
+    </div>`).join("")
+    : '<div class="recent-empty">No recent files — browse a JSON file to get started</div>';
+}
+
+async function _renderFolderSection() {
+  const folderSection = document.getElementById("load-folder-section");
+  const folderList = document.getElementById("load-folder-list");
+  const breadcrumb = document.getElementById("load-folder-breadcrumb");
+  const newFolderBtn = document.getElementById("load-new-folder-btn");
+
+  if (!workDirHandle) { folderSection.style.display = "none"; return; }
+  folderSection.style.display = "block";
+
+  // breadcrumb
+  if (_modalSubfolder) {
+    breadcrumb.innerHTML = `<span class="breadcrumb-back" onclick="browseSubfolder(null)">📁 ${esc(workDirHandle.name)}</span><span class="breadcrumb-sep">›</span><span class="breadcrumb-cur">📁 ${esc(_modalSubfolder)}</span>`;
+    newFolderBtn.style.display = "none";
   } else {
-    list.innerHTML = meta.map((m) => `
-            <div class="recent-item">
-              <div class="recent-item-info">
-                <div class="recent-item-name">${esc(m.name)}</div>
-                <div class="recent-item-meta">${m.cardCount} card${m.cardCount !== 1 ? "s" : ""} · ${formatRelDate(m.savedAt)}</div>
-              </div>
-              <div class="recent-item-btns">
-                <button class="btn btn-primary btn-sm" onclick="loadFromRecent('${m.id}')">Open</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteRecentItem('${m.id}',this)">✕</button>
-              </div>
-            </div>`).join("");
+    breadcrumb.innerHTML = `<span class="breadcrumb-cur">📁 ${esc(workDirHandle.name)}</span>`;
+    newFolderBtn.style.display = "";
   }
-  document.getElementById("load-modal").style.display = "flex";
+
+  folderList.innerHTML = '<div class="recent-empty">Loading…</div>';
+  try {
+    const perm = await workDirHandle.requestPermission({ mode: "readwrite" });
+    if (perm !== "granted") throw new Error("Permission denied — click Set Folder again");
+
+    const activeDir = _modalSubfolder
+      ? await workDirHandle.getDirectoryHandle(_modalSubfolder)
+      : workDirHandle;
+
+    const folders = [], files = [];
+    for await (const [name, handle] of activeDir.entries()) {
+      if (handle.kind === "directory" && !_modalSubfolder) {
+        folders.push(name);
+      } else if (handle.kind === "file" && name.endsWith(".json") && name !== "user-config.json") {
+        const file = await handle.getFile();
+        let projectName = name, projectIcon = "🗂️";
+        try { const d = JSON.parse(await file.text()); projectName = d.project_name || name; projectIcon = d.project_icon || "🗂️"; } catch (_) {}
+        files.push({ name, projectName, projectIcon, lastModified: file.lastModified });
+      }
+    }
+    folders.sort((a, b) => a.localeCompare(b));
+    files.sort((a, b) => b.lastModified - a.lastModified);
+    _modalFolders = folders;
+
+    const folderHtml = folders.map(f => {
+      const sn = JSON.stringify(f);
+      return `<div class="folder-item" onclick='browseSubfolder(${sn})'>
+        <span class="folder-tree">└</span><span class="folder-icon">📁</span>
+        <span class="folder-item-name">${esc(f)}</span>
+        <span class="folder-item-arrow">›</span>
+      </div>`;
+    }).join("");
+
+    const fileHtml = files.map(f => {
+      const sn = JSON.stringify(f.name);
+      const isActive = f.name === currentFileName && _modalSubfolder === currentSubfolder;
+      return `<div class="recent-item${isActive ? " recent-item--active" : ""}">
+        <div class="recent-item-info">
+          <div class="recent-item-name">${esc(f.projectIcon)} ${esc(f.projectName)}</div>
+          <div class="recent-item-meta">${esc(f.name)} · ${formatRelDate(f.lastModified)}</div>
+        </div>
+        <div class="recent-item-btns" style="position:relative">
+          <button class="btn btn-primary btn-sm" onclick='loadFromFolder(${sn})'>Open</button>
+          <button class="btn btn-secondary btn-sm" onclick='showMoveMenu(${sn},this)' title="Move to folder">⇄</button>
+          <button class="btn btn-danger btn-sm" onclick='deleteFromFolder(${sn},this)'>✕</button>
+        </div>
+      </div>`;
+    }).join("");
+
+    const divider = folderHtml && fileHtml ? '<div class="folder-divider"></div>' : "";
+    folderList.innerHTML = folderHtml + divider + fileHtml
+      || '<div class="recent-empty">Empty folder</div>';
+  } catch (err) {
+    folderList.innerHTML = `<div class="recent-empty">${esc(err.message)}</div>`;
+  }
+}
+
+async function browseSubfolder(name) {
+  _modalSubfolder = name;
+  await _renderFolderSection();
+}
+
+async function createSubfolder() {
+  const name = prompt("Folder name:");
+  if (!name) return;
+  const clean = name.trim().replace(/[\\/:*?"<>|]/g, "");
+  if (!clean) return;
+  try {
+    await workDirHandle.getDirectoryHandle(clean, { create: true });
+    await browseSubfolder(clean);
+  } catch (e) { alert("Cannot create folder: " + e.message); }
 }
 function closeLoadModal() {
   document.getElementById("load-modal").style.display = "none";
@@ -169,6 +215,7 @@ async function newProject() {
   state.projectName = "Untitled";
   activeCardId = null;
   currentFileName = null;
+  currentSubfolder = null;
   closeLoadModal();
   dispatch('INIT_LOAD');
   clearDirty();
@@ -189,7 +236,10 @@ async function deleteRecentItem(id, btn) {
 
 // ── Save / Load JSON ───────────────────────────────────────────────
 let workDirHandle = null;
+let currentSubfolder = null;  // null = root, string = subfolder name
 let currentFileName = null;
+let _modalSubfolder = null;   // browsing state inside load modal
+let _modalFolders = [];       // all subfolders, used by move menu
 let dirty = false;
 let _autoSaveTimer = null;
 
@@ -219,7 +269,8 @@ async function _autoSaveToFile() {
   try {
     const dataObj = _buildDataObj();
     await _writeToDir(currentFileName, JSON.stringify(dataObj, null, 2));
-    localStorage.setItem("fc_last_file", currentFileName);
+    const path = currentSubfolder ? `${currentSubfolder}/${currentFileName}` : currentFileName;
+    localStorage.setItem("fc_last_file", path);
     clearDirty();
     showToast("✓ Saved");
   } catch (_) { }
@@ -231,8 +282,13 @@ function _updateLabels() {
   const dot = document.getElementById("dirty-dot");
   if (dirLabel) dirLabel.textContent = workDirHandle ? workDirHandle.name : "Set Folder";
   if (pnInput && pnInput !== document.activeElement) pnInput.value = state.projectName || "Untitled";
+  const iconBtn = document.getElementById("project-icon-btn");
+  if (iconBtn) iconBtn.textContent = state.projectIcon || "🗂️";
   const fileLabel = document.getElementById("current-file-label");
-  if (fileLabel) fileLabel.textContent = currentFileName || "";
+  if (fileLabel) {
+    const path = currentSubfolder && currentFileName ? `${currentSubfolder}/${currentFileName}` : (currentFileName || "");
+    fileLabel.textContent = path;
+  }
   if (dot) dot.style.display = dirty ? "inline" : "none";
 }
 
@@ -255,10 +311,16 @@ async function setWorkDir() {
   }
 }
 
+async function _getActiveDirHandle() {
+  if (!currentSubfolder) return workDirHandle;
+  return await workDirHandle.getDirectoryHandle(currentSubfolder);
+}
+
 async function _writeToDir(fileName, json) {
   const perm = await workDirHandle.requestPermission({ mode: "readwrite" });
   if (perm !== "granted") throw new Error("Permission denied");
-  const fh = await workDirHandle.getFileHandle(fileName, { create: true });
+  const dir = await _getActiveDirHandle();
+  const fh = await dir.getFileHandle(fileName, { create: true });
   const w = await fh.createWritable();
   await w.write(json);
   await w.close();
@@ -272,7 +334,7 @@ function _fallbackDownload(json, name) {
 }
 
 function _buildDataObj() {
-  return { version: "1.0", project_name: state.projectName, ...state };
+  return { version: "1.0", project_name: state.projectName, project_icon: state.projectIcon, ...state };
 }
 
 function _defaultFileName() {
@@ -315,9 +377,10 @@ async function saveJSONAs() {
     if (!raw) return;
     const name = raw.endsWith(".json") ? raw : raw + ".json";
     if (name !== currentFileName) {
+      const dir = await _getActiveDirHandle();
       let exists = false;
       try {
-        await workDirHandle.getFileHandle(name, { create: false });
+        await dir.getFileHandle(name, { create: false });
         exists = true;
       } catch (e) { if (e.name !== "NotFoundError") exists = true; }
       if (exists && !confirm(`"${name}" already exists. Overwrite?`)) return;
@@ -325,7 +388,8 @@ async function saveJSONAs() {
     try {
       await _writeToDir(name, json);
       currentFileName = name;
-      localStorage.setItem("fc_last_file", currentFileName);
+      const path = currentSubfolder ? `${currentSubfolder}/${name}` : name;
+      localStorage.setItem("fc_last_file", path);
       addToRecent(name, dataObj).catch(() => { });
       clearDirty();
       return;
@@ -352,13 +416,18 @@ async function saveJSONAs() {
 
 async function loadFromFolder(fileName) {
   try {
-    const fh = await workDirHandle.getFileHandle(fileName);
+    const dir = _modalSubfolder
+      ? await workDirHandle.getDirectoryHandle(_modalSubfolder)
+      : workDirHandle;
+    const fh = await dir.getFileHandle(fileName);
     const file = await fh.getFile();
     const data = JSON.parse(await file.text());
+    currentSubfolder = _modalSubfolder;
     currentFileName = fileName;
     _updateLabels();
     applyLoadedData(data);
-    addToRecent(fileName, data).catch(() => { });
+    const fullPath = _modalSubfolder ? `${_modalSubfolder}/${fileName}` : fileName;
+    addToRecent(fileName, data, fullPath).catch(() => { });
     closeLoadModal();
   } catch (err) { alert("Không đọc được file: " + err.message); }
 }
@@ -366,9 +435,57 @@ async function loadFromFolder(fileName) {
 async function deleteFromFolder(fileName, btn) {
   if (!confirm("Xóa " + fileName + "?")) return;
   try {
-    await workDirHandle.removeEntry(fileName);
+    const dir = _modalSubfolder
+      ? await workDirHandle.getDirectoryHandle(_modalSubfolder)
+      : workDirHandle;
+    await dir.removeEntry(fileName);
     btn.closest(".recent-item").remove();
   } catch (err) { alert("Không xóa được: " + err.message); }
+}
+
+function showMoveMenu(fileName, btn) {
+  closeMoveMenu();
+  const destinations = [
+    ...(_modalSubfolder ? [{ label: "📁 Root", value: null }] : []),
+    ..._modalFolders.filter(f => f !== _modalSubfolder).map(f => ({ label: `📁 ${f}`, value: f })),
+  ];
+  if (!destinations.length) return;
+  const menu = document.createElement("div");
+  menu.id = "move-menu";
+  menu.className = "move-menu";
+  menu.innerHTML = destinations.map(d =>
+    `<button class="move-menu-item" onclick='_execMove(${JSON.stringify(fileName)},${JSON.stringify(d.value)})'>${esc(d.label)}</button>`
+  ).join("");
+  menu.addEventListener("click", e => e.stopPropagation());
+  btn.after(menu);
+  setTimeout(() => document.addEventListener("click", closeMoveMenu, { once: true }), 0);
+}
+
+function closeMoveMenu() {
+  document.getElementById("move-menu")?.remove();
+}
+
+async function _execMove(fileName, destSubfolder) {
+  closeMoveMenu();
+  try {
+    const srcDir = _modalSubfolder
+      ? await workDirHandle.getDirectoryHandle(_modalSubfolder)
+      : workDirHandle;
+    const destDir = destSubfolder
+      ? await workDirHandle.getDirectoryHandle(destSubfolder, { create: true })
+      : workDirHandle;
+    const text = await (await (await srcDir.getFileHandle(fileName)).getFile()).text();
+    const writable = await (await destDir.getFileHandle(fileName, { create: true })).createWritable();
+    await writable.write(text);
+    await writable.close();
+    await srcDir.removeEntry(fileName);
+    if (currentFileName === fileName && currentSubfolder === _modalSubfolder) {
+      currentSubfolder = destSubfolder;
+      const newPath = destSubfolder ? `${destSubfolder}/${fileName}` : fileName;
+      localStorage.setItem("fc_last_file", newPath);
+    }
+    await _renderFolderSection();
+  } catch (err) { alert("Move failed: " + err.message); }
 }
 
 async function openFilePicker() {
@@ -418,8 +535,18 @@ async function _autoRestore() {
   } catch (_) { }
 }
 
-async function _loadFileFromWorkDir(fileName) {
-  const fh = await workDirHandle.getFileHandle(fileName);
+async function _loadFileFromWorkDir(path) {
+  const parts = path.split("/");
+  let dir = workDirHandle;
+  let fileName = path;
+  if (parts.length === 2) {
+    dir = await workDirHandle.getDirectoryHandle(parts[0]);
+    fileName = parts[1];
+    currentSubfolder = parts[0];
+  } else {
+    currentSubfolder = null;
+  }
+  const fh = await dir.getFileHandle(fileName);
   const file = await fh.getFile();
   const data = JSON.parse(await file.text());
   currentFileName = fileName;
@@ -455,6 +582,7 @@ function toggleSidebar() {
 function applyLoadedData(data) {
   if (data.version && data.version !== "1.0") console.warn("Unknown JSON version:", data.version);
   state.projectName = data.project_name || "Untitled";
+  state.projectIcon = data.project_icon || "🗂️";
   if (data.settings) {
     state.settings = { ...state.settings, ...data.settings };
     const defaultTF = { family: "sans-serif", size: 14, color: "#1a1a1a", lineHeight: 1.0, textAlign: "left" };

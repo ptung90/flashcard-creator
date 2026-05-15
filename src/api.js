@@ -149,10 +149,24 @@ Rules:
 - Replace title and section content with accurate, concise information about the new subject
 - Keep all settings, fonts, and layout configurations unchanged
 - Set "project_name" to the new subject
+- Set "project_icon" to a single emoji that best represents the subject theme
+- For each image object in card.images: set "search_query" to a concise English search term that would find a relevant image on Wikipedia/Wikimedia Commons (e.g. species binomial name, landmark name); set "url" to ""
 - Return ONLY valid JSON matching the exact same schema, no explanation
 
 Project JSON:
 ${JSON.stringify(snapshot, null, 2)}`;
+}
+
+async function _wikimediaFirstResult(query) {
+  const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(query)}&gsrlimit=5&prop=imageinfo&iiprop=url&iiurlwidth=900&format=json&origin=*`;
+  const r = await fetch(url);
+  const data = await r.json();
+  const pages = Object.values(data.query?.pages || {});
+  for (const p of pages) {
+    const u = p.imageinfo?.[0]?.url;
+    if (u) return u;
+  }
+  return null;
 }
 
 async function _callOpenAI(key, prompt) {
@@ -235,9 +249,7 @@ async function aiGenerateProject() {
       ? await _callGemini(key, prompt)
       : await _callOpenAI(key, prompt);
     closeJsonModal();
-    currentFileName = null;
-    applyLoadedData(newProject);
-    showToast(`✦ ${t('ai.done')} "${subject}"`);
+    openJsonPreview(JSON.stringify(newProject, null, 2));
   } catch (e) {
     statusEl.textContent = e.message;
   } finally {

@@ -36,6 +36,7 @@ function renderEditor() {
         </div>
         <div class="image-slot-btns">
           ${!hidden ? `<button class="btn btn-secondary btn-sm" onclick="openImgModal(${i})">🔍</button>` : ""}
+          ${url && !hidden ? `<button class="btn btn-secondary btn-sm" onclick="copySlot(${i})" title="Copy image">⎘</button>` : ""}
           ${!hidden ? `<button class="btn btn-secondary btn-sm" onclick="pasteToSlot(${i})" title="Paste image from clipboard (Ctrl+V)">📋</button>` : ""}
           ${url ? `<button class="btn btn-danger btn-sm" onclick="clearSlot(${i})">✕</button>` : ""}
         </div>
@@ -66,9 +67,9 @@ function renderEditor() {
             <div class="section-row section-row--paired" id="section-${s.id}">
               <div class="pair-thumb" onclick="openImgModal(${si})" title="${t('editor.clickImg')}">${thumb}</div>
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
-                <div style="display:flex;align-items:center;gap:6px">
+                <div class="section-row-header">
                   <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" oninput="updateSection('${s.id}','label',this.value)">
-                  <button class="icon-btn" onclick="deleteSection('${s.id}')" title="${t('misc.delete')}" ${disableDelete ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>🗑</button>
+                  <button class="icon-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More">⋮</button>
                 </div>
                 <textarea class="section-content-input" rows="4" placeholder="${t('editor.pairedPh')}" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
               </div>
@@ -78,9 +79,7 @@ function renderEditor() {
           <div class="section-row" id="section-${s.id}">
             <div class="section-row-header">
               <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" oninput="updateSection('${s.id}','label',this.value)">
-              <button class="icon-btn" onclick="moveSection('${s.id}',-1)" title="${t('misc.moveUp')}">↑</button>
-              <button class="icon-btn" onclick="moveSection('${s.id}',1)" title="${t('misc.moveDown')}">↓</button>
-              <button class="icon-btn" onclick="deleteSection('${s.id}')" title="${t('misc.delete')}">🗑</button>
+              <button class="icon-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More">⋮</button>
             </div>
             <textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
           </div>`;
@@ -363,12 +362,9 @@ function cardOrientationControls() {
   if (!card) return "";
   const useCustom = !!card.orientation;
   const effective = card.orientation || state.settings.orientation;
-  const btnStyle = (val) => {
+  const btnCls = (val) => {
     const active = effective === val;
-    const base = "btn btn-secondary btn-sm";
-    const activeStyle = active ? "background:#ede9fe;border-color:#a78bfa;color:#6b21a8;" : "";
-    const disabledStyle = useCustom ? "" : "opacity:0.4;pointer-events:none;";
-    return `class="${base}" style="${activeStyle}${disabledStyle}"`;
+    return `btn btn-secondary btn-sm orient-btn${active ? " active" : ""}${useCustom ? "" : " disabled"}`;
   };
   return `
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -376,9 +372,9 @@ function cardOrientationControls() {
         <input type="checkbox" ${useCustom ? "checked" : ""} onchange="toggleCardOrientation(this.checked)">
         ${t('editor.override')}
       </label>
-      <div style="display:flex;gap:2px">
-        <button ${btnStyle("portrait")} onclick="setCardOrientation('portrait')">${t('orient.portrait')}</button>
-        <button ${btnStyle("landscape")} onclick="setCardOrientation('landscape')">${t('orient.landscape')}</button>
+      <div class="btn-group">
+        <button class="${btnCls('portrait')}" onclick="setCardOrientation('portrait')">${t('orient.portrait')}</button>
+        <button class="${btnCls('landscape')}" onclick="setCardOrientation('landscape')">${t('orient.landscape')}</button>
       </div>
       ${useCustom ? "" : `<span style="font-size:11px;color:#9ca3af">${t('editor.fromGlobal')}</span>`}
     </div>`;
@@ -563,6 +559,88 @@ function moveSection(id, dir) {
     card.sections[j],
     card.sections[i],
   ];
+  dispatch('CARD_UI_CHANGED');
+}
+
+function openSectionMenu(id, btn) {
+  closeSectionMenu();
+  const card = getActiveCard();
+  const canPaste = !!_sectionClipboard;
+  const canPasteWithImg = !!(_sectionClipboard?.image);
+  const minSections = LAYOUT_SLOTS[card.layout] || 0;
+  const canDelete = card.sections.length > minSections;
+  const isPaired = card.layout === "2img-2txt" || card.layout === "8img-8txt";
+  const menu = document.createElement('div');
+  menu.id = 'section-menu';
+  menu.className = 'section-menu';
+  menu.innerHTML = `
+    <button class="section-menu-item" onclick="moveSection('${id}',-1);closeSectionMenu()"><span class="smi">↑</span> Move up</button>
+    <button class="section-menu-item" onclick="moveSection('${id}',1);closeSectionMenu()"><span class="smi">↓</span> Move down</button>
+    <div class="section-menu-sep"></div>
+    <button class="section-menu-item" onclick="copySection('${id}');closeSectionMenu()"><span class="smi">⎘</span> Copy${isPaired ? ' text only' : ''}</button>
+    ${isPaired ? `<button class="section-menu-item" onclick="copySectionWithImage('${id}');closeSectionMenu()"><span class="smi">⎘</span> Copy with image</button>` : ''}
+    <button class="section-menu-item${canPaste ? '' : ' disabled'}" onclick="pasteSection('${id}');closeSectionMenu()"><span class="smi">📋</span> Paste${isPaired ? ' text only' : ''}</button>
+    ${isPaired ? `<button class="section-menu-item${canPasteWithImg ? '' : ' disabled'}" onclick="pasteSectionWithImage('${id}');closeSectionMenu()"><span class="smi">📋</span> Paste with image</button>` : ''}
+    <div class="section-menu-sep"></div>
+    <button class="section-menu-item section-menu-item--danger${canDelete ? '' : ' disabled'}" onclick="deleteSection('${id}');closeSectionMenu()"><span class="smi">🗑</span> Delete</button>
+  `;
+  menu.addEventListener('click', e => e.stopPropagation());
+  btn.after(menu);
+  setTimeout(() => document.addEventListener('click', closeSectionMenu, { once: true }), 0);
+}
+
+function closeSectionMenu() {
+  document.getElementById('section-menu')?.remove();
+}
+
+let _sectionClipboard = null;
+
+function copySection(id) {
+  const card = getActiveCard();
+  if (!card) return;
+  const s = card.sections.find((s) => s.id === id);
+  if (!s) return;
+  _sectionClipboard = { label: s.label, content: s.content };
+  showToast('Section copied');
+}
+
+function pasteSection(id) {
+  if (!_sectionClipboard) return;
+  if (!confirm('Overwrite this section?')) return;
+  const card = getActiveCard();
+  if (!card) return;
+  const s = card.sections.find((s) => s.id === id);
+  if (!s) return;
+  s.label = _sectionClipboard.label;
+  s.content = _sectionClipboard.content;
+  dispatch('CARD_UI_CHANGED');
+}
+
+function copySectionWithImage(id) {
+  const card = getActiveCard();
+  if (!card) return;
+  const si = card.sections.findIndex(s => s.id === id);
+  const s = card.sections[si];
+  if (!s) return;
+  const img = card.images.find(im => im.slot === si);
+  _sectionClipboard = { label: s.label, content: s.content, image: img ? { ...img } : null };
+  showToast('Pair copied');
+}
+
+function pasteSectionWithImage(id) {
+  if (!_sectionClipboard?.image) return;
+  if (!confirm('Overwrite this section and image?')) return;
+  const card = getActiveCard();
+  if (!card) return;
+  const si = card.sections.findIndex(s => s.id === id);
+  const s = card.sections[si];
+  if (!s) return;
+  s.label = _sectionClipboard.label;
+  s.content = _sectionClipboard.content;
+  const newImg = { ..._sectionClipboard.image, slot: si };
+  const existing = card.images.find(im => im.slot === si);
+  if (existing) Object.assign(existing, newImg);
+  else card.images.push(newImg);
   dispatch('CARD_UI_CHANGED');
 }
 
