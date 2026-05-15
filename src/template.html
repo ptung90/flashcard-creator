@@ -538,6 +538,7 @@
             type="text"
             value="Untitled"
             title="Project name — click to rename"
+            onfocus="pushUndo()"
             onchange="
               state.projectName = this.value.trim() || 'Untitled';
               this.value = state.projectName;
@@ -566,6 +567,8 @@
           />
         </div>
         <div class="spacer"></div>
+        <button id="undo-btn" class="btn btn-secondary btn-sm" onclick="undo()" title="Undo (Ctrl+Z)" disabled>⟲</button>
+        <button id="redo-btn" class="btn btn-secondary btn-sm" onclick="redo()" title="Redo (Ctrl+Y)" disabled>⟳</button>
         <button
           class="btn btn-secondary btn-sm btn-icon"
           onclick="openSettingsModal()"
@@ -1313,6 +1316,10 @@
                 <option value="1654">Large — 1654px (A4 @ 200dpi)</option>
                 <option value="2480">Original — 2480px (A4 @ 300dpi)</option>
               </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-undoMax">Undo steps</label>
+              <input type="number" id="cfg-undoMax" min="1" max="200" step="1">
             </div>
           </div>
 

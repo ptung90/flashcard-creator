@@ -14,7 +14,7 @@ marked.use({
 });
 // ── Dispatcher (State Management) ──────────────────────────────────
 function dispatch(action) {
-  const skipDirty = ['ACTIVE_CARD_CHANGED', 'VIEW_MODE_CHANGED', 'INIT_LOAD'].includes(action);
+  const skipDirty = ['ACTIVE_CARD_CHANGED', 'VIEW_MODE_CHANGED', 'INIT_LOAD', 'FULL_STATE_UPDATED'].includes(action);
   if (!skipDirty) {
     setDirty();
   }
@@ -228,6 +228,7 @@ function applySettingsToUI() {
 
 // ── Card Management ────────────────────────────────────────────────
 function addCard() {
+  pushUndo();
   const nc = (window.FC_CONFIG || {}).newCard || {};
   const layout = nc.layout || "2top-1bot";
   const card = {
@@ -255,6 +256,7 @@ function addCard() {
 }
 
 function cloneCard(id) {
+  pushUndo();
   const src = state.cards.find((c) => c.id === id);
   if (!src) return;
   const clone = JSON.parse(JSON.stringify(src));
@@ -267,6 +269,7 @@ function cloneCard(id) {
 }
 
 function deleteCard(id) {
+  pushUndo();
   state.cards = state.cards.filter((c) => c.id !== id);
   if (activeCardId === id) {
     activeCardId = state.cards.length
@@ -393,6 +396,7 @@ function _attachCardDrag(selector) {
       const fromIdx = state.cards.findIndex(c => c.id === dragId);
       const toIdx = state.cards.findIndex(c => c.id === el.dataset.id);
       if (fromIdx < 0 || toIdx < 0) return;
+      pushUndo();
       const [card] = state.cards.splice(fromIdx, 1);
       state.cards.splice(toIdx, 0, card);
       dispatch('CARD_MOVED');
@@ -796,7 +800,6 @@ async function init() {
   //   if (e.target === e.currentTarget) closeSettingsModal();
   // });
 
-
   // Close emoji picker on outside click
   document.addEventListener("click", () => {
     const picker = document.getElementById("emoji-picker");
@@ -840,6 +843,8 @@ async function init() {
     reader.readAsDataURL(file);
     e.preventDefault();
   });
+
+  initUndoKeys();
 }
 
 init();

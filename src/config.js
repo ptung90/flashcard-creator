@@ -1,4 +1,4 @@
-window.FC_VERSION = "2.1.0";
+window.FC_VERSION = "2.2.0";
 
 window.FC_CONFIG = {
   // ── Paper & Layout ────────────────────────────────────────────────
@@ -60,6 +60,9 @@ window.FC_CONFIG = {
   // ── Max image size on paste/upload (px, longest edge) ────────────
   // A4 @ 150 DPI = 1240 | A4 @ 200 DPI = 1654 | A4 @ 300 DPI = 2480
   maxImgPx: 1240,
+
+  // ── Undo / Redo ───────────────────────────────────────────────────
+  undoMax: 50,          // max undo steps (1–200)
 
   // ── Custom CSS (inject vào mỗi session) ──────────────────────────
   customCss: "",

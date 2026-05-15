@@ -37,6 +37,7 @@ function openSettingsModal() {
   // App behaviour
   set("cfg-pasteBlock", cfg.pasteBlock);
   set("cfg-maxImgPx", cfg.maxImgPx ?? 1240);
+  set("cfg-undoMax", cfg.undoMax ?? 50);
   // New card
   set("cfg-newCard-layout", (cfg.newCard || {}).layout || "2top-1bot");
   set("cfg-newCard-ihp", (cfg.newCard || {}).imageHeightPercent ?? 80);
@@ -101,6 +102,7 @@ function applyAndSaveSettings() {
   if (on("behaviour")) {
     patch.pasteBlock = chk("cfg-pasteBlock");
     patch.maxImgPx = parseInt(get("cfg-maxImgPx"), 10) || 1240;
+    patch.undoMax = Math.max(1, Math.min(200, parseInt(get("cfg-undoMax"), 10) || 50));
   }
   if (on("newcard")) {
     patch.newCard = {
@@ -255,6 +257,7 @@ function switchTab(el) {
 function insertImageUrl(url) {
   const card = getActiveCard();
   if (!card) return;
+  pushUndo();
   const existing = card.images.find((i) => i.slot === imgModalSlot);
   if (existing) existing.url = url;
   else card.images.push({ slot: imgModalSlot, url });

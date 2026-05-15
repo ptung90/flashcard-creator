@@ -68,20 +68,20 @@ function renderEditor() {
               <div class="pair-thumb" onclick="openImgModal(${si})" title="${t('editor.clickImg')}">${thumb}</div>
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
                 <div class="section-row-header">
-                  <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" oninput="updateSection('${s.id}','label',this.value)">
+                  <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)">
                   <button class="icon-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More">⋮</button>
                 </div>
-                <textarea class="section-content-input" rows="4" placeholder="${t('editor.pairedPh')}" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
+                <textarea class="section-content-input" rows="4" placeholder="${t('editor.pairedPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
               </div>
             </div>`;
       }
       return `
           <div class="section-row" id="section-${s.id}">
             <div class="section-row-header">
-              <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" oninput="updateSection('${s.id}','label',this.value)">
+              <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)">
               <button class="icon-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More">⋮</button>
             </div>
-            <textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
+            <textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
           </div>`;
     })
     .join("");
@@ -123,7 +123,7 @@ function renderEditor() {
         </label>
       </div>
       <input class="title-input" type="text" value="${esc(card.title)}" placeholder="${t('editor.titlePh')}"
-        oninput="updateCardProp('title',this.value)">
+        onfocus="pushUndo()" oninput="updateCardProp('title',this.value)">
       <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px">
         ${cardFontControls("titleFont")}
       </div>
@@ -338,6 +338,7 @@ function layoutIcon(layout, selected) {
 }
 
 function setLayout(layout) {
+  pushUndo();
   const card = getActiveCard();
   if (!card) return;
   card.layout = layout;
@@ -425,6 +426,7 @@ function setCardFontProp(key, prop, val) {
 }
 
 function toggleCardFontColor(key, enabled) {
+  pushUndo();
   const card = getActiveCard();
   if (!card) return;
   if (enabled) {
@@ -443,6 +445,7 @@ function toggleCardFontColor(key, enabled) {
 }
 
 function toggleCardOrientation(enabled) {
+  pushUndo();
   const card = getActiveCard();
   if (!card) return;
   card.orientation = enabled ? (card.orientation || state.settings.orientation) : null;
@@ -453,6 +456,7 @@ function toggleCardOrientation(enabled) {
 }
 
 function setCardOrientation(val) {
+  pushUndo();
   const card = getActiveCard();
   if (!card) return;
   card.orientation = ["portrait", "landscape"].includes(val) ? val : null;
@@ -528,6 +532,7 @@ function updateImgProp(slot, key, value) {
 }
 
 function clearSlot(slot) {
+  pushUndo();
   const card = getActiveCard();
   if (!card) return;
   card.images = card.images.filter((i) => i.slot !== slot);
@@ -536,6 +541,7 @@ function clearSlot(slot) {
 
 // ── Sections ───────────────────────────────────────────────────────
 function addSection() {
+  pushUndo();
   const card = getActiveCard();
   if (!card) return;
   card.sections.push({ id: uid(), label: "Section", content: "" });
@@ -543,6 +549,7 @@ function addSection() {
 }
 
 function deleteSection(id) {
+  pushUndo();
   const card = getActiveCard();
   if (!card) return;
   card.sections = card.sections.filter((s) => s.id !== id);
@@ -550,6 +557,7 @@ function deleteSection(id) {
 }
 
 function moveSection(id, dir) {
+  pushUndo();
   const card = getActiveCard();
   if (!card) return;
   const i = card.sections.findIndex((s) => s.id === id);
@@ -607,6 +615,7 @@ function copySection(id) {
 function pasteSection(id) {
   if (!_sectionClipboard) return;
   if (!confirm('Overwrite this section?')) return;
+  pushUndo();
   const card = getActiveCard();
   if (!card) return;
   const s = card.sections.find((s) => s.id === id);
@@ -630,6 +639,7 @@ function copySectionWithImage(id) {
 function pasteSectionWithImage(id) {
   if (!_sectionClipboard?.image) return;
   if (!confirm('Overwrite this section and image?')) return;
+  pushUndo();
   const card = getActiveCard();
   if (!card) return;
   const si = card.sections.findIndex(s => s.id === id);
