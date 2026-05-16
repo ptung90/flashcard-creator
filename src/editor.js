@@ -164,7 +164,9 @@ function renderEditor() {
       <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px;margin-top:6px">
         ${cardFontControls("contentFont")}
       </div>
-      <div class="sections-list ${isCompoundTextLayout ? "sections-list--2col" : ""}" id="sections-list">
+      <div class="sections-list${isCompoundTextLayout && card.layout !== 'txtgrid' ? ' sections-list--2col' : ''}"
+        ${card.layout === 'txtgrid' ? `style="display:grid;grid-template-columns:repeat(${card.textCols || 3},1fr);gap:8px;align-items:start"` : ''}
+        id="sections-list">
         ${sections || `<div style="color:#555;font-size:12px;padding:8px 0">${t('editor.noSections')}</div>`}
       </div>
       <div style="margin-top:8px;display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap">
