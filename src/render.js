@@ -440,11 +440,11 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
         buildCompoundCellStyle("", { paddingPx: imgPaddingPx, borderWidth: s.border.width, borderCss, borderRadiusPx: s.border.radius, overflow: "hidden" }) + '">' +
         imgContent + '</div>'
       );
-      const label = section ? (section.content || "") : "";
+      const txtContent = section ? (section.content || "") : "";
       txtItems.push(
         '<div style="' +
-        buildCompoundCellStyle(compoundTextBase + "text-align:center;", { paddingPx, borderWidth: s.border.width, borderCss, borderRadiusPx: s.border.radius }) + '">' +
-        '<span style="' + titleStyle + 'overflow:hidden;">' + esc(label) + '</span></div>'
+        buildCompoundCellStyle(compoundTextBase + contentStyle, { paddingPx, borderWidth: s.border.width, borderCss, borderRadiusPx: s.border.radius }) + '">' +
+        '<div class="fc-section__content">' + mdParse(txtContent) + '</div></div>'
       );
     }
 
