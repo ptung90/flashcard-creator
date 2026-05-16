@@ -472,7 +472,7 @@ function cardFontControls(key) {
   return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%">
     <label style="${_FL}">Size</label>
     <input type="number" min="8" max="28" value="${sizeVal}" placeholder="${global.size}"
-      style="width:56px;${FIS};${_bg(sizeVal !== '')}" oninput="setCardFontProp('${key}','size',this.value===''?null:+this.value)">
+      style="width:56px;${FIS};${_bg(sizeVal !== '')}" oninput="setCardFontProp('${key}','size',this.value===''?null:+this.value);this.style.background=this.value===''?'#f3f4f6':'#fff';this.style.borderColor=this.value===''?'#d1d5db':'#a855f7'">
     <span style="${_FL}">px</span>
     <label style="${_FL};display:flex;align-items:center;gap:4px">
       <input type="checkbox" ${hasColor ? 'checked' : ''} onchange="toggleCardFontColor('${key}',this.checked)"> Color
@@ -480,9 +480,9 @@ function cardFontControls(key) {
     ${hasColor ? `<input type="color" value="${override.color || global.color}" style="width:28px;height:24px;border:none;border-radius:3px;cursor:pointer;padding:0" oninput="setCardFontProp('${key}','color',this.value)">` : ''}
     <label style="${_FL}">LH</label>
     <input type="number" min="1" max="3" step="0.1" value="${lhVal}" placeholder="${global.lineHeight}"
-      style="width:56px;${FIS};${_bg(lhVal !== '')}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value)">
+      style="width:56px;${FIS};${_bg(lhVal !== '')}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value);this.style.background=this.value===''?'#f3f4f6':'#fff';this.style.borderColor=this.value===''?'#d1d5db':'#a855f7'">
     <label style="${_FL}">W</label>
-    <select style="${FIS};width:auto;${_bg(!!override.weight)}" onchange="setCardFontProp('${key}','weight',this.value==='0'?null:+this.value)">${weightOpts}</select>
+    <select style="${FIS};width:auto;${_bg(!!override.weight)}" onchange="setCardFontProp('${key}','weight',this.value==='0'?null:+this.value);this.style.background=this.value==='0'?'#f3f4f6':'#fff';this.style.borderColor=this.value==='0'?'#d1d5db':'#a855f7'">${weightOpts}</select>
     <div class="align-btn-group" style="${'textAlign' in override ? 'border:1px solid #a855f7;border-radius:4px' : 'border:1px solid #f3f4f6;border-radius:4px;background:#f3f4f6'}">
       <button class="align-btn${'textAlign' in override ? '' : ' active'}" onclick="setCardFontAlign('${key}',null)" title="inherit">–</button>
       ${alignBtns}
