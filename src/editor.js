@@ -559,6 +559,7 @@ function updateCardProp(prop, val) {
   card[prop] = val;
   setDirty();
   if (prop === "title") renderSidebar();
+  if (prop === "hideTitle" || prop === "hideSectionLabels") renderEditor();
   renderPreview();
   dispatch(prop === "title" ? "CARD_TITLE_CHANGED" : "CARD_CONTENT_CHANGED");
 }
