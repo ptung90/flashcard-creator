@@ -56,8 +56,9 @@ function renderEditor() {
       if (card.layout === 'txtgrid') {
         return `
           <div class="section-row section-row--compact" id="section-${s.id}">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
-              <span style="font-size:10px;color:#9ca3af">${si + 1}</span>
+            <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
+              <span style="font-size:10px;color:#9ca3af;flex-shrink:0">${si + 1}</span>
+              <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)" style="flex:1;min-width:0">
               <button class="icon-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More">⋮</button>
             </div>
             <textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
