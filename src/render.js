@@ -464,7 +464,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
     const gridStyle3 =
       "grid-template-columns:" + colTrack + " " + colTrack + " " + colTrack + ";" +
       "grid-auto-rows:" + gridAutoRows + ";";
-    const cellCount = Math.max(3, card.sections.length);
+    const cellCount = Math.max((card.textRows || 1) * 3, card.sections.length);
     return (
       cardStyleTag +
       '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id +
