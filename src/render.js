@@ -31,7 +31,8 @@ const HANDLE_STRATEGIES = {
   "2x2": (r, c, n) => _H("row", `top:${r}%;left:0;right:0;${_ROW}`) + _H("col", `left:${c}%;top:0;bottom:0;${_COL}`),
   "2img-4txt": (r, c, n) => "",
   "2img-2txt": (r, c, n) => "",
-  "3img-3txt": (r, c, n) => ""
+  "3img-3txt": (r, c, n) => "",
+  "3txt": (r, c, n) => ""
 };
 
 function buildHandles(layout, sp) {
@@ -454,6 +455,24 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
       '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id + '" style="' + compoundWrapperStyle + '">' +
       '<div style="width:100%;height:100%;display:grid;grid-template-columns:repeat(' + cols + ',1fr);grid-template-rows:' + rowTemplate + ';gap:' + marginPx + 'px;">' +
       cells + '</div></div>'
+    );
+  }
+
+  if (card.layout === "3txt") {
+    const gridAutoRows = card.textCardHeight ? card.textCardHeight + "px" : "auto";
+    const colTrack = "calc((100% - " + (marginPx * 2) + "px)/3)";
+    const gridStyle3 =
+      "grid-template-columns:" + colTrack + " " + colTrack + " " + colTrack + ";" +
+      "grid-auto-rows:" + gridAutoRows + ";";
+    const cellCount = Math.max(3, card.sections.length);
+    return (
+      cardStyleTag +
+      '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id +
+      '" style="' + compoundWrapperStyle + '">' +
+      (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + '</div>' : '') +
+      '<div style="flex:1;overflow:auto;display:grid;gap:' + marginPx + 'px;' + gridStyle3 + '">' +
+      buildSectionCellsHtml(card.sections, cellCount, compoundTextBase + contentStyle, compoundCellOptions) +
+      '</div></div>'
     );
   }
 
