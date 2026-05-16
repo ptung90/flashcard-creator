@@ -468,10 +468,11 @@ function cardFontControls(key) {
     .map(([v, l]) => `<option value="${v}" ${(!override.weight && v==='0') || override.weight==v ? 'selected' : ''}>${l}</option>`).join('');
   const alignBtns = [['left','&#8676;'],['center','&#8596;'],['right','&#8677;'],['justify','&#8644;']]
     .map(([a, ic]) => `<button class="align-btn${override.textAlign===a?' active':''}" onclick="setCardFontAlign('${key}','${a}')" title="${a}">${ic}</button>`).join('');
+  const _bg = (hasVal) => hasVal ? 'background:#fff' : 'background:#f3f4f6';
   return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%">
     <label style="${_FL}">Size</label>
     <input type="number" min="8" max="28" value="${sizeVal}" placeholder="${global.size}"
-      style="width:56px;${FIS}" oninput="setCardFontProp('${key}','size',this.value===''?null:+this.value)">
+      style="width:56px;${FIS};${_bg(sizeVal !== '')}" oninput="setCardFontProp('${key}','size',this.value===''?null:+this.value)">
     <span style="${_FL}">px</span>
     <label style="${_FL};display:flex;align-items:center;gap:4px">
       <input type="checkbox" ${hasColor ? 'checked' : ''} onchange="toggleCardFontColor('${key}',this.checked)"> Color
@@ -479,7 +480,7 @@ function cardFontControls(key) {
     ${hasColor ? `<input type="color" value="${override.color || global.color}" style="width:28px;height:24px;border:none;border-radius:3px;cursor:pointer;padding:0" oninput="setCardFontProp('${key}','color',this.value)">` : ''}
     <label style="${_FL}">LH</label>
     <input type="number" min="1" max="3" step="0.1" value="${lhVal}" placeholder="${global.lineHeight}"
-      style="width:56px;${FIS}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value)">
+      style="width:56px;${FIS};${_bg(lhVal !== '')}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value)">
     <label style="${_FL}">W</label>
     <select style="${FIS};width:auto" onchange="setCardFontProp('${key}','weight',this.value==='0'?null:+this.value)">${weightOpts}</select>
     <div class="align-btn-group">
