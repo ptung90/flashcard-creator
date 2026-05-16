@@ -60,12 +60,12 @@ function buildSlots(card, slotCount, imgStyle) {
   }).join("");
 }
 
-function buildSectionsHtml(sections) {
+function buildSectionsHtml(sections, hideLabels) {
   return sections
     .map(
       (sec) =>
         '<div class="fc-section">' +
-        (sec.label ? '<span class="fc-section__label">• ' + esc(sec.label) + ': </span>' : '') +
+        (!hideLabels && sec.label ? '<span class="fc-section__label">• ' + esc(sec.label) + ': </span>' : '') +
         '<div class="fc-section__content">' +
         mdParse(sec.content) +
         "</div></div>",
@@ -73,11 +73,11 @@ function buildSectionsHtml(sections) {
     .join("");
 }
 
-function buildSectionCellHtml(section) {
+function buildSectionCellHtml(section, hideLabels) {
   if (!section) return '<div class="fc-section fc-section--empty"></div>';
   return (
     '<div class="fc-section">' +
-    (section.label ? '<span class="fc-section__label">• ' + esc(section.label) + ': </span>' : '') +
+    (!hideLabels && section.label ? '<span class="fc-section__label">• ' + esc(section.label) + ': </span>' : '') +
     '<div class="fc-section__content">' +
     mdParse(section.content) +
     "</div></div>"
@@ -137,13 +137,13 @@ function buildCompoundImageSlots(card, imgStyle, cellOptions) {
   }).join("");
 }
 
-function buildSectionCellsHtml(sections, count, contentStyle, cellOptions) {
+function buildSectionCellsHtml(sections, count, contentStyle, cellOptions, hideLabels) {
   return Array.from({ length: count }, (_, i) => {
     return (
       '<div class="fc-sections" style="' +
       buildCompoundCellStyle(contentStyle, cellOptions) +
       '">' +
-      buildSectionCellHtml(sections[i]) +
+      buildSectionCellHtml(sections[i], hideLabels) +
       "</div>"
     );
   }).join("");
@@ -200,9 +200,6 @@ function _scopeCardCss(css, cardId) {
 
 function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   const s = settings;
-  const cardStyleTag = card.customCss
-    ? '<style>' + _scopeCardCss(card.customCss, card.id) + '</style>'
-    : '';
   const { w, h } = overridePx || getPaperPx(s.paperSize, card.orientation || s.orientation);
   const marginPx = mmToPx(s.margin);
   const paddingPx = mmToPx(s.padding);
@@ -229,7 +226,8 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
 
   const slots = buildSlots(card, slotCount, imgStyle);
   const handles = forPrint ? "" : buildHandles(card.layout, split);
-  const sectionsHtml = buildSectionsHtml(card.sections);
+  const hideLabels = !!card.hideSectionLabels;
+  const sectionsHtml = buildSectionsHtml(card.sections, hideLabels);
 
   const cls =
     "fc-card fc-card--" +
@@ -277,6 +275,12 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   const contentF = { ...s.contentFont, ...(card.contentFont || {}) };
   const titleStyle = buildFontOverride(titleF);
   const contentStyle = buildFontOverride(contentF);
+  const _cs = `.fc-card[data-id="${card.id}"]`;
+  const _h1Rule =
+    `${_cs} .fc-section__content h1{margin:0;padding:0;${titleStyle}}` +
+    `${_cs} .fc-section__content h2{margin:0;padding:0;${titleStyle}font-size:${Math.round((titleF.size||14)*0.85)}px;}` +
+    `${_cs} .fc-section__content h3{margin:0;padding:0;${titleStyle}font-size:${Math.round((titleF.size||14)*0.75)}px;}`;
+  const cardStyleTag = '<style>' + _h1Rule + (card.customCss ? _scopeCardCss(card.customCss, card.id) : '') + '</style>';
   const showTitle = !!card.title && !card.hideTitle;
   const borderCss = s.border.style + " " + s.border.color;
   const compoundCellOptions = {
@@ -313,8 +317,8 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   }
 
   if (card.layout === "2img-2txt") {
-    const sectionA = buildSectionCellHtml(card.sections[0]);
-    const sectionB = buildSectionCellHtml(card.sections[1]);
+    const sectionA = buildSectionCellHtml(card.sections[0], hideLabels);
+    const sectionB = buildSectionCellHtml(card.sections[1], hideLabels);
     const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions);
     return (
       cardStyleTag +
@@ -352,9 +356,9 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   }
 
   if (card.layout === "3img-3txt") {
-    const sectionA = buildSectionCellHtml(card.sections[0]);
-    const sectionB = buildSectionCellHtml(card.sections[1]);
-    const sectionC = buildSectionCellHtml(card.sections[2]);
+    const sectionA = buildSectionCellHtml(card.sections[0], hideLabels);
+    const sectionB = buildSectionCellHtml(card.sections[1], hideLabels);
+    const sectionC = buildSectionCellHtml(card.sections[2], hideLabels);
     const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions);
     return (
       cardStyleTag +
@@ -406,7 +410,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
       compoundGridStyle +
       '">' +
       compoundSlots +
-      buildSectionCellsHtml(card.sections, 4, compoundTextBase + contentStyle, compoundCellOptions) +
+      buildSectionCellsHtml(card.sections, 4, compoundTextBase + contentStyle, compoundCellOptions, hideLabels) +
       handles +
       "</div></div>"
     );
@@ -473,7 +477,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
       '" style="' + compoundWrapperStyle + '">' +
       (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + '</div>' : '') +
       '<div style="flex:1;overflow:auto;display:grid;gap:' + marginPx + 'px;' + gridStyle3 + '">' +
-      buildSectionCellsHtml(card.sections, cellCount, compoundTextBase + contentStyle, compoundCellOptions) +
+      buildSectionCellsHtml(card.sections, cellCount, compoundTextBase + contentStyle, compoundCellOptions, hideLabels) +
       '</div></div>'
     );
   }

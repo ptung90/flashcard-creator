@@ -596,7 +596,7 @@ function applyLoadedData(data) {
     state.cards = data.cards.map((c) => {
       const layout = LAYOUTS.includes(c.layout) ? c.layout : "1full";
       return {
-        ...c, layout, hideTitle: !!c.hideTitle, titleFont: c.titleFont ?? null, contentFont: c.contentFont ?? null,
+        ...c, layout, hideTitle: !!c.hideTitle, hideSectionLabels: !!c.hideSectionLabels, titleFont: c.titleFont ?? null, contentFont: c.contentFont ?? null,
         orientation: ["portrait", "landscape"].includes(c.orientation) ? c.orientation : null,
         imageGridSplit: c.imageGridSplit || { ...LAYOUT_SPLIT_DEFAULTS[layout] },
         sections: (c.sections || []).map((s) => ({ id: s.id || uid(), ...s })),

@@ -239,6 +239,7 @@ function addCard() {
     images: [],
     title: t('card.new'),
     hideTitle: false,
+    hideSectionLabels: false,
     titleFont: null,
     contentFont: null,
     orientation: null,
