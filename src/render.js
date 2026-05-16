@@ -32,7 +32,7 @@ const HANDLE_STRATEGIES = {
   "2img-4txt": (r, c, n) => "",
   "2img-2txt": (r, c, n) => "",
   "3img-3txt": (r, c, n) => "",
-  "3txt": (r, c, n) => ""
+  "txtgrid": (r, c, n) => ""
 };
 
 function buildHandles(layout, sp) {
@@ -458,7 +458,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
     );
   }
 
-  if (card.layout === "3txt") {
+  if (card.layout === "txtgrid") {
     const cols = card.textCols || 3;
     const gridAutoRows = card.textCardHeight ? card.textCardHeight + "px" : "auto";
     const colTrack = "calc((100% - " + (marginPx * (cols - 1)) + "px)/" + cols + ")";

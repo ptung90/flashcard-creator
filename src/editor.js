@@ -47,7 +47,7 @@ function renderEditor() {
   const hiddenImgs = card.images.filter((im) => im.slot >= slotCount);
   const hiddenSlots = hiddenImgs.map((im) => slotRow(im.slot, true)).join("");
   const slots = activeSlots + hiddenSlots;
-  const isCompoundTextLayout = ["2img-2txt", "2img-4txt", "3img-3txt", "3txt", "8img-8txt"].includes(card.layout);
+  const isCompoundTextLayout = ["2img-2txt", "2img-4txt", "3img-3txt", "txtgrid", "8img-8txt"].includes(card.layout);
   const isImgPairedLayout = ["2img-2txt", "3img-3txt", "8img-8txt"].includes(card.layout);
   const sectionRows = card.layout === "fulltext" ? 6 : 4;
 
@@ -95,7 +95,7 @@ function renderEditor() {
       ${cardOrientationControls()}
     </div>
 
-    ${card.layout === '3txt' ? `
+    ${card.layout === 'txtgrid' ? `
     <div class="editor-section">
       <h3>Grid</h3>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -116,7 +116,7 @@ function renderEditor() {
     ${card.layout !== 'fullimage' &&
       card.layout !== 'fulltext' &&
       card.layout !== '2img-4txt' &&
-      card.layout !== '3txt' ? `
+      card.layout !== 'txtgrid' ? `
     <div class="editor-section">
       <h3>${t('editor.imgHeight')}</h3>
       <div class="height-slider-row">
@@ -126,7 +126,7 @@ function renderEditor() {
       </div>
     </div>` : ''}
 
-    ${card.layout !== '3txt' ? `
+    ${card.layout !== 'txtgrid' ? `
     <div class="editor-section">
       <h3>${t('editor.images')} (${slotCount} ${t('editor.slots')})</h3>
       <div class="image-slots">${slots}</div>
@@ -326,7 +326,7 @@ function layoutIcon(layout, selected) {
           </div>
         `,
 
-    "3txt": `
+    "txtgrid": `
           <div class="lo-row" style="flex:1;align-items:stretch">
             <div class="lo-text" style="height:auto"></div>
             <div class="lo-text" style="height:auto"></div>
@@ -373,7 +373,7 @@ function setLayout(layout) {
     while (card.sections.length < 8) card.sections.push({ id: uid(), label: "", content: "" });
   } else if (layout === "3img-3txt") {
     while (card.sections.length < 3) card.sections.push({ id: uid(), label: "Section", content: "" });
-  } else if (layout === "3txt") {
+  } else if (layout === "txtgrid") {
     const target = (card.textRows || 1) * (card.textCols || 3);
     while (card.sections.length < target) card.sections.push({ id: uid(), label: "", content: "" });
   }

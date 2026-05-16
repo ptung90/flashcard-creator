@@ -13,7 +13,7 @@ const LAYOUTS = [
   "fulltext",
   "2img-2txt",
   "3img-3txt",
-  "3txt",
+  "txtgrid",
   // "2img-4txt",
   "8img-8txt",
 ];
@@ -32,7 +32,7 @@ const LAYOUT_SPLIT_DEFAULTS = {
   "1top-1bot": { row: 50, col: 50, inner: 50 },
   "2img-2txt": { row: 50, col: 50, inner: 50 },
   "3img-3txt": { row: 50, col: 33, inner: 33 },
-  "3txt": { row: 50, col: 33, inner: 33 },
+  "txtgrid": { row: 50, col: 33, inner: 33 },
   "2img-4txt": { row: 33, col: 50, inner: 50 },
   "8img-8txt": { row: 50, col: 50, inner: 50 },
 };
@@ -51,7 +51,7 @@ const LAYOUT_SLOTS = {
   "1top-1bot": 2,
   "2img-2txt": 2,
   "3img-3txt": 3,
-  "3txt": 0,
+  "txtgrid": 0,
   "2img-4txt": 2,
   "8img-8txt": 8,
 };
