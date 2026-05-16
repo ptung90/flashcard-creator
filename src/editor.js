@@ -393,7 +393,9 @@ function setLayout(layout) {
   } else if (layout === "3img-3txt") {
     while (card.sections.length < 3) card.sections.push({ id: uid(), label: "Section", content: "" });
   } else if (layout === "txtgrid") {
-    const target = (card.textRows || 1) * (card.textCols || 3);
+    if (!card.textCols) card.textCols = 3;
+    if (!card.textRows) card.textRows = 1;
+    const target = card.textRows * card.textCols;
     while (card.sections.length < target) card.sections.push({ id: uid(), label: "", content: "" });
   }
   setDirty();
