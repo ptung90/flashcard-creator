@@ -53,16 +53,6 @@ function renderEditor() {
 
   const sections = card.sections
     .map((s, si) => {
-      if (card.layout === 'txtgrid') {
-        return `
-          <div class="section-row section-row--compact" id="section-${s.id}">
-            <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
-              <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)" style="flex:1;min-width:0">
-              <button class="icon-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More">⋮</button>
-            </div>
-            <textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
-          </div>`;
-      }
       if (isImgPairedLayout) {
         const img = card.images.find((im) => im.slot === si);
         const thumb = img && img.url
@@ -175,7 +165,7 @@ function renderEditor() {
         ${cardFontControls("contentFont")}
       </div>
       <div class="sections-list${isCompoundTextLayout && card.layout !== 'txtgrid' ? ' sections-list--2col' : ''}"
-        ${card.layout === 'txtgrid' ? `style="display:grid;grid-template-columns:repeat(${card.textCols || 3},1fr);gap:8px;align-items:start"` : ''}
+        ${card.layout === 'txtgrid' ? `style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;align-items:start"` : ''}
         id="sections-list">
         ${sections || `<div style="color:#555;font-size:12px;padding:8px 0">${t('editor.noSections')}</div>`}
       </div>
