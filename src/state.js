@@ -95,7 +95,7 @@ let state = {
     googleFonts: [],
     border: { width: 4, style: "double", color: "#6B21A8", radius: 0, ...(_cfg.border || {}) },
     image: { backgroundSize: "cover", backgroundPosition: "center", ...(_cfg.image || {}) },
-    titleFont: { family: "sans-serif", size: 14, weight: 400, color: "#1a1a1a", lineHeight: 1.0, ...(_cfg.titleFont || {}) },
+    titleFont: { family: "sans-serif", size: 14, weight: 700, color: "#1a1a1a", lineHeight: 1.0, ...(_cfg.titleFont || {}) },
     contentFont: { family: "sans-serif", size: 12, weight: 400, color: "#1a1a1a", lineHeight: 1.1, ...(_cfg.contentFont || {}) },
     customCss: _cfg.customCss ?? "",
   },
