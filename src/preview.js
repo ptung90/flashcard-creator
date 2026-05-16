@@ -14,7 +14,7 @@ function renderPreview() {
   const panelW = document.getElementById("fc-preview-panel").clientWidth - 32;
   const scale = (panelW / w) * previewZoom;
   const zl = document.getElementById("preview-zoom-label");
-  if (zl) zl.textContent = Math.round(previewZoom * 100) + "%";
+  if (zl) zl.textContent = `${Math.round(scale * 100)}%`;
   const scaledW = Math.round(w * scale);
   const scaledH = Math.round(h * scale);
   wrap.style.cssText = "width:100%;min-width:" + scaledW + "px;display:flex;justify-content:center;";

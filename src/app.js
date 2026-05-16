@@ -53,7 +53,27 @@ function dispatch(action) {
   }
 }
 function changePreviewZoom(delta) {
-  previewZoom = delta === 0 ? 1.0 : Math.round(Math.max(0.25, Math.min(3.0, previewZoom + delta)) * 100) / 100;
+  if (delta === 0) {
+    previewZoom = 1.0; // reset to fit
+  } else {
+    const card = getActiveCard();
+    const { w } = card
+      ? getPaperPx(state.settings.paperSize, card.orientation || state.settings.orientation)
+      : { w: 559 };
+    const panelW = (document.getElementById("fc-preview-panel")?.clientWidth || 350) - 32;
+    const currentPhysical = (panelW / w) * previewZoom;
+    const newPhysical = Math.round(Math.max(0.1, Math.min(3.0, currentPhysical + delta)) * 100) / 100;
+    previewZoom = newPhysical / (panelW / w);
+  }
+  renderPreview();
+}
+
+function setPhysicalZoom() {
+  const card = getActiveCard();
+  if (!card) return;
+  const { w } = getPaperPx(state.settings.paperSize, card.orientation || state.settings.orientation);
+  const panelW = (document.getElementById("fc-preview-panel")?.clientWidth || 350) - 32;
+  previewZoom = w / panelW;
   renderPreview();
 }
 
