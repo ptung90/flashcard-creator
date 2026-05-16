@@ -484,7 +484,7 @@ function cardFontControls(key) {
       style="width:56px;${FIS};${_bg(lhVal !== '')}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value);this.style.background=this.value===''?'#f3f4f6':'#fff';this.style.borderColor=this.value===''?'#d1d5db':'#a855f7'">
     <label style="${_FL}">W</label>
     <select style="${FIS};width:auto;${_bg(!!override.weight)}" onchange="setCardFontProp('${key}','weight',this.value==='0'?null:+this.value);this.style.background=this.value==='0'?'#f3f4f6':'#fff';this.style.borderColor=this.value==='0'?'#d1d5db':'#a855f7'">${weightOpts}</select>
-    <div class="align-btn-group" style="${'textAlign' in override ? 'border:1px solid #a855f7;border-radius:4px' : 'border:1px solid #f3f4f6;border-radius:4px;background:#f3f4f6'}">
+    <div class="align-btn-group">
       <button class="align-btn${'textAlign' in override ? '' : ' active'}" onclick="setCardFontAlign('${key}',null)" title="inherit">–</button>
       ${alignBtns}
     </div>
