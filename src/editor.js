@@ -107,10 +107,10 @@ function renderEditor() {
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <label style="font-size:11px;color:#6b7280">Cols</label>
         <input type="number" min="1" max="10" value="${card.textCols ?? 3}"
-          style="width:58px;${FIS}" oninput="setTextCols(+this.value)">
+          style="width:58px;${FIS}" oninput="setTextCols(+this.value)" onchange="renderEditor()">
         <label style="font-size:11px;color:#6b7280">Rows</label>
         <input type="number" min="1" max="10" value="${card.textRows ?? 1}"
-          style="width:58px;${FIS}" oninput="setTextRows(+this.value)">
+          style="width:58px;${FIS}" oninput="setTextRows(+this.value)" onchange="renderEditor()">
         <label style="font-size:11px;color:#6b7280">Height</label>
         <input type="number" min="20" max="500" value="${card.textCardHeight ?? ''}" placeholder="auto"
           style="width:72px;${FIS}"
@@ -402,7 +402,8 @@ function setTextRows(n) {
   card.textRows = Math.max(1, n || 1);
   const target = card.textRows * (card.textCols || 3);
   while (card.sections.length < target) card.sections.push({ id: uid(), label: "", content: "" });
-  dispatch('CARD_UI_CHANGED');
+  setDirty();
+  renderPreview();
 }
 
 function setTextCols(n) {
@@ -412,7 +413,8 @@ function setTextCols(n) {
   card.textCols = Math.max(1, n || 1);
   const target = (card.textRows || 1) * card.textCols;
   while (card.sections.length < target) card.sections.push({ id: uid(), label: "", content: "" });
-  dispatch('CARD_UI_CHANGED');
+  setDirty();
+  renderPreview();
 }
 
 const FIS =
