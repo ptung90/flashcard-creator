@@ -489,7 +489,7 @@ function cardFontControls(key) {
         <option value="900" ${override.weight===900 ? 'selected' : ''}>Black</option>
       </select>
       <div class="align-btn-group">
-        ${['left','center','right'].map(a => `<button class="align-btn${(override.textAlign||global.textAlign||'left')===a?' active':''}" onclick="setCardFontAlign('${key}','${a}')" title="${a}">${a==='left'?'&#8676;':a==='center'?'&#8596;':'&#8677;'}</button>`).join('')}
+        ${[['left','&#8676;'],['center','&#8596;'],['right','&#8677;'],['justify','&#8660;']].map(([a,ic]) => `<button class="align-btn${(override.textAlign||global.textAlign||'left')===a?' active':''}" onclick="setCardFontAlign('${key}','${a}')" title="${a}">${ic}</button>`).join('')}
       </div>`;
 }
 
