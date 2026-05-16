@@ -327,10 +327,9 @@ function layoutIcon(layout, selected) {
         `,
 
     "txtgrid": `
-          <div class="lo-row" style="flex:1;align-items:stretch">
-            <div class="lo-text" style="height:auto"></div>
-            <div class="lo-text" style="height:auto"></div>
-            <div class="lo-text" style="height:auto"></div>
+          <div style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:2px">
+            <div class="lo-text"></div><div class="lo-text"></div><div class="lo-text"></div>
+            <div class="lo-text"></div><div class="lo-text"></div><div class="lo-text"></div>
           </div>
         `,
 
