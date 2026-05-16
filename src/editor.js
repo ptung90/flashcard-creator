@@ -165,7 +165,7 @@ function renderEditor() {
         ${cardFontControls("contentFont")}
       </div>
       <div class="sections-list${isCompoundTextLayout && card.layout !== 'txtgrid' ? ' sections-list--2col' : ''}"
-        ${card.layout === 'txtgrid' ? `style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;align-items:start"` : ''}
+        ${card.layout === 'txtgrid' ? `style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;align-items:start"` : ''}
         id="sections-list">
         ${sections || `<div style="color:#555;font-size:12px;padding:8px 0">${t('editor.noSections')}</div>`}
       </div>
