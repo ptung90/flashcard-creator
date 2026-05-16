@@ -1,4 +1,4 @@
-window.FC_VERSION = "2.2.0";
+window.FC_VERSION = "2.2.1";
 
 window.FC_CONFIG = {
   // ── Paper & Layout ────────────────────────────────────────────────

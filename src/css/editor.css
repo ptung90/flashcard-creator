@@ -2,7 +2,7 @@
 .fc-editor {
   flex: 1;
   overflow-y: auto;
-  padding: 14px;
+  padding: 10px;
   background: #f0f0f2;
   min-width: 0;
 }
@@ -15,7 +15,7 @@
 }
 
 .editor-section {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .editor-section h3 {
@@ -23,7 +23,7 @@
   color: #4b5563;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
 }
 
 /* Layout Picker */
@@ -106,10 +106,10 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   background: #f3f4f6;
   border-radius: 6px;
-  padding: 6px 8px;
+  padding: 4px 6px;
 }
 
 .image-slot-thumb {
@@ -204,7 +204,7 @@
 .sections-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .sections-list--2col {
@@ -223,10 +223,10 @@
 .section-row {
   background: #f3f4f6;
   border-radius: 6px;
-  padding: 8px;
+  padding: 6px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .section-row-header {
@@ -320,15 +320,6 @@
 .section-label-input:focus,
 .section-content-input:focus {
   outline: 1px solid #6b21a8;
-}
-
-.section-row--compact {
-  padding: 5px;
-}
-
-.section-row--compact .section-content-input {
-  padding: 4px 5px;
-  font-size: 11px;
 }
 
 .section-row--paired {

@@ -29,10 +29,10 @@ body {
 .fc-settings-bar {
   background: #ffffff;
   border-bottom: 1px solid #d1d5db;
-  padding: 8px 12px;
+  padding: 5px 10px;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 8px;
+  gap: 4px 8px;
   align-items: center;
   flex-shrink: 0;
 }
@@ -214,7 +214,7 @@ body {
   display: none;
   background: #f9fafb;
   border-bottom: 1px solid #d1d5db;
-  padding: 6px 12px;
+  padding: 4px 10px;
   flex-wrap: wrap;
   gap: 4px 8px;
   align-items: center;
@@ -254,7 +254,7 @@ body {
   display: none;
   background: #f9fafb;
   border-bottom: 1px solid #d1d5db;
-  padding: 6px 12px;
+  padding: 4px 10px;
   flex-wrap: wrap;
   gap: 4px 8px;
   align-items: center;
@@ -306,9 +306,9 @@ body {
 .fc-toolbar {
   background: #ffffff;
   border-bottom: 1px solid #d1d5db;
-  padding: 6px 12px;
+  padding: 4px 10px;
   display: flex;
-  gap: 6px;
+  gap: 5px;
   align-items: center;
   flex-shrink: 0;
 }
