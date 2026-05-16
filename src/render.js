@@ -459,12 +459,14 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   }
 
   if (card.layout === "3txt") {
+    const cols = card.textCols || 3;
     const gridAutoRows = card.textCardHeight ? card.textCardHeight + "px" : "auto";
-    const colTrack = "calc((100% - " + (marginPx * 2) + "px)/3)";
+    const colTrack = "calc((100% - " + (marginPx * (cols - 1)) + "px)/" + cols + ")";
+    const colTracks = Array(cols).fill(colTrack).join(" ");
     const gridStyle3 =
-      "grid-template-columns:" + colTrack + " " + colTrack + " " + colTrack + ";" +
+      "grid-template-columns:" + colTracks + ";" +
       "grid-auto-rows:" + gridAutoRows + ";";
-    const cellCount = Math.max((card.textRows || 1) * 3, card.sections.length);
+    const cellCount = Math.max((card.textRows || 1) * cols, card.sections.length);
     return (
       cardStyleTag +
       '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id +

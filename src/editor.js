@@ -97,8 +97,11 @@ function renderEditor() {
 
     ${card.layout === '3txt' ? `
     <div class="editor-section">
-      <h3>Rows &amp; row height</h3>
+      <h3>Grid</h3>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <label style="font-size:11px;color:#6b7280">Cols</label>
+        <input type="number" min="1" max="10" value="${card.textCols ?? 3}"
+          style="width:58px;${FIS}" oninput="setTextCols(+this.value)">
         <label style="font-size:11px;color:#6b7280">Rows</label>
         <input type="number" min="1" max="10" value="${card.textRows ?? 1}"
           style="width:58px;${FIS}" oninput="setTextRows(+this.value)">
@@ -371,7 +374,7 @@ function setLayout(layout) {
   } else if (layout === "3img-3txt") {
     while (card.sections.length < 3) card.sections.push({ id: uid(), label: "Section", content: "" });
   } else if (layout === "3txt") {
-    const target = (card.textRows || 1) * 3;
+    const target = (card.textRows || 1) * (card.textCols || 3);
     while (card.sections.length < target) card.sections.push({ id: uid(), label: "", content: "" });
   }
   setDirty();
@@ -386,7 +389,17 @@ function setTextRows(n) {
   const card = getActiveCard();
   if (!card) return;
   card.textRows = Math.max(1, n || 1);
-  const target = card.textRows * 3;
+  const target = card.textRows * (card.textCols || 3);
+  while (card.sections.length < target) card.sections.push({ id: uid(), label: "", content: "" });
+  dispatch('CARD_UI_CHANGED');
+}
+
+function setTextCols(n) {
+  pushUndo();
+  const card = getActiveCard();
+  if (!card) return;
+  card.textCols = Math.max(1, n || 1);
+  const target = (card.textRows || 1) * card.textCols;
   while (card.sections.length < target) card.sections.push({ id: uid(), label: "", content: "" });
   dispatch('CARD_UI_CHANGED');
 }
