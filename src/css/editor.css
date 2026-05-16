@@ -322,6 +322,15 @@
   outline: 1px solid #6b21a8;
 }
 
+.section-row--compact {
+  padding: 5px;
+}
+
+.section-row--compact .section-content-input {
+  padding: 4px 5px;
+  font-size: 11px;
+}
+
 .section-row--paired {
   display: flex;
   flex-direction: row;

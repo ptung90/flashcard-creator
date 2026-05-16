@@ -53,6 +53,16 @@ function renderEditor() {
 
   const sections = card.sections
     .map((s, si) => {
+      if (card.layout === 'txtgrid') {
+        return `
+          <div class="section-row section-row--compact" id="section-${s.id}">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+              <span style="font-size:10px;color:#9ca3af">${si + 1}</span>
+              <button class="icon-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More">⋮</button>
+            </div>
+            <textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
+          </div>`;
+      }
       if (isImgPairedLayout) {
         const img = card.images.find((im) => im.slot === si);
         const thumb = img && img.url
