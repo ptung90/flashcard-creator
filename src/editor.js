@@ -84,10 +84,16 @@ function renderEditor() {
     })
     .join("");
 
+  const _ltab = LAYOUTS.indexOf(card.layout) >= 9 ? 1 : 0;
   content.innerHTML = `
     <div class="editor-section">
       <h3>${t('editor.layout')}</h3>
-      <div class="layout-grid">${LAYOUTS.map((l) => layoutIcon(l, l === card.layout)).join("")}</div>
+      <div class="layout-tabs">
+        <button class="layout-tab ${_ltab === 0 ? 'active' : ''}" onclick="switchLayoutTab(0,this)">Basic</button>
+        <button class="layout-tab ${_ltab === 1 ? 'active' : ''}" onclick="switchLayoutTab(1,this)">Special</button>
+      </div>
+      <div id="layout-tab-0" class="layout-grid" style="${_ltab !== 0 ? 'display:none' : ''}">${LAYOUTS.slice(0,9).map((l) => layoutIcon(l, l === card.layout)).join("")}</div>
+      <div id="layout-tab-1" class="layout-grid" style="${_ltab !== 1 ? 'display:none' : ''}">${LAYOUTS.slice(9).map((l) => layoutIcon(l, l === card.layout)).join("")}</div>
     </div>
 
     <div class="editor-section">
@@ -360,6 +366,12 @@ function layoutIcon(layout, selected) {
         <div class="layout-opt ${selected ? "selected" : ""}" title="${layout}" onclick="setLayout('${layout}')">
           ${icons[layout]}
         </div>`;
+}
+
+function switchLayoutTab(idx, btn) {
+  btn.parentElement.querySelectorAll('.layout-tab').forEach((b, i) => b.classList.toggle('active', i === idx));
+  document.getElementById('layout-tab-0').style.display = idx === 0 ? '' : 'none';
+  document.getElementById('layout-tab-1').style.display = idx === 1 ? '' : 'none';
 }
 
 function setLayout(layout) {

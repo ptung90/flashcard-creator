@@ -27,9 +27,30 @@
 }
 
 /* Layout Picker */
+.layout-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.layout-tab {
+  flex: 1;
+  padding: 3px 0;
+  font-size: 11px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #f9fafb;
+  cursor: pointer;
+  color: #374151;
+}
+.layout-tab.active {
+  background: #ede9fe;
+  border-color: #a855f7;
+  color: #6b21a8;
+  font-weight: 600;
+}
 .layout-grid {
   display: grid;
-  grid-template-columns: repeat(14, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
   gap: 4px;
 }
 
