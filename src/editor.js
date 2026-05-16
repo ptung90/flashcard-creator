@@ -468,7 +468,7 @@ function cardFontControls(key) {
     .map(([v, l]) => `<option value="${v}" ${(!override.weight && v==='0') || override.weight==v ? 'selected' : ''}>${l}</option>`).join('');
   const alignBtns = [['left','&#8676;'],['center','&#8596;'],['right','&#8677;'],['justify','&#8644;']]
     .map(([a, ic]) => `<button class="align-btn${override.textAlign===a?' active':''}" onclick="setCardFontAlign('${key}','${a}')" title="${a}">${ic}</button>`).join('');
-  const _bg = (hasVal) => hasVal ? 'background:#fff' : 'background:#f3f4f6';
+  const _bg = (hasVal) => hasVal ? 'background:#fff;border-color:#a855f7' : 'background:#f3f4f6';
   return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%">
     <label style="${_FL}">Size</label>
     <input type="number" min="8" max="28" value="${sizeVal}" placeholder="${global.size}"
