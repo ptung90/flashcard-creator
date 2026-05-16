@@ -441,11 +441,11 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
         buildCompoundCellStyle("", { paddingPx: imgPaddingPx, borderWidth: s.border.width, borderCss, borderRadiusPx: s.border.radius, overflow: "hidden" }) + '">' +
         imgContent + '</div>'
       );
-      const label = section ? (section.content || "") : "";
       txtItems.push(
-        '<div style="' +
-        buildCompoundCellStyle(compoundTextBase + "text-align:center;", { paddingPx, borderWidth: s.border.width, borderCss, borderRadiusPx: s.border.radius }) + '">' +
-        '<span style="' + titleStyle + 'overflow:hidden;">' + esc(label) + '</span></div>'
+        '<div class="fc-sections" style="' +
+        buildCompoundCellStyle(compoundTextBase + contentStyle, compoundCellOptions) + '">' +
+        buildSectionCellHtml(section, hideLabels) +
+        '</div>'
       );
     }
 
