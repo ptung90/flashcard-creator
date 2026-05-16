@@ -461,39 +461,30 @@ function cardFontControls(key) {
   if (!card) return "";
   const override = card[key] || {};
   const global = state.settings[key] || {};
-  const effective = { ...global, ...override };
   const sizeVal = override.size ?? "";
   const lhVal = override.lineHeight ?? "";
   const hasColor = "color" in override;
-  const hint = key === "contentFont"
-    ? `→ label ${Math.round(effective.size * 0.78)}px · content ${Math.round(effective.size * 0.75)}px`
-    : `→ ${effective.size}px`;
   const weightOpts = [['0','–'],['300','Light'],['400','Normal'],['500','Medium'],['600','SemiBold'],['700','Bold'],['900','Black']]
     .map(([v, l]) => `<option value="${v}" ${(!override.weight && v==='0') || override.weight==v ? 'selected' : ''}>${l}</option>`).join('');
   const alignBtns = [['left','&#8676;'],['center','&#8596;'],['right','&#8677;'],['justify','&#8644;']]
     .map(([a, ic]) => `<button class="align-btn${override.textAlign===a?' active':''}" onclick="setCardFontAlign('${key}','${a}')" title="${a}">${ic}</button>`).join('');
-  return `<div style="display:flex;flex-direction:column;gap:4px;width:100%">
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-      <label style="${_FL}">Size</label>
-      <input type="number" min="8" max="28" value="${sizeVal}" placeholder="${global.size}"
-        style="width:56px;${FIS}" oninput="setCardFontProp('${key}','size',this.value===''?null:+this.value)">
-      <span style="${_FL}">px</span>
-      <label style="${_FL};display:flex;align-items:center;gap:4px">
-        <input type="checkbox" ${hasColor ? 'checked' : ''} onchange="toggleCardFontColor('${key}',this.checked)"> Color
-      </label>
-      ${hasColor ? `<input type="color" value="${override.color || global.color}" style="width:28px;height:24px;border:none;border-radius:3px;cursor:pointer;padding:0" oninput="setCardFontProp('${key}','color',this.value)">` : ''}
-      <span style="font-size:10px;color:#9ca3af;margin-left:2px">${hint}</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-      <label style="${_FL}">LH</label>
-      <input type="number" min="1" max="3" step="0.1" value="${lhVal}" placeholder="${global.lineHeight}"
-        style="width:56px;${FIS}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value)">
-      <label style="${_FL}">W</label>
-      <select style="${FIS};width:auto" onchange="setCardFontProp('${key}','weight',this.value==='0'?null:+this.value)">${weightOpts}</select>
-      <div class="align-btn-group">
-        <button class="align-btn${'textAlign' in override ? '' : ' active'}" onclick="setCardFontAlign('${key}',null)" title="inherit">–</button>
-        ${alignBtns}
-      </div>
+  return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%">
+    <label style="${_FL}">Size</label>
+    <input type="number" min="8" max="28" value="${sizeVal}" placeholder="${global.size}"
+      style="width:56px;${FIS}" oninput="setCardFontProp('${key}','size',this.value===''?null:+this.value)">
+    <span style="${_FL}">px</span>
+    <label style="${_FL};display:flex;align-items:center;gap:4px">
+      <input type="checkbox" ${hasColor ? 'checked' : ''} onchange="toggleCardFontColor('${key}',this.checked)"> Color
+    </label>
+    ${hasColor ? `<input type="color" value="${override.color || global.color}" style="width:28px;height:24px;border:none;border-radius:3px;cursor:pointer;padding:0" oninput="setCardFontProp('${key}','color',this.value)">` : ''}
+    <label style="${_FL}">LH</label>
+    <input type="number" min="1" max="3" step="0.1" value="${lhVal}" placeholder="${global.lineHeight}"
+      style="width:56px;${FIS}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value)">
+    <label style="${_FL}">W</label>
+    <select style="${FIS};width:auto" onchange="setCardFontProp('${key}','weight',this.value==='0'?null:+this.value)">${weightOpts}</select>
+    <div class="align-btn-group">
+      <button class="align-btn${'textAlign' in override ? '' : ' active'}" onclick="setCardFontAlign('${key}',null)" title="inherit">–</button>
+      ${alignBtns}
     </div>
   </div>`;
 }
