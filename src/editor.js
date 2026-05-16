@@ -667,6 +667,7 @@ function moveSection(id, dir) {
 function openSectionMenu(id, btn) {
   closeSectionMenu();
   const card = getActiveCard();
+  const s = card?.sections?.find(sec => sec.id === id);
   const canPaste = !!_sectionClipboard;
   const canPasteWithImg = !!(_sectionClipboard?.image);
   const minSections = LAYOUT_SLOTS[card.layout] || 0;
@@ -684,6 +685,8 @@ function openSectionMenu(id, btn) {
     <button class="section-menu-item${canPaste ? '' : ' disabled'}" onclick="pasteSection('${id}');closeSectionMenu()"><span class="smi">📋</span> Paste${isPaired ? ' text only' : ''}</button>
     ${isPaired ? `<button class="section-menu-item${canPasteWithImg ? '' : ' disabled'}" onclick="pasteSectionWithImage('${id}');closeSectionMenu()"><span class="smi">📋</span> Paste with image</button>` : ''}
     <div class="section-menu-sep"></div>
+    <button class="section-menu-item" onclick="setSectionClass('${id}');closeSectionMenu()"><span class="smi">🏷</span> Class${s?.customClass ? `: <em style="color:#6b21a8;font-size:10px;font-style:normal">${esc(s.customClass)}</em>` : ''}</button>
+    <div class="section-menu-sep"></div>
     <button class="section-menu-item section-menu-item--danger${canDelete ? '' : ' disabled'}" onclick="deleteSection('${id}');closeSectionMenu()"><span class="smi">🗑</span> Delete</button>
   `;
   menu.addEventListener('click', e => e.stopPropagation());
@@ -693,6 +696,19 @@ function openSectionMenu(id, btn) {
 
 function closeSectionMenu() {
   document.getElementById('section-menu')?.remove();
+}
+
+function setSectionClass(id) {
+  const card = getActiveCard();
+  if (!card) return;
+  const s = card.sections.find(sec => sec.id === id);
+  if (!s) return;
+  const cls = prompt('CSS class(es) for this section:', s.customClass || '');
+  if (cls === null) return;
+  s.customClass = cls.trim();
+  setDirty();
+  renderPreview();
+  dispatch('CARD_CONTENT_CHANGED');
 }
 
 let _sectionClipboard = null;

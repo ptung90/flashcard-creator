@@ -64,7 +64,7 @@ function buildSectionsHtml(sections, hideLabels) {
   return sections
     .map(
       (sec) =>
-        '<div class="fc-section">' +
+        `<div class="fc-section${sec.customClass ? ` ${esc(sec.customClass)}` : ''}">` +
         (!hideLabels && sec.label ? '<span class="fc-section__label">• ' + esc(sec.label) + ': </span>' : '') +
         '<div class="fc-section__content">' +
         mdParse(sec.content) +
@@ -76,7 +76,7 @@ function buildSectionsHtml(sections, hideLabels) {
 function buildSectionCellHtml(section, hideLabels) {
   if (!section) return '<div class="fc-section fc-section--empty"></div>';
   return (
-    '<div class="fc-section">' +
+    `<div class="fc-section${section.customClass ? ` ${esc(section.customClass)}` : ''}">` +
     (!hideLabels && section.label ? '<span class="fc-section__label">• ' + esc(section.label) + ': </span>' : '') +
     '<div class="fc-section__content">' +
     mdParse(section.content) +
