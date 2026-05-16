@@ -166,10 +166,12 @@ function bindSettings() {
     "set-cfont-size": (v) => (state.settings.contentFont.size = +v),
     "set-cfont-color": (v) => (state.settings.contentFont.color = v),
     "set-cfont-lh": (v) => (state.settings.contentFont.lineHeight = +v),
+    "set-cfont-fw": (v) => (state.settings.contentFont.weight = +v),
     "set-font-family": (v) => (state.settings.titleFont.family = v),
     "set-font-size": (v) => (state.settings.titleFont.size = +v),
     "set-font-color": (v) => (state.settings.titleFont.color = v),
     "set-font-lh": (v) => (state.settings.titleFont.lineHeight = +v),
+    "set-font-fw": (v) => (state.settings.titleFont.weight = +v),
     "set-img-padding": (v) => (state.settings.imgPadding = +v),
   };
   for (const [id, fn] of Object.entries(ids)) {
@@ -208,11 +210,13 @@ function applySettingsToUI() {
   document.getElementById("set-cfont-size").value = cf.size || 12;
   document.getElementById("set-cfont-color").value = cf.color || "#1a1a1a";
   document.getElementById("set-cfont-lh").value = cf.lineHeight || 1.1;
+  document.getElementById("set-cfont-fw").value = cf.weight || 400;
   const tf = s.titleFont || {};
   document.getElementById("set-font-family").value = tf.family || "sans-serif";
   document.getElementById("set-font-size").value = tf.size || 14;
   document.getElementById("set-font-color").value = tf.color || "#1a1a1a";
   document.getElementById("set-font-lh").value = tf.lineHeight || 1.0;
+  document.getElementById("set-font-fw").value = tf.weight || 400;
   const tfa = tf.textAlign || "left";
   document.querySelectorAll('.align-btn[data-key="titleFont"]').forEach((b) => b.classList.toggle("active", b.dataset.align === tfa));
   const cfa = (s.contentFont || {}).textAlign || "left";

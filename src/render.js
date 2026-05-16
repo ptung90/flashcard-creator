@@ -183,6 +183,7 @@ function buildFontOverride(f) {
   return (
     (f.family ? "font-family:" + f.family + ";" : "") +
     (f.size ? "font-size:" + f.size + "px;" : "") +
+    (f.weight ? "font-weight:" + f.weight + ";" : "") +
     (f.color ? "color:" + f.color + ";" : "") +
     (f.lineHeight ? "line-height:" + f.lineHeight + ";" : "") +
     (f.textAlign ? "text-align:" + f.textAlign + ";" : "")
@@ -440,11 +441,11 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
         buildCompoundCellStyle("", { paddingPx: imgPaddingPx, borderWidth: s.border.width, borderCss, borderRadiusPx: s.border.radius, overflow: "hidden" }) + '">' +
         imgContent + '</div>'
       );
-      const txtContent = section ? (section.content || "") : "";
+      const label = section ? (section.content || "") : "";
       txtItems.push(
         '<div style="' +
-        buildCompoundCellStyle(compoundTextBase + contentStyle, { paddingPx, borderWidth: s.border.width, borderCss, borderRadiusPx: s.border.radius }) + '">' +
-        '<div class="fc-section__content">' + mdParse(txtContent) + '</div></div>'
+        buildCompoundCellStyle(compoundTextBase + "text-align:center;", { paddingPx, borderWidth: s.border.width, borderCss, borderRadiusPx: s.border.radius }) + '">' +
+        '<span style="' + titleStyle + 'overflow:hidden;">' + esc(label) + '</span></div>'
       );
     }
 

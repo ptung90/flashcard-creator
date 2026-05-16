@@ -473,7 +473,17 @@ function cardFontControls(key) {
       ${hasColor ? `<input type="color" value="${override.color || global.color}" style="width:30px;height:26px;border:none;border-radius:3px;cursor:pointer;padding:0" oninput="setCardFontProp('${key}','color',this.value)">` : ""}
       <label style="font-size:11px;color:#6b7280">LH</label>
       <input type="number" min="1" max="3" step="0.1" value="${lhVal}" placeholder="${global.lineHeight}"
-        style="width:64px;${FIS}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value)">`;
+        style="width:64px;${FIS}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value)">
+      <label style="font-size:11px;color:#6b7280">W</label>
+      <select style="${FIS};width:auto" onchange="setCardFontProp('${key}','weight',this.value==='0'?null:+this.value)">
+        <option value="0" ${!override.weight ? 'selected' : ''}>–</option>
+        <option value="300" ${override.weight===300 ? 'selected' : ''}>Light</option>
+        <option value="400" ${override.weight===400 ? 'selected' : ''}>Normal</option>
+        <option value="500" ${override.weight===500 ? 'selected' : ''}>Medium</option>
+        <option value="600" ${override.weight===600 ? 'selected' : ''}>SemiBold</option>
+        <option value="700" ${override.weight===700 ? 'selected' : ''}>Bold</option>
+        <option value="900" ${override.weight===900 ? 'selected' : ''}>Black</option>
+      </select>`;
 }
 
 function setCardFontProp(key, prop, val) {
