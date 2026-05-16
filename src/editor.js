@@ -148,7 +148,7 @@ function renderEditor() {
       </div>
       <input class="title-input" type="text" value="${esc(card.title)}" placeholder="${t('editor.titlePh')}"
         onfocus="pushUndo()" oninput="updateCardProp('title',this.value)">
-      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px">
+      <div style="margin-top:6px">
         ${cardFontControls("titleFont")}
       </div>
     </div>
@@ -161,7 +161,7 @@ function renderEditor() {
           ${t('editor.hideLabels')}
         </label>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px;margin-top:6px">
+      <div style="margin-bottom:8px;margin-top:6px">
         ${cardFontControls("contentFont")}
       </div>
       <div class="sections-list${isCompoundTextLayout && card.layout !== 'txtgrid' ? ' sections-list--2col' : ''}"
@@ -453,6 +453,8 @@ function cardOrientationControls() {
     </div>`;
 }
 
+const _FL = `font-size:11px;color:#6b7280`;
+
 // Per-card font override controls (empty = inherit global)
 function cardFontControls(key) {
   const card = getActiveCard();
@@ -463,35 +465,37 @@ function cardFontControls(key) {
   const sizeVal = override.size ?? "";
   const lhVal = override.lineHeight ?? "";
   const hasColor = "color" in override;
-  const computed = key === "contentFont"
-    ? `→ label: ${Math.round(effective.size * 0.78)} px · content: ${Math.round(effective.size * 0.75)} px`
-    : `→ ${effective.size} px`;
-  return `<label style = "font-size:11px;color:#6b7280" > Size</label >
-    <input type="number" min="8" max="28" value="${sizeVal}" placeholder="${global.size}"
-      style="width:64px;${FIS}" oninput="setCardFontProp('${key}','size',this.value===''?null:+this.value)">
-      <label style="font-size:11px;color:#6b7280">px</label>
-      <span style="font-size:10px;color:#9ca3af">${computed}</span>
-      <label style="font-size:11px;color:#6b7280;display:flex;align-items:center;gap:3px">
-        <input type="checkbox" ${hasColor ? "checked" : ""} onchange="toggleCardFontColor('${key}',this.checked)"> Color
+  const hint = key === "contentFont"
+    ? `→ label ${Math.round(effective.size * 0.78)}px · content ${Math.round(effective.size * 0.75)}px`
+    : `→ ${effective.size}px`;
+  const weightOpts = [['0','–'],['300','Light'],['400','Normal'],['500','Medium'],['600','SemiBold'],['700','Bold'],['900','Black']]
+    .map(([v, l]) => `<option value="${v}" ${(!override.weight && v==='0') || override.weight==v ? 'selected' : ''}>${l}</option>`).join('');
+  const alignBtns = [['left','&#8676;'],['center','&#8596;'],['right','&#8677;'],['justify','&#8644;']]
+    .map(([a, ic]) => `<button class="align-btn${override.textAlign===a?' active':''}" onclick="setCardFontAlign('${key}','${a}')" title="${a}">${ic}</button>`).join('');
+  return `<div style="display:flex;flex-direction:column;gap:4px;width:100%">
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <label style="${_FL}">Size</label>
+      <input type="number" min="8" max="28" value="${sizeVal}" placeholder="${global.size}"
+        style="width:56px;${FIS}" oninput="setCardFontProp('${key}','size',this.value===''?null:+this.value)">
+      <span style="${_FL}">px</span>
+      <label style="${_FL};display:flex;align-items:center;gap:4px">
+        <input type="checkbox" ${hasColor ? 'checked' : ''} onchange="toggleCardFontColor('${key}',this.checked)"> Color
       </label>
-      ${hasColor ? `<input type="color" value="${override.color || global.color}" style="width:30px;height:26px;border:none;border-radius:3px;cursor:pointer;padding:0" oninput="setCardFontProp('${key}','color',this.value)">` : ""}
-      <label style="font-size:11px;color:#6b7280">LH</label>
+      ${hasColor ? `<input type="color" value="${override.color || global.color}" style="width:28px;height:24px;border:none;border-radius:3px;cursor:pointer;padding:0" oninput="setCardFontProp('${key}','color',this.value)">` : ''}
+      <span style="font-size:10px;color:#9ca3af;margin-left:2px">${hint}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+      <label style="${_FL}">LH</label>
       <input type="number" min="1" max="3" step="0.1" value="${lhVal}" placeholder="${global.lineHeight}"
-        style="width:64px;${FIS}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value)">
-      <label style="font-size:11px;color:#6b7280">W</label>
-      <select style="${FIS};width:auto" onchange="setCardFontProp('${key}','weight',this.value==='0'?null:+this.value)">
-        <option value="0" ${!override.weight ? 'selected' : ''}>–</option>
-        <option value="300" ${override.weight===300 ? 'selected' : ''}>Light</option>
-        <option value="400" ${override.weight===400 ? 'selected' : ''}>Normal</option>
-        <option value="500" ${override.weight===500 ? 'selected' : ''}>Medium</option>
-        <option value="600" ${override.weight===600 ? 'selected' : ''}>SemiBold</option>
-        <option value="700" ${override.weight===700 ? 'selected' : ''}>Bold</option>
-        <option value="900" ${override.weight===900 ? 'selected' : ''}>Black</option>
-      </select>
+        style="width:56px;${FIS}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value)">
+      <label style="${_FL}">W</label>
+      <select style="${FIS};width:auto" onchange="setCardFontProp('${key}','weight',this.value==='0'?null:+this.value)">${weightOpts}</select>
       <div class="align-btn-group">
         <button class="align-btn${'textAlign' in override ? '' : ' active'}" onclick="setCardFontAlign('${key}',null)" title="inherit">–</button>
-        ${[['left','&#8676;'],['center','&#8596;'],['right','&#8677;'],['justify','&#8644;']].map(([a,ic]) => `<button class="align-btn${override.textAlign===a?' active':''}" onclick="setCardFontAlign('${key}','${a}')" title="${a}">${ic}</button>`).join('')}
-      </div>`;
+        ${alignBtns}
+      </div>
+    </div>
+  </div>`;
 }
 
 function setCardFontAlign(key, val) {
