@@ -493,6 +493,12 @@ function cardFontControls(key) {
 
 function setCardFontAlign(key, val) {
   setCardFontProp(key, 'textAlign', val);
+  const group = event?.target?.closest?.('.align-btn-group');
+  if (group) {
+    group.querySelectorAll('.align-btn').forEach(b =>
+      b.classList.toggle('active', b.title === (val || 'inherit'))
+    );
+  }
 }
 
 function setCardFontProp(key, prop, val) {
