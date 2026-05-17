@@ -740,6 +740,21 @@ function closeJsonPreview() {
   document.getElementById("json-preview-modal").style.display = "none";
 }
 
+function _jumpToJsonError(msg) {
+  const ta = document.getElementById("json-preview-textarea");
+  const m = msg.match(/line (\d+)/i);
+  if (!m) return;
+  const lineNum = parseInt(m[1]) - 1;
+  const lines = ta.value.split("\n");
+  let offset = 0;
+  for (let i = 0; i < lineNum; i++) offset += lines[i].length + 1;
+  const lineLen = (lines[lineNum] || "").length;
+  ta.focus();
+  ta.setSelectionRange(offset, offset + lineLen);
+  ta.scrollTop = lineNum * 18 - ta.clientHeight / 2;
+  _syncJsonLineNums();
+}
+
 function validateJsonPreview() {
   const status = document.getElementById("json-preview-status");
   try {
@@ -749,6 +764,7 @@ function validateJsonPreview() {
   } catch (e) {
     status.textContent = "✗ " + e.message;
     status.style.color = "#dc2626";
+    _jumpToJsonError(e.message);
   }
 }
 
@@ -760,6 +776,7 @@ function applyJsonPreview() {
   } catch (e) {
     status.textContent = "✗ " + e.message;
     status.style.color = "#dc2626";
+    _jumpToJsonError(e.message);
     return;
   }
   closeJsonPreview();
