@@ -146,7 +146,10 @@ function _buildAiPrompt(subject, snapshot) {
 Rules:
 - Keep identical JSON structure (same number of cards, same layouts, same number of sections per card)
 - Keep all section label names unchanged
-- Replace title and section content with accurate, concise information about the new subject
+- Replace title and section content with accurate, detailed information about the new subject
+- Each section content should be 2–4 sentences with specific, interesting facts — avoid one-liners
+- Write in the same language as the original project content
+- Use markdown where helpful (bold key terms, bullet points for lists)
 - Keep all settings, fonts, and layout configurations unchanged
 - Set "project_name" to the new subject
 - Set "project_icon" to a single emoji that best represents the subject theme
