@@ -145,7 +145,7 @@ function _buildAiPrompt(subject, snapshot) {
 
 Rules:
 - Keep identical JSON structure (same number of cards, same layouts, same number of sections per card)
-- Keep all section label names unchanged
+- Keep generic section label names unchanged (e.g. "Kích thước", "Sinh sản", "Phân bố"); replace subject-specific labels that reference the original topic name with accurate equivalents for the new subject
 - Replace title and section content with accurate, detailed information about the new subject
 - Each section content should be 2–4 sentences with specific, interesting facts — avoid one-liners
 - Write in the same language as the original project content
@@ -214,7 +214,7 @@ async function _callGemini(key, prompt) {
     try { const e = await r.json(); detail = e.error?.message || ""; } catch {}
     if (r.status === 400 && !detail) throw new Error(t('ai.badKey'));
     if (r.status === 429 || r.status === 403)
-      throw new Error(`${t('ai.rateLimit')}${detail ? ": " + detail : ""}`);
+      throw new Error(`${t('ai.rateLimit')}${detail ? `: ${detail}` : ""}`);
     throw new Error(detail || `Error ${r.status}`);
   }
   const data = await r.json();
