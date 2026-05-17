@@ -1228,7 +1228,8 @@
             <div id="json-line-numbers" style="padding:10px 6px 10px 8px; background:#f3f4f6; border-right:1px solid #e5e7eb; font-family:'Courier New',monospace; font-size:12px; line-height:1.5; color:#9ca3af; text-align:right; user-select:none; overflow:hidden; white-space:pre; min-width:36px"></div>
             <textarea
               id="json-preview-textarea"
-              style="flex:1; font-family:'Courier New',monospace; font-size:12px; line-height:1.5; background:transparent; border:none; padding:10px; resize:none; color:#1a1a2e; outline:none; overflow:auto"
+              wrap="off"
+              style="flex:1; font-family:'Courier New',monospace; font-size:12px; line-height:1.5; background:transparent; border:none; padding:10px; resize:none; color:#1a1a2e; outline:none; overflow:auto; white-space:pre"
               oninput="_syncJsonLineNums()"
               onscroll="document.getElementById('json-line-numbers').scrollTop=this.scrollTop"
             ></textarea>
