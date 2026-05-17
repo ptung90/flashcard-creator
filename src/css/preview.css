@@ -5,7 +5,7 @@
   margin: 0;
 }
 .fc-card--list-indent .fc-section__content ul > li {
-  text-indent: 1em;
+  text-indent: 2em;
 }
 
 /* ── Preview Panel ── */
