@@ -718,9 +718,21 @@ function copyJsonForAI() {
   closeJsonModal();
 }
 
+function _syncJsonLineNums() {
+  const ta = document.getElementById("json-preview-textarea");
+  const ln = document.getElementById("json-line-numbers");
+  if (!ta || !ln) return;
+  const count = (ta.value.match(/\n/g) || []).length + 1;
+  let s = "";
+  for (let i = 1; i <= count; i++) s += `${i}\n`;
+  ln.textContent = s;
+  ln.scrollTop = ta.scrollTop;
+}
+
 function openJsonPreview(text) {
   document.getElementById("json-preview-textarea").value = text;
   document.getElementById("json-preview-status").textContent = "";
+  _syncJsonLineNums();
   document.getElementById("json-preview-modal").style.display = "flex";
 }
 
