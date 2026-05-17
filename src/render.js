@@ -234,7 +234,8 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
     "fc-card fc-card--" +
     (forPrint ? "print" : "preview") +
     " fc-layout-" +
-    card.layout;
+    card.layout +
+    (card.listIndent ? " fc-card--list-indent" : "");
   const borderStyle =
     "border:" +
     s.border.width +

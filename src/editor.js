@@ -157,10 +157,16 @@ function renderEditor() {
     <div class="editor-section">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:0">
         <h3 style="margin:0">${t('editor.sections')}</h3>
-        <label style="font-size:12px;color:#1f2937;display:flex;align-items:center;gap:6px">
-          <input type="checkbox" ${card.hideSectionLabels ? "checked" : ""} onchange="updateCardProp('hideSectionLabels',this.checked)">
-          ${t('editor.hideLabels')}
-        </label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <label style="font-size:12px;color:#1f2937;display:flex;align-items:center;gap:6px">
+            <input type="checkbox" ${card.hideSectionLabels ? "checked" : ""} onchange="updateCardProp('hideSectionLabels',this.checked)">
+            ${t('editor.hideLabels')}
+          </label>
+          <label style="font-size:12px;color:#1f2937;display:flex;align-items:center;gap:6px">
+            <input type="checkbox" ${card.listIndent ? "checked" : ""} onchange="updateCardProp('listIndent',this.checked)">
+            ${t('editor.listIndent')}
+          </label>
+        </div>
       </div>
       <div style="margin-bottom:8px;margin-top:6px">
         ${cardFontControls("contentFont")}

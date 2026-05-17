@@ -264,6 +264,7 @@ function addCard() {
     title: t('card.new'),
     hideTitle: false,
     hideSectionLabels: false,
+    listIndent: false,
     titleFont: null,
     contentFont: null,
     orientation: null,
