@@ -68,9 +68,22 @@ async function searchINaturalist() {
 }
 
 // Unsplash
+const _unsplashCache = {};
+
 function saveUnsplashKey() {
   const key = document.getElementById("unsplash-key").value.trim();
   localStorage.setItem("unsplash-key", key);
+}
+
+function _unsplashPick(i) {
+  const d = _unsplashCache[i];
+  if (!d) return;
+  const key = document.getElementById("unsplash-key")?.value.trim()
+    || localStorage.getItem("unsplash-key") || "";
+  if (key && d.dlUrl) {
+    fetch(`${d.dlUrl}?client_id=${encodeURIComponent(key)}`).catch(() => {});
+  }
+  insertUnsplashImage(d.url, { name: d.name, profileUrl: d.profileUrl, photoUrl: d.photoUrl });
 }
 
 async function searchUnsplash() {
@@ -100,11 +113,16 @@ async function searchUnsplash() {
       return;
     }
     res.innerHTML = results
-      .map((p) => {
+      .map((p, i) => {
         const thumb = p.urls.small;
-        const full = p.urls.regular;
-        const author = p.user?.name || "";
-        return `<div class="search-result-item" title="${esc(author)}" onclick="insertImageUrl('${esc(full)}')"><img src="${esc(thumb)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`;
+        _unsplashCache[i] = {
+          url: p.urls.regular,
+          dlUrl: p.links?.download_location || "",
+          name: p.user?.name || "",
+          profileUrl: p.user?.links?.html || "https://unsplash.com",
+          photoUrl: p.links?.html || "https://unsplash.com",
+        };
+        return `<div class="search-result-item" title="${esc(_unsplashCache[i].name)}" onclick="_unsplashPick(${i})"><img src="${esc(thumb)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`;
       })
       .join("");
   } catch (e) {

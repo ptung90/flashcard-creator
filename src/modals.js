@@ -259,8 +259,19 @@ function insertImageUrl(url) {
   if (!card) return;
   pushUndo();
   const existing = card.images.find((i) => i.slot === imgModalSlot);
-  if (existing) existing.url = url;
+  if (existing) { existing.url = url; delete existing.attribution; }
   else card.images.push({ slot: imgModalSlot, url });
+  closeImgModal();
+  dispatch('CARD_UI_CHANGED');
+}
+
+function insertUnsplashImage(url, attribution) {
+  const card = getActiveCard();
+  if (!card) return;
+  pushUndo();
+  const existing = card.images.find((i) => i.slot === imgModalSlot);
+  if (existing) { existing.url = url; existing.attribution = attribution; }
+  else card.images.push({ slot: imgModalSlot, url, attribution });
   closeImgModal();
   dispatch('CARD_UI_CHANGED');
 }

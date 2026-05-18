@@ -45,6 +45,12 @@ function resolveImgStyle(img, globalImgStyle) {
     (img.size !== "cover" && img.color ? "background-color:" + img.color + ";" : "");
 }
 
+function buildAttrHtml(img) {
+  if (!img?.attribution) return "";
+  const { name, profileUrl, photoUrl } = img.attribution;
+  return `<div class="fc-img-attribution"><a href="${esc(photoUrl)}" target="_blank">Photo</a> by <a href="${esc(profileUrl)}" target="_blank">${esc(name)}</a> on <a href="https://unsplash.com" target="_blank">Unsplash</a></div>`;
+}
+
 function buildSlots(card, slotCount, imgStyle) {
   return Array.from({ length: slotCount }, (_, i) => {
     const img = card.images.find((im) => im.slot === i);
@@ -53,7 +59,9 @@ function buildSlots(card, slotCount, imgStyle) {
         '<div class="fc-image-slot fc-image-slot-' + i +
         '"><div class="img-bg" style="background-image:url(\'' + esc(img.url) + "\');" +
         resolveImgStyle(img, imgStyle) +
-        'background-repeat:no-repeat;width:100%;height:100%;"></div></div>'
+        'background-repeat:no-repeat;width:100%;height:100%;"></div>' +
+        buildAttrHtml(img) +
+        '</div>'
       );
     }
     return '<div class="fc-image-slot fc-image-slot-' + i + '"><span class="empty-placeholder">📷</span></div>';
