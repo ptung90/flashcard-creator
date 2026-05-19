@@ -347,7 +347,7 @@ async function pasteToSlot(slot) {
   // Last resort: passive paste listener
   pendingPasteSlot = slot;
   document.querySelectorAll(".image-slot-row").forEach((r, i) => {
-    r.style.outline = i === slot ? "2px solid #a855f7" : "";
+    r.style.outline = i === slot ? "2px solid #5CB29D" : "";
   });
   setTimeout(() => {
     if (pendingPasteSlot === slot) {

@@ -70,8 +70,8 @@
 }
 
 .search-tab.active {
-  color: #a855f7;
-  border-bottom-color: #a855f7;
+  color: #5CB29D;
+  border-bottom-color: #5CB29D;
 }
 
 .search-bar {
@@ -116,7 +116,7 @@
 }
 
 .search-result-item:hover {
-  border-color: #a855f7;
+  border-color: #5CB29D;
 }
 
 .search-result-item img {

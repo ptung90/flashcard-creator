@@ -80,9 +80,9 @@
 }
 
 .fc-card-item.card-drag-over {
-  border-color: #a855f7;
+  border-color: #5CB29D;
   background: #f3e8ff;
-  outline: 2px dashed #a855f7;
+  outline: 2px dashed #5CB29D;
 }
 
 .fc-card-item .card-num {
@@ -193,9 +193,9 @@
 }
 
 .fc-card-thumb-item.card-drag-over {
-  border-color: #a855f7;
+  border-color: #5CB29D;
   background: #f3e8ff;
-  outline: 2px dashed #a855f7;
+  outline: 2px dashed #5CB29D;
 }
 
 .card-thumb-img {

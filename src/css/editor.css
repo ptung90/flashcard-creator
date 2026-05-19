@@ -44,7 +44,7 @@
 }
 .layout-tab.active {
   background: #ede9fe;
-  border-color: #a855f7;
+  border-color: #5CB29D;
   color: #3e9684;
   font-weight: 600;
 }
@@ -73,7 +73,7 @@
 }
 
 .layout-opt.selected {
-  border-color: #a855f7;
+  border-color: #5CB29D;
 }
 
 .layout-opt .lo-row {
@@ -181,7 +181,7 @@
 
 .height-val {
   font-size: 12px;
-  color: #a855f7;
+  color: #5CB29D;
   min-width: 34px;
 }
 
@@ -358,7 +358,7 @@
 .fc-grid-handle::after {
   content: "";
   position: absolute;
-  background: #a855f7;
+  background: #5CB29D;
   opacity: 0;
   transition: opacity 0.15s;
   border-radius: 2px;
@@ -388,7 +388,7 @@
 }
 
 .image-slot-row.drag-over {
-  border: 2px dashed #a855f7;
+  border: 2px dashed #5CB29D;
   background: #1e0a4a;
 }
 
