@@ -177,9 +177,9 @@ function renderEditor() {
         ${sections || `<div style="color:#555;font-size:12px;padding:8px 0">${t('editor.noSections')}</div>`}
       </div>
       <div style="margin-top:8px;display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap">
-        ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="addSection()">${t('editor.addSection')}</button>` : ''}
-        ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="togglePasteBlock()">${t('editor.pasteBlock')}</button>` : ''}
-        <button class="btn btn-secondary btn-sm" onclick="toggleCardCssEditor()" id="card-css-btn">${card.customCss ? '💅✓' : '💅'} ${t('editor.css')}</button>
+        ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="addSection()"><svg class="icon" style="width:14px;height:14px"><use href="#i-plus"/></svg><span>${t('editor.addSection')}</span></button>` : ''}
+        ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="togglePasteBlock()"><svg class="icon" style="width:14px;height:14px"><use href="#i-clipboard"/></svg><span>${t('editor.pasteBlock')}</span></button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="toggleCardCssEditor()" id="card-css-btn"><svg class="icon" style="width:14px;height:14px"><use href="#i-braces"/></svg><span>${t('editor.css')}</span>${card.customCss ? '<span class="card-css-on">●</span>' : ''}</button>
         <button class="btn btn-secondary btn-sm" onclick="toggleDataArea()">${t('editor.data')}</button>
       </div>
       <div id="card-css-area" style="display:${card.customCss ? '' : 'none'};margin-top:8px">
@@ -806,7 +806,11 @@ function updateCardCss(css) {
   if (!card) return;
   card.customCss = css;
   const btn = document.getElementById("card-css-btn");
-  if (btn) btn.textContent = (css ? '💅✓' : '💅') + ' CSS';
+  if (btn) {
+    const dot = btn.querySelector('.card-css-on');
+    if (css && !dot) btn.insertAdjacentHTML('beforeend', '<span class="card-css-on">●</span>');
+    else if (!css && dot) dot.remove();
+  }
   dispatch('CARD_CONTENT_CHANGED');
 }
 
