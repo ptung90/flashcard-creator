@@ -637,6 +637,23 @@ function _buildEmojiPicker() {
   _emojiPickerBuilt = true;
 }
 
+function toggleMoreMenu(event) {
+  event.stopPropagation();
+  const menu = document.getElementById('toolbar-more-menu');
+  const btn = document.getElementById('toolbar-more-btn');
+  if (!menu) return;
+  const open = menu.classList.toggle('open');
+  btn.setAttribute('aria-pressed', open ? 'true' : 'false');
+  if (open) setTimeout(() => document.addEventListener('click', closeMoreMenu, { once: true }), 0);
+}
+
+function closeMoreMenu() {
+  const menu = document.getElementById('toolbar-more-menu');
+  const btn = document.getElementById('toolbar-more-btn');
+  if (menu) menu.classList.remove('open');
+  if (btn) btn.setAttribute('aria-pressed', 'false');
+}
+
 function toggleSettingsBar() {
   const bar = document.querySelector('.fc-settings-bar');
   const btn = document.getElementById('setup-toggle-btn');

@@ -456,12 +456,6 @@
         <button id="redo-btn" class="btn btn-secondary btn-sm btn-icon" onclick="redo()" title="Redo (Ctrl+Y)" disabled>
           <svg class="icon"><use href="#i-redo"/></svg>
         </button>
-        <button class="btn btn-secondary btn-sm btn-icon" onclick="openSettingsModal()" title="Advanced settings">
-          <svg class="icon"><use href="#i-settings"/></svg>
-        </button>
-        <button class="btn btn-secondary btn-sm btn-icon" onclick="openCssModal()" title="Custom CSS">
-          <svg class="icon"><use href="#i-braces"/></svg>
-        </button>
         <button class="btn btn-secondary btn-sm" onclick="saveJSON()" title="Save (Ctrl+S)">
           <svg class="icon"><use href="#i-save"/></svg><span class="btn-label" data-i18n="toolbar.save">Save</span><span id="dirty-dot" style="display: none">●</span>
         </button>
@@ -474,16 +468,32 @@
         <button class="btn btn-primary btn-sm" onclick="exportPDF()" data-i18n-title="toolbar.pdfAll" title="Export PDF (all)">
           <svg class="icon"><use href="#i-download"/></svg><span class="btn-label" data-i18n="toolbar.pdfAll">PDF All</span>
         </button>
-        <button class="btn btn-secondary btn-sm btn-icon" onclick="openJsonModal()" data-i18n-title="json.btnTitle" title="JSON">
-          <svg class="icon"><use href="#i-code"/></svg>
-        </button>
+
+        <!-- More menu -->
+        <div class="toolbar-more-wrap">
+          <button class="btn btn-secondary btn-sm btn-icon" id="toolbar-more-btn" onclick="toggleMoreMenu(event)" title="More options" aria-pressed="false">
+            <svg class="icon"><use href="#i-more"/></svg>
+          </button>
+          <div class="toolbar-more-menu" id="toolbar-more-menu">
+            <button class="toolbar-more-item" onclick="openSettingsModal();closeMoreMenu()">
+              <svg class="icon"><use href="#i-settings"/></svg> Settings
+            </button>
+            <button class="toolbar-more-item" onclick="openCssModal();closeMoreMenu()">
+              <svg class="icon"><use href="#i-braces"/></svg> Custom CSS
+            </button>
+            <button class="toolbar-more-item" onclick="openJsonModal();closeMoreMenu()">
+              <svg class="icon"><use href="#i-code"/></svg> JSON
+            </button>
+            <div class="toolbar-more-sep"></div>
+            <div class="toolbar-more-lang">
+              <button class="btn btn-secondary btn-sm lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+              <button class="btn btn-secondary btn-sm lang-btn" data-lang="vi" onclick="setLang('vi')">VI</button>
+            </div>
+          </div>
+        </div>
 
         <span class="toolbar-meta">
           <span id="app-version"></span>
-          <div class="btn-group">
-            <button class="btn btn-secondary btn-sm lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
-            <button class="btn btn-secondary btn-sm lang-btn" data-lang="vi" onclick="setLang('vi')">VI</button>
-          </div>
           <div class="btn-group">
             <button class="btn btn-secondary btn-sm btn-icon" onclick="changeUIZoom(-0.1)" data-i18n-title="set.zoom.dec" title="Decrease UI size">A−</button>
             <button class="btn btn-secondary btn-sm btn-icon" onclick="changeUIZoom(0.1)" data-i18n-title="set.zoom.inc" title="Increase UI size">A+</button>
