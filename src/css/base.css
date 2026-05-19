@@ -120,7 +120,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  background: #ede9fe;
+  background: var(--mint-100);
   color: #5b21b6;
   border-radius: 4px;
   padding: 2px 4px 2px 7px;
@@ -180,7 +180,7 @@ body {
 }
 
 .align-btn.active {
-  background: #ede9fe;
+  background: var(--mint-100);
   border-color: #82c4b6;
   color: #3e9684;
 }
@@ -205,7 +205,7 @@ body {
 }
 
 .btn-font-toggle.open {
-  background: #ede9fe;
+  background: var(--mint-100);
   border-color: #82c4b6;
   color: #3e9684;
 }
@@ -245,7 +245,7 @@ body {
 }
 
 .btn-border-toggle.open {
-  background: #ede9fe;
+  background: var(--mint-100);
   border-color: #82c4b6;
   color: #3e9684;
 }
@@ -397,7 +397,7 @@ body {
 }
 
 .btn-group .btn.active {
-  background: #ede9fe;
+  background: var(--mint-100);
   border-color: #82c4b6;
   color: #3e9684;
   z-index: 1;
@@ -466,7 +466,7 @@ body {
 }
 
 .lang-btn.active {
-  background: #ede9fe;
+  background: var(--mint-100);
   border-color: #82c4b6;
   color: #3e9684;
   font-weight: 600;

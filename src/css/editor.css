@@ -43,7 +43,7 @@
   color: #374151;
 }
 .layout-tab.active {
-  background: #ede9fe;
+  background: var(--mint-100);
   border-color: #5CB29D;
   color: #3e9684;
   font-weight: 600;

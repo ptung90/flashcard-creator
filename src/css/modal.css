@@ -430,7 +430,7 @@
 }
 
 .folder-item:hover {
-  background: #ede9fe;
+  background: var(--mint-100);
 }
 
 .folder-tree {
@@ -571,7 +571,7 @@
 }
 
 .ai-provider-btn.active {
-  background: #ede9fe;
+  background: var(--mint-100);
   border-color: #82c4b6;
   color: #3e9684;
   font-weight: 600;
