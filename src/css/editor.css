@@ -82,7 +82,7 @@
 }
 
 .layout-opt .lo-block {
-  background: #c7d2fe;
+  background: var(--mint-300);
   border-radius: 2px;
   flex: 1;
 }
