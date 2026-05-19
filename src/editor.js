@@ -22,7 +22,7 @@ function renderEditor() {
           <input type="checkbox" ${hasOverride ? "checked" : ""} onchange="toggleImgOverride(${i},this.checked)">${t('editor.custom')}</label>
         ${hasOverride ? `<select class="img-override-select" onchange="updateImgProp(${i},'size',this.value)">${sizeOpts.map(([v, l]) => `<option value="${v}"${img.size === v ? " selected" : ""}>${l}</option>`).join("")
         }</select>` : ""}
-        ${hasOverride && img.size !== "cover" ? `<input type="color" value="${img.color || "#e5e7eb"}" onchange="updateImgProp(${i},'color',this.value)" title="${t('editor.bgColor')}" style="width:26px;height:22px;padding:0;border:1px solid #d1d5db;border-radius:3px;cursor:pointer">` : ""}
+        ${hasOverride && img.size !== "cover" ? `<input type="color" value="${img.color || "#e5e7e4"}" onchange="updateImgProp(${i},'color',this.value)" title="${t('editor.bgColor')}" style="width:26px;height:22px;padding:0;border:1px solid #d1d5d2;border-radius:3px;cursor:pointer">` : ""}
       </div>` : "";
     return `
       <div class="image-slot-row${hidden ? " slot-hidden" : ""}" draggable="true" data-slot="${i}">
@@ -32,13 +32,13 @@ function renderEditor() {
         </div>
         <div class="image-slot-info">
           <div class="image-slot-url">${url ? esc(url) : t('editor.noImage')}</div>
-          ${hidden ? `<div style="font-size:10px;color:#9ca3af;margin-top:2px">${t('editor.hiddenSlot').replace('{n}', i)}</div>` : ""}
+          ${hidden ? `<div style="font-size:10px;color:#9aa19e;margin-top:2px">${t('editor.hiddenSlot').replace('{n}', i)}</div>` : ""}
         </div>
         <div class="image-slot-btns">
-          ${!hidden ? `<button class="btn btn-secondary btn-sm" onclick="openImgModal(${i})">🔍</button>` : ""}
-          ${url && !hidden ? `<button class="btn btn-secondary btn-sm" onclick="copySlot(${i})" title="Copy image">⎘</button>` : ""}
-          ${!hidden ? `<button class="btn btn-secondary btn-sm" onclick="pasteToSlot(${i})" title="Paste image from clipboard (Ctrl+V)">📋</button>` : ""}
-          ${url ? `<button class="btn btn-danger btn-sm" onclick="clearSlot(${i})">✕</button>` : ""}
+          ${!hidden ? `<button class="btn btn-secondary btn-sm btn-icon" onclick="openImgModal(${i})" title="${t('editor.search')}"><svg class="icon" style="width:14px;height:14px"><use href="#i-search"/></svg></button>` : ""}
+          ${url && !hidden ? `<button class="btn btn-secondary btn-sm btn-icon" onclick="copySlot(${i})" title="Copy image"><svg class="icon" style="width:14px;height:14px"><use href="#i-copy"/></svg></button>` : ""}
+          ${!hidden ? `<button class="btn btn-secondary btn-sm btn-icon" onclick="pasteToSlot(${i})" title="Paste image from clipboard (Ctrl+V)"><svg class="icon" style="width:14px;height:14px"><use href="#i-clipboard"/></svg></button>` : ""}
+          ${url ? `<button class="btn btn-danger btn-sm btn-icon" onclick="clearSlot(${i})" title="Clear"><svg class="icon" style="width:14px;height:14px"><use href="#i-x"/></svg></button>` : ""}
         </div>
         ${overrideHtml}
       </div>`;
@@ -66,8 +66,8 @@ function renderEditor() {
               <div class="pair-thumb" onclick="openImgModal(${si})" title="${t('editor.clickImg')}">${thumb}</div>
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
                 <div class="section-row-header">
-                  <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)" style="${card.hideSectionLabels ? 'background:#f3f4f6;color:#9ca3af' : ''}">
-                  <button class="icon-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More">⋮</button>
+                  <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)" style="${card.hideSectionLabels ? 'background:#f1f2ef;color:#9aa19e' : ''}">
+                  <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
                 </div>
                 <textarea class="section-content-input" rows="4" placeholder="${t('editor.pairedPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
               </div>
@@ -76,8 +76,8 @@ function renderEditor() {
       return `
           <div class="section-row" id="section-${s.id}">
             <div class="section-row-header">
-              <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)" style="${card.hideSectionLabels ? 'background:#f3f4f6;color:#9ca3af' : ''}">
-              <button class="icon-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More">⋮</button>
+              <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)" style="${card.hideSectionLabels ? 'background:#f1f2ef;color:#9aa19e' : ''}">
+              <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
             </div>
             <textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
           </div>`;
@@ -105,17 +105,17 @@ function renderEditor() {
     <div class="editor-section">
       <h3>Grid</h3>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <label style="font-size:11px;color:#6b7280">Cols</label>
+        <label style="font-size:11px;color:#6b7672">Cols</label>
         <input type="number" min="1" max="10" value="${card.textCols ?? 3}"
           style="width:58px;${FIS}" oninput="setTextCols(+this.value)" onchange="renderEditor()">
-        <label style="font-size:11px;color:#6b7280">Rows</label>
+        <label style="font-size:11px;color:#6b7672">Rows</label>
         <input type="number" min="1" max="10" value="${card.textRows ?? 1}"
           style="width:58px;${FIS}" oninput="setTextRows(+this.value)" onchange="renderEditor()">
-        <label style="font-size:11px;color:#6b7280">Height</label>
+        <label style="font-size:11px;color:#6b7672">Height</label>
         <input type="number" min="20" max="500" value="${card.textCardHeight ?? ''}" placeholder="auto"
           style="width:72px;${FIS}"
           oninput="updateCardProp('textCardHeight',this.value===''?null:+this.value)">
-        <span style="font-size:11px;color:#9ca3af">px</span>
+        <span style="font-size:11px;color:#9aa19e">px</span>
       </div>
     </div>` : ''}
 
@@ -141,14 +141,14 @@ function renderEditor() {
     <div class="editor-section">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
         <h3 style="margin:0">${t('editor.title')}</h3>
-        <label style="font-size:12px;color:#1f2937;display:flex;align-items:center;gap:6px">
+        <label style="font-size:12px;color:#1f2a28;display:flex;align-items:center;gap:6px">
           <input type="checkbox" ${card.hideTitle ? "checked" : ""} onchange="updateCardProp('hideTitle',this.checked)">
           ${t('editor.hideTitle')}
         </label>
       </div>
       <input class="title-input" type="text" value="${esc(card.title)}" placeholder="${t('editor.titlePh')}"
         onfocus="pushUndo()" oninput="updateCardProp('title',this.value)"
-        style="${card.hideTitle ? 'background:#f3f4f6;color:#9ca3af' : ''}">
+        style="${card.hideTitle ? 'background:#f1f2ef;color:#9aa19e' : ''}">
       <div style="margin-top:6px">
         ${cardFontControls("titleFont")}
       </div>
@@ -158,11 +158,11 @@ function renderEditor() {
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:0">
         <h3 style="margin:0">${t('editor.sections')}</h3>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <label style="font-size:12px;color:#1f2937;display:flex;align-items:center;gap:6px">
+          <label style="font-size:12px;color:#1f2a28;display:flex;align-items:center;gap:6px">
             <input type="checkbox" ${card.hideSectionLabels ? "checked" : ""} onchange="updateCardProp('hideSectionLabels',this.checked)">
             ${t('editor.hideLabels')}
           </label>
-          <label style="font-size:12px;color:#1f2937;display:flex;align-items:center;gap:6px">
+          <label style="font-size:12px;color:#1f2a28;display:flex;align-items:center;gap:6px">
             <input type="checkbox" ${card.listIndent ? "checked" : ""} onchange="updateCardProp('listIndent',this.checked)">
             ${t('editor.listIndent')}
           </label>
@@ -183,7 +183,7 @@ function renderEditor() {
         <button class="btn btn-secondary btn-sm" onclick="toggleDataArea()">${t('editor.data')}</button>
       </div>
       <div id="card-css-area" style="display:${card.customCss ? '' : 'none'};margin-top:8px">
-        <div style="font-size:10px;color:#9ca3af;margin-bottom:4px">${t('editor.cssHint')}</div>
+        <div style="font-size:10px;color:#9aa19e;margin-bottom:4px">${t('editor.cssHint')}</div>
         <textarea id="card-css-input" class="section-content-input" rows="5"
           placeholder=".fc-title { font-size: 20px; color: #6b21a8; }&#10;.fc-section__content { line-height: 1.8; }"
           oninput="updateCardCss(this.value)">${esc(card.customCss || '')}</textarea>
@@ -199,7 +199,7 @@ function renderEditor() {
       </div>
       <div id="data-area" style="display:none;margin-top:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <label style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">${t('editor.cardData')}</label>
+          <label style="font-size:11px;color:#6b7672;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">${t('editor.cardData')}</label>
           <div id="data-area-btns" style="display:flex;gap:4px;">
             <button class="btn btn-secondary btn-sm" onclick="editCardData()">${t('editor.edit')}</button>
           </div>
@@ -435,7 +435,7 @@ function setTextCols(n) {
 }
 
 const FIS =
-  "background:#fff;border:1px solid #d1d5db;color:#1a1a2e;border-radius:4px;padding:3px 5px;font-size:12px";
+  "background:#fff;border:1px solid #d1d5d2;color:#1f2a28;border-radius:4px;padding:3px 5px;font-size:12px";
 
 function cardOrientationControls() {
   const card = getActiveCard();
@@ -456,11 +456,11 @@ function cardOrientationControls() {
         <button class="${btnCls('portrait')}" onclick="setCardOrientation('portrait')">${t('orient.portrait')}</button>
         <button class="${btnCls('landscape')}" onclick="setCardOrientation('landscape')">${t('orient.landscape')}</button>
       </div>
-      ${useCustom ? "" : `<span style="font-size:11px;color:#9ca3af">${t('editor.fromGlobal')}</span>`}
+      ${useCustom ? "" : `<span style="font-size:11px;color:#9aa19e">${t('editor.fromGlobal')}</span>`}
     </div>`;
 }
 
-const _FL = `font-size:11px;color:#6b7280`;
+const _FL = `font-size:11px;color:#6b7672`;
 
 // Per-card font override controls (empty = inherit global)
 function cardFontControls(key) {
@@ -473,13 +473,13 @@ function cardFontControls(key) {
   const hasColor = "color" in override;
   const weightOpts = [['0', '–'], ['300', 'Light'], ['400', 'Normal'], ['500', 'Medium'], ['600', 'SemiBold'], ['700', 'Bold'], ['900', 'Black']]
     .map(([v, l]) => `<option value="${v}" ${(!override.weight && v === '0') || override.weight == v ? 'selected' : ''}>${l}</option>`).join('');
-  const alignBtns = [['left', '&#8676;'], ['center', '&#8596;'], ['right', '&#8677;'], ['justify', '&#8644;']]
-    .map(([a, ic]) => `<button class="align-btn${override.textAlign === a ? ' active' : ''}" onclick="setCardFontAlign('${key}','${a}')" title="${a}">${ic}</button>`).join('');
-  const _bg = (hasVal) => hasVal ? 'background:#fff;border-color:#a855f7' : 'background:#f3f4f6';
+  const alignBtns = [['left', '#i-align-left'], ['center', '#i-align-center'], ['right', '#i-align-right'], ['justify', '#i-align-justify']]
+    .map(([a, ic]) => `<button class="align-btn${override.textAlign === a ? ' active' : ''}" onclick="setCardFontAlign('${key}','${a}')" title="${a}"><svg class="icon" style="width:13px;height:13px"><use href="${ic}"/></svg></button>`).join('');
+  const _bg = (hasVal) => hasVal ? 'background:#fff;border-color:#60b0a0' : 'background:#f1f2ef';
   return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%">
     <label style="${_FL}">Size</label>
     <input type="number" min="8" max="72" value="${sizeVal}" placeholder="${global.size}"
-      style="width:56px;${FIS};${_bg(sizeVal !== '')}" oninput="setCardFontProp('${key}','size',this.value===''?null:+this.value);this.style.background=this.value===''?'#f3f4f6':'#fff';this.style.borderColor=this.value===''?'#d1d5db':'#a855f7'">
+      style="width:56px;${FIS};${_bg(sizeVal !== '')}" oninput="setCardFontProp('${key}','size',this.value===''?null:+this.value);this.style.background=this.value===''?'#f1f2ef':'#fff';this.style.borderColor=this.value===''?'#d1d5d2':'#60b0a0'">
     <span style="${_FL}">px</span>
     <label style="${_FL};display:flex;align-items:center;gap:4px">
       <input type="checkbox" ${hasColor ? 'checked' : ''} onchange="toggleCardFontColor('${key}',this.checked)"> Color
@@ -487,9 +487,9 @@ function cardFontControls(key) {
     ${hasColor ? `<input type="color" value="${override.color || global.color}" style="width:28px;height:24px;border:none;border-radius:3px;cursor:pointer;padding:0" oninput="setCardFontProp('${key}','color',this.value)">` : ''}
     <label style="${_FL}">LH</label>
     <input type="number" min="1" max="3" step="0.1" value="${lhVal}" placeholder="${global.lineHeight}"
-      style="width:56px;${FIS};${_bg(lhVal !== '')}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value);this.style.background=this.value===''?'#f3f4f6':'#fff';this.style.borderColor=this.value===''?'#d1d5db':'#a855f7'">
+      style="width:56px;${FIS};${_bg(lhVal !== '')}" oninput="setCardFontProp('${key}','lineHeight',this.value===''?null:+this.value);this.style.background=this.value===''?'#f1f2ef':'#fff';this.style.borderColor=this.value===''?'#d1d5d2':'#60b0a0'">
     <label style="${_FL}">W</label>
-    <select style="${FIS};width:auto;${_bg(!!override.weight)}" onchange="setCardFontProp('${key}','weight',this.value==='0'?null:+this.value);this.style.background=this.value==='0'?'#f3f4f6':'#fff';this.style.borderColor=this.value==='0'?'#d1d5db':'#a855f7'">${weightOpts}</select>
+    <select style="${FIS};width:auto;${_bg(!!override.weight)}" onchange="setCardFontProp('${key}','weight',this.value==='0'?null:+this.value);this.style.background=this.value==='0'?'#f1f2ef':'#fff';this.style.borderColor=this.value==='0'?'#d1d5d2':'#60b0a0'">${weightOpts}</select>
     <div class="align-btn-group">
       <button class="align-btn${'textAlign' in override ? '' : ' active'}" onclick="setCardFontAlign('${key}',null)" title="inherit">–</button>
       ${alignBtns}
