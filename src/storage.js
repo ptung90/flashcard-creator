@@ -574,8 +574,10 @@ function dismissRestoreBanner() {
 function toggleSidebar() {
   const sidebar = document.getElementById("fc-sidebar");
   const btn = document.getElementById("sidebar-toggle-btn");
+  if (!sidebar || !btn) return;
   const collapsed = sidebar.classList.toggle("collapsed");
-  btn.textContent = collapsed ? "▶" : "◀";
+  btn.setAttribute("aria-pressed", collapsed ? "true" : "false");
+  btn.title = collapsed ? "Show sidebar" : "Hide sidebar";
   renderPreview();
 }
 

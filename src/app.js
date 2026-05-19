@@ -640,8 +640,9 @@ function _buildEmojiPicker() {
 function toggleSettingsBar() {
   const bar = document.querySelector('.fc-settings-bar');
   const btn = document.getElementById('setup-toggle-btn');
-  bar.classList.toggle('open');
-  btn?.setAttribute('aria-pressed', String(bar.classList.contains('open')));
+  if (!bar) return;
+  const open = bar.classList.toggle('open');
+  if (btn) btn.setAttribute('aria-pressed', open ? 'true' : 'false');
 }
 
 function toggleEmojiPicker(event) {
@@ -910,3 +911,23 @@ async function init() {
 }
 
 init();
+
+// Tint the filled half of range sliders for Chromium via --val CSS property
+(function () {
+  function tint(input) {
+    if (!input || input.type !== "range" || input.classList.contains("mint-fill")) return;
+    input.classList.add("mint-fill");
+    const update = () => {
+      const min = +input.min || 0, max = +input.max || 100;
+      const v = ((+input.value - min) / (max - min)) * 100;
+      input.style.setProperty("--val", v + "%");
+    };
+    input.addEventListener("input", update);
+    update();
+  }
+  function tintAll() {
+    document.querySelectorAll('input[type="range"]').forEach(tint);
+  }
+  document.addEventListener("DOMContentLoaded", tintAll);
+  new MutationObserver(tintAll).observe(document.body, { childList: true, subtree: true });
+})();
