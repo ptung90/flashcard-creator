@@ -194,6 +194,7 @@ body { background: var(--paper); color: var(--ink-900); }
 /* Preview & Editor */
 .fc-preview-panel { background: var(--paper); }
 .fc-preview { background: var(--paper); }
+.preview-paper { box-shadow: 0 2px 16px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.10); }
 .fc-editor { background: var(--paper); }
 .fc-preview-header { background: #fff; border-bottom: 1px solid var(--line); }
 
@@ -204,9 +205,7 @@ body { background: var(--paper); color: var(--ink-900); }
   border-left: 1px solid var(--line);
   height: 28px;
 }
-.toolbar-meta .btn-group .btn { font-size: 11.5px; padding: 0 9px; height: 28px; min-width: 28px; }
-/* A− / A+ are btn-icon but contain text — give them room */
-.toolbar-meta .btn-icon { width: auto; min-width: 28px; padding: 0 8px; font-size: 11px; font-weight: 600; }
+.toolbar-meta .btn-group .btn { font-size: 11.5px; font-weight: 600; padding: 0 9px; height: 28px; min-width: 28px; }
 
 /* Responsive */
 @media (max-width: 1100px) {
@@ -607,6 +606,19 @@ input[type="range"]:focus { outline: none; }
 input[type="range"]:focus::-webkit-slider-thumb {
   box-shadow: 0 0 0 3px rgba(92,178,157,0.25);
 }
+
+/* ── Overlay scrollbars (no layout shift) ── */
+.fc-editor, .fc-preview, .fc-card-list, .emoji-picker {
+  overflow: overlay;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; transition: background .15s; }
+.fc-editor:hover::-webkit-scrollbar-thumb,
+.fc-preview:hover::-webkit-scrollbar-thumb,
+.fc-card-list:hover::-webkit-scrollbar-thumb,
+.emoji-picker:hover::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.20); }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.35) !important; }
 input[type="range"].mint-fill::-webkit-slider-runnable-track {
   background: linear-gradient(to right,
     var(--mint-500) 0%,

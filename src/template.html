@@ -496,8 +496,8 @@
 
         <span class="toolbar-meta">
           <div class="btn-group">
-            <button class="btn btn-secondary btn-sm btn-icon" onclick="changeUIZoom(-0.1)" data-i18n-title="set.zoom.dec" title="Decrease UI size">A−</button>
-            <button class="btn btn-secondary btn-sm btn-icon" onclick="changeUIZoom(0.1)" data-i18n-title="set.zoom.inc" title="Increase UI size">A+</button>
+            <button class="btn btn-secondary btn-sm" onclick="changeUIZoom(-0.1)" data-i18n-title="set.zoom.dec" title="Decrease UI size">A−</button>
+            <button class="btn btn-secondary btn-sm" onclick="changeUIZoom(0.1)" data-i18n-title="set.zoom.inc" title="Increase UI size">A+</button>
           </div>
         </span>
       </div>
@@ -559,66 +559,17 @@
         <!-- Preview -->
         <div class="fc-preview-panel" id="fc-preview-panel">
           <div class="fc-preview-header">
-            <div style="display: flex; align-items: center; gap: 6px">
-              <div class="fc-preview-label" data-i18n="preview.label">
-                Preview
-              </div>
-              <button
-                class="btn btn-secondary btn-sm"
-                onclick="changePreviewZoom(-0.25)"
-              >
-                −
-              </button>
-              <span
-                id="preview-zoom-label"
-                onclick="changePreviewZoom(0)"
-                title="Reset zoom"
-                style="
-                  cursor: pointer;
-                  min-width: 32px;
-                  text-align: center;
-                  font-size: 11px;
-                  color: #374151;
-                  user-select: none;
-                "
-                >100%</span
-              >
-              <button
-                class="btn btn-secondary btn-sm"
-                onclick="changePreviewZoom(0.25)"
-              >
-                +
-              </button>
-              <button
-                class="btn btn-secondary btn-sm"
-                onclick="setPhysicalZoom()"
-                title="Actual print size (96dpi reference)"
-              >
-                1:1
-              </button>
-              <button
-                class="btn btn-secondary btn-sm"
-                onclick="changePreviewZoom(0)"
-                title="Fit to panel"
-              >
-                ⊡
-              </button>
+            <div style="display: flex; align-items: center; gap: 4px">
+              <div class="fc-preview-label" data-i18n="preview.label">Preview</div>
+              <button class="btn btn-secondary btn-sm btn-icon" onclick="changePreviewZoom(-0.25)" title="Zoom out"><svg class="icon"><use href="#i-minus"/></svg></button>
+              <span id="preview-zoom-label" onclick="changePreviewZoom(0)" title="Reset zoom" style="cursor:pointer;min-width:32px;text-align:center;font-size:11px;color:#374151;user-select:none">100%</span>
+              <button class="btn btn-secondary btn-sm btn-icon" onclick="changePreviewZoom(0.25)" title="Zoom in"><svg class="icon"><use href="#i-plus"/></svg></button>
+              <button class="btn btn-secondary btn-sm" onclick="setPhysicalZoom()" title="Actual print size (96dpi reference)" style="font-size:10px;font-weight:600">1:1</button>
+              <button class="btn btn-secondary btn-sm btn-icon" onclick="changePreviewZoom(0)" title="Fit to panel"><svg class="icon"><use href="#i-maximize"/></svg></button>
             </div>
             <div class="fc-preview-actions">
-              <button
-                class="btn btn-secondary btn-sm"
-                onclick="printOne()"
-                data-i18n="preview.print"
-              >
-                🖨 Print
-              </button>
-              <button
-                class="btn btn-primary btn-sm"
-                onclick="exportOnePDF()"
-                data-i18n="preview.export"
-              >
-                ⬇ Export PDF
-              </button>
+              <button class="btn btn-secondary btn-sm" onclick="printOne()"><svg class="icon"><use href="#i-printer"/></svg> <span data-i18n="preview.print">Print</span></button>
+              <button class="btn btn-primary btn-sm" onclick="exportOnePDF()"><svg class="icon"><use href="#i-download"/></svg> <span data-i18n="preview.export">Export PDF</span></button>
             </div>
           </div>
           <div class="fc-preview" id="fc-preview">

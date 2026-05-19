@@ -20,7 +20,7 @@ function renderPreview() {
   wrap.style.cssText = "width:100%;min-width:" + scaledW + "px;display:flex;justify-content:center;";
   // White paper background; card sits inside with margin applied via its own style
   wrap.innerHTML =
-    '<div style="width:' +
+    '<div class="preview-paper" style="width:' +
     scaledW +
     "px;height:" +
     scaledH +
@@ -45,6 +45,7 @@ function attachPreviewDragHandlers(card) {
     const type = handle.dataset.handle;
     handle.addEventListener("mousedown", (e) => {
       e.preventDefault();
+      pushUndo();
       handle.classList.add("dragging");
       const imgArea = handle.closest(".fc-image-area");
       const rect = imgArea.getBoundingClientRect();
@@ -80,61 +81,62 @@ function attachPreviewDragHandlers(card) {
                 sp.row + "% " + (100 - sp.row) + "%";
               handle.style.top = sp.row + "%";
             }
-            // sync inner-col handle position (layout-specific)
-            const ic = imgArea.querySelector('[data-handle="inner-col"]');
-            if (ic) {
-              if (layout === "2top-1bot") {
-                // inner-col lives in top area
-                ic.style.height = sp.row + "%";
-              } else {
-                // inner-col lives in bottom area (1top-2bot)
-                ic.style.top = sp.row + "%";
-                ic.style.height = (100 - sp.row) + "%";
-              }
-            }
-          } else if (type === "col") {
-            sp.col = xPct;
-            imgArea.style.gridTemplateColumns = sp.col + "% " + (100 - sp.col) + "%";
-            handle.style.left = sp.col + "%";
-            const ir = imgArea.querySelector('[data-handle="inner-row"]');
-            if (ir) ir.style.left = sp.col + "%";
-          } else if (type === "inner-col") {
-            sp.inner = xPct;
-            imgArea.style.gridTemplateColumns = sp.inner + "% " + (100 - sp.inner) + "%";
-            handle.style.left = sp.inner + "%";
-          } else if (type === "inner-row") {
-            if (layout === "2img-4txt") {
-              const relPct = clamp(
-                Math.round(((yPct - sp.row) / (100 - sp.row)) * 100),
-                15, 85,
-              );
-              const mid = ((100 - sp.row) * relPct) / 100;
-              sp.inner = relPct;
-              const tracks = getCompoundGridTracks(layout, sp, compoundGapPx);
-              if (tracks) {
-                imgArea.style.gridTemplateColumns = tracks.columns;
-                imgArea.style.gridTemplateRows = tracks.rows;
-              }
-              handle.style.top = sp.row + mid + "%";
+          } else {
+            imgArea.style.gridTemplateRows = sp.row + "% " + (100 - sp.row) + "%";
+            handle.style.top = sp.row + "%";
+          }
+          // sync inner-col handle position (2top-1bot / 1top-2bot)
+          const ic = imgArea.querySelector('[data-handle="inner-col"]');
+          if (ic) {
+            if (layout === "2top-1bot") {
+              ic.style.height = sp.row + "%";
             } else {
-              sp.inner = yPct;
-              imgArea.style.gridTemplateRows = sp.inner + "% " + (100 - sp.inner) + "%";
-              handle.style.top = sp.inner + "%";
+              ic.style.top = sp.row + "%";
+              ic.style.height = (100 - sp.row) + "%";
             }
           }
-        };
+        } else if (type === "col") {
+          sp.col = xPct;
+          imgArea.style.gridTemplateColumns = sp.col + "% " + (100 - sp.col) + "%";
+          handle.style.left = sp.col + "%";
+          const ir = imgArea.querySelector('[data-handle="inner-row"]');
+          if (ir) ir.style.left = sp.col + "%";
+        } else if (type === "inner-col") {
+          sp.inner = xPct;
+          imgArea.style.gridTemplateColumns = sp.inner + "% " + (100 - sp.inner) + "%";
+          handle.style.left = sp.inner + "%";
+        } else if (type === "inner-row") {
+          if (layout === "2img-4txt") {
+            const relPct = clamp(
+              Math.round(((yPct - sp.row) / (100 - sp.row)) * 100),
+              15, 85,
+            );
+            const mid = ((100 - sp.row) * relPct) / 100;
+            sp.inner = relPct;
+            const tracks = getCompoundGridTracks(layout, sp, compoundGapPx);
+            if (tracks) {
+              imgArea.style.gridTemplateColumns = tracks.columns;
+              imgArea.style.gridTemplateRows = tracks.rows;
+            }
+            handle.style.top = sp.row + mid + "%";
+          } else {
+            sp.inner = yPct;
+            imgArea.style.gridTemplateRows = sp.inner + "% " + (100 - sp.inner) + "%";
+            handle.style.top = sp.inner + "%";
+          }
+        }
+      };
 
-        const onUp = () => {
-          handle.classList.remove("dragging");
-          document.removeEventListener("mousemove", onMove);
-          document.removeEventListener("mouseup", onUp);
-          dispatch('CARD_UI_CHANGED');
-        };
+      const onUp = () => {
+        handle.classList.remove("dragging");
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+        setDirty();
+      };
 
-        document.addEventListener("mousemove", onMove);
-        document.addEventListener("mouseup", onUp);
-      }
-    })
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
   });
 }
 

@@ -26,7 +26,7 @@ const STRINGS = {
     'img.fit': 'Fit',
     'img.pos': 'Position',
     // Toolbar
-    'toolbar.newCard': '+ New Card',
+    'toolbar.newCard': 'New Card',
     'toolbar.thumbs': '↻ Thumbs',
     'toolbar.settings': 'Settings',
     'toolbar.customCss': 'Custom CSS',
@@ -150,7 +150,7 @@ const STRINGS = {
     'img.fit': 'Khớp',
     'img.pos': 'Vị trí',
     // Toolbar
-    'toolbar.newCard': '+ Thẻ mới',
+    'toolbar.newCard': 'Thẻ mới',
     'toolbar.thumbs': '↻ Thumbnail',
     'toolbar.settings': 'Cài đặt',
     'toolbar.customCss': 'CSS tùy chỉnh',
