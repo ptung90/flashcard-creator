@@ -116,9 +116,9 @@ body { background: var(--paper); color: var(--ink-900); }
 .btn-primary { background: var(--mint-500); color: #fff; }
 .btn-primary:hover { background: var(--mint-600); }
 
-.btn-sm { height: 26px; padding: 0 8px; font-size: 11.5px; gap: 4px; white-space: nowrap; flex-shrink: 0; }
+.btn-sm { height: 28px; padding: 0 10px; font-size: 11.5px; gap: 5px; white-space: nowrap; flex-shrink: 0; }
 .btn-sm .icon { width: 14px; height: 14px; }
-.btn-icon { padding: 0; width: 26px; }
+.btn-icon { padding: 0; width: 28px; }
 
 .fc-toolbar .btn { font-weight: 500; }
 
@@ -482,8 +482,14 @@ input[type="range"] { accent-color: var(--mint-600); }
 .fc-sidebar-header { padding: 10px 12px; }
 
 /* ── Toolbar spacing ── */
-.fc-toolbar { gap: 4px; padding: 6px 10px; }
-.fc-toolbar .spacer { min-width: 12px; }
+.fc-toolbar { gap: 4px; padding: 5px 12px; min-height: 42px; }
+.fc-toolbar .spacer { min-width: 6px; }
+
+/* Visual group separators — margin-left on group boundaries */
+#undo-btn           { margin-left: 6px; }
+.fc-toolbar button[onclick*="openSettingsModal"] { margin-left: 6px; }
+.fc-toolbar button[onclick*="saveJSON()"]        { margin-left: 6px; }
+.fc-toolbar button[onclick*="printAll"]          { margin-left: 6px; }
 
 /* ── Settings / font / border panels spacing ── */
 .fc-settings-bar.open { padding-top: 10px; padding-bottom: 10px; gap: 6px 14px; }
