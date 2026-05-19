@@ -543,10 +543,9 @@ input[type="range"] { accent-color: var(--mint-600); }
 .fc-toolbar .spacer { min-width: 6px; }
 
 /* Visual group separators — margin-left on group boundaries */
-#undo-btn           { margin-left: 6px; }
-.fc-toolbar button[onclick*="openSettingsModal"] { margin-left: 6px; }
-.fc-toolbar button[onclick*="saveJSON()"]        { margin-left: 6px; }
-.fc-toolbar button[onclick*="printAll"]          { margin-left: 6px; }
+#undo-btn                                { margin-left: 6px; }
+.fc-toolbar button[onclick*="saveJSON()"] { margin-left: 6px; }
+.fc-toolbar button[onclick*="printAll"]   { margin-left: 6px; }
 
 /* ── Settings / font / border panels spacing ── */
 .fc-settings-bar.open { padding-top: 10px; padding-bottom: 10px; gap: 6px 14px; }
