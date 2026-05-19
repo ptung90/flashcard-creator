@@ -1,4 +1,4 @@
-/* ── Editor Panel ── */
+﻿/* ── Editor Panel ── */
 .fc-editor {
   flex: 1;
   overflow-y: auto;
@@ -45,7 +45,7 @@
 .layout-tab.active {
   background: #ede9fe;
   border-color: #a855f7;
-  color: #6b21a8;
+  color: #3e9684;
   font-weight: 600;
 }
 .layout-grid {
@@ -69,7 +69,7 @@
 }
 
 .layout-opt:hover {
-  border-color: #6b21a8;
+  border-color: #3e9684;
 }
 
 .layout-opt.selected {
@@ -176,7 +176,7 @@
 
 .height-slider-row input[type="range"] {
   flex: 1;
-  accent-color: #6b21a8;
+  accent-color: #3e9684;
 }
 
 .height-val {
@@ -197,7 +197,7 @@
 }
 
 .fc-editor input.title-input:focus {
-  outline: 1px solid #6b21a8;
+  outline: 1px solid #3e9684;
 }
 
 /* Sections */
@@ -267,7 +267,7 @@
 
 .section-menu-item:hover {
   background: #f3e8ff;
-  color: #6b21a8;
+  color: #3e9684;
 }
 
 .smi {
@@ -319,7 +319,7 @@
 
 .section-label-input:focus,
 .section-content-input:focus {
-  outline: 1px solid #6b21a8;
+  outline: 1px solid #3e9684;
 }
 
 .section-row--paired {
@@ -345,7 +345,7 @@
 }
 
 .pair-thumb:hover {
-  border-color: #6b21a8;
+  border-color: #3e9684;
 }
 
 /* Grid drag handles */
@@ -424,7 +424,7 @@
 }
 
 .image-slot-row.drag-over-slot {
-  outline: 2px dashed #6b21a8;
+  outline: 2px dashed #3e9684;
   background: #f3e8ff;
 }
 
@@ -481,7 +481,7 @@
 }
 
 .ep-custom-input:focus {
-  outline: 1px solid #6b21a8;
+  outline: 1px solid #3e9684;
 }
 
 .ep-cat-label {

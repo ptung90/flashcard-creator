@@ -1,4 +1,4 @@
-/* ── Modal ── */
+﻿/* ── Modal ── */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -91,7 +91,7 @@
 }
 
 .search-bar input:focus {
-  outline: 1px solid #6b21a8;
+  outline: 1px solid #3e9684;
 }
 
 .search-results {
@@ -199,7 +199,7 @@
 }
 
 .css-modal textarea:focus {
-  outline: 1px solid #6b21a8;
+  outline: 1px solid #3e9684;
 }
 
 .modal-footer {
@@ -274,7 +274,7 @@
 
 .upload-drop-zone:hover,
 .upload-drop-zone.drag-over {
-  border-color: #6b21a8;
+  border-color: #3e9684;
   background: #f3e8ff;
   color: #1a1a2e;
 }
@@ -302,7 +302,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: #6b21a8;
+  color: #3e9684;
   border-bottom: 1px solid #e9d5ff;
   padding-bottom: 4px;
   margin-bottom: 8px;
@@ -313,7 +313,7 @@
   height: 13px;
   cursor: pointer;
   flex-shrink: 0;
-  accent-color: #6b21a8;
+  accent-color: #3e9684;
 }
 
 .cfg-section--disabled .cfg-row {
@@ -399,7 +399,7 @@
 }
 
 .breadcrumb-back {
-  /* color: #6b21a8; */
+  /* color: #3e9684; */
   cursor: pointer;
 }
 
@@ -458,7 +458,7 @@
 }
 
 .recent-path {
-  color: #6b21a8;
+  color: #3e9684;
   font-weight: 500;
 }
 
@@ -490,7 +490,7 @@
 
 .move-menu-item:hover {
   background: #f3e8ff;
-  color: #6b21a8;
+  color: #3e9684;
 }
 
 .folder-divider {
@@ -549,7 +549,7 @@
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
-  color: #6b21a8;
+  color: #3e9684;
   user-select: none;
 }
 
@@ -572,8 +572,8 @@
 
 .ai-provider-btn.active {
   background: #ede9fe;
-  border-color: #a78bfa;
-  color: #6b21a8;
+  border-color: #82c4b6;
+  color: #3e9684;
   font-weight: 600;
 }
 
@@ -589,7 +589,7 @@
 }
 
 .ai-subject-input:focus {
-  outline: 1px solid #6b21a8;
+  outline: 1px solid #3e9684;
 }
 
 .ai-status {

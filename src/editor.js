@@ -185,7 +185,7 @@ function renderEditor() {
       <div id="card-css-area" style="display:${card.customCss ? '' : 'none'};margin-top:8px">
         <div style="font-size:10px;color:#9aa19e;margin-bottom:4px">${t('editor.cssHint')}</div>
         <textarea id="card-css-input" class="section-content-input" rows="5"
-          placeholder=".fc-title { font-size: 20px; color: #6b21a8; }&#10;.fc-section__content { line-height: 1.8; }"
+          placeholder=".fc-title { font-size: 20px; color: #3e9684; }&#10;.fc-section__content { line-height: 1.8; }"
           oninput="updateCardCss(this.value)">${esc(card.customCss || '')}</textarea>
       </div>
       <div id="paste-block-area" style="display:none;margin-top:8px">
@@ -582,7 +582,6 @@ function toggleFontPanel() {
   const btn = document.getElementById("btn-font-toggle");
   const open = panel.classList.toggle("open");
   btn.classList.toggle("open", open);
-  btn.textContent = open ? "Aa ▴" : "Aa ▾";
 }
 
 function _syncBdSwatch() {
@@ -605,7 +604,6 @@ function toggleImgPanel() {
   const btn = document.getElementById("btn-img-toggle");
   const open = panel.classList.toggle("open");
   btn.classList.toggle("open", open);
-  btn.textContent = open ? "Img ▴" : "Img ▾";
 }
 
 function toggleImgOverride(slot, enabled) {
@@ -691,7 +689,7 @@ function openSectionMenu(id, btn) {
     <button class="section-menu-item${canPaste ? '' : ' disabled'}" onclick="pasteSection('${id}');closeSectionMenu()"><span class="smi">📋</span> Paste${isPaired ? ' text only' : ''}</button>
     ${isPaired ? `<button class="section-menu-item${canPasteWithImg ? '' : ' disabled'}" onclick="pasteSectionWithImage('${id}');closeSectionMenu()"><span class="smi">📋</span> Paste with image</button>` : ''}
     <div class="section-menu-sep"></div>
-    <button class="section-menu-item" onclick="setSectionClass('${id}');closeSectionMenu()"><span class="smi">🏷</span> Class${s?.customClass ? `: <em style="color:#6b21a8;font-size:10px;font-style:normal">${esc(s.customClass)}</em>` : ''}</button>
+    <button class="section-menu-item" onclick="setSectionClass('${id}');closeSectionMenu()"><span class="smi">🏷</span> Class${s?.customClass ? `: <em style="color:#3e9684;font-size:10px;font-style:normal">${esc(s.customClass)}</em>` : ''}</button>
     <div class="section-menu-sep"></div>
     <button class="section-menu-item section-menu-item--danger${canDelete ? '' : ' disabled'}" onclick="deleteSection('${id}');closeSectionMenu()"><span class="smi">🗑</span> Delete</button>
   `;
@@ -861,7 +859,7 @@ function editCardData() {
   const btns = document.getElementById("data-area-btns");
   if (!ta || !btns) return;
   ta.removeAttribute("readonly");
-  ta.style.outline = "1px solid #6b21a8";
+  ta.style.outline = "1px solid #3e9684";
   ta.style.background = "#fff";
   btns.innerHTML = `
     <button class="btn btn-danger btn-sm" onclick="cancelCardData()">Cancel</button>

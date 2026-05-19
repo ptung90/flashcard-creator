@@ -1,4 +1,4 @@
-/* ── Sidebar ── */
+﻿/* ── Sidebar ── */
 .fc-sidebar {
   width: 120px;
   min-width: 120px;
@@ -71,7 +71,7 @@
 
 .fc-card-item.active {
   background: #f3e8ff;
-  border-color: #6b21a8;
+  border-color: #3e9684;
 }
 
 .fc-card-item.card-dragging {
@@ -156,7 +156,7 @@
 
 .view-toggle-btn.active {
   background: #f3e8ff;
-  color: #6b21a8;
+  color: #3e9684;
   border-color: #d8b4fe;
 }
 
@@ -183,7 +183,7 @@
 }
 
 .fc-card-thumb-item.active {
-  border-color: #6b21a8;
+  border-color: #3e9684;
   background: #f3e8ff;
 }
 
