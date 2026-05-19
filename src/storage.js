@@ -105,7 +105,7 @@ function _renderRecentList() {
       </div>
       <div class="recent-item-btns">
         <button class="btn btn-primary btn-sm" onclick="loadFromRecent('${m.id}')">Open</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteRecentItem('${m.id}',this)">✕</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteRecentItem('${m.id}',this)"><svg class="icon" style="width:13px;height:13px"><use href="#i-trash"/></svg></button>
       </div>
     </div>`).join("")
     : '<div class="recent-empty">No recent files — browse a JSON file to get started</div>';
@@ -173,7 +173,7 @@ async function _renderFolderSection() {
         <div class="recent-item-btns" style="position:relative">
           <button class="btn btn-primary btn-sm" onclick='loadFromFolder(${sn})'>Open</button>
           <button class="btn btn-secondary btn-sm" onclick='showMoveMenu(${sn},this)' title="Move to folder">⇄</button>
-          <button class="btn btn-danger btn-sm" onclick='deleteFromFolder(${sn},this)'>✕</button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick='deleteFromFolder(${sn},this)'><svg class="icon" style="width:13px;height:13px"><use href="#i-trash"/></svg></button>
         </div>
       </div>`;
     }).join("");

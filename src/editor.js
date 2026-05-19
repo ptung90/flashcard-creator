@@ -681,17 +681,17 @@ function openSectionMenu(id, btn) {
   menu.id = 'section-menu';
   menu.className = 'section-menu';
   menu.innerHTML = `
-    <button class="section-menu-item" onclick="moveSection('${id}',-1);closeSectionMenu()"><span class="smi">↑</span> Move up</button>
-    <button class="section-menu-item" onclick="moveSection('${id}',1);closeSectionMenu()"><span class="smi">↓</span> Move down</button>
+    <button class="section-menu-item" onclick="moveSection('${id}',-1);closeSectionMenu()"><svg class="icon" style="width:13px;height:13px"><use href="#i-arrow-up"/></svg> Move up</button>
+    <button class="section-menu-item" onclick="moveSection('${id}',1);closeSectionMenu()"><svg class="icon" style="width:13px;height:13px"><use href="#i-arrow-down"/></svg> Move down</button>
     <div class="section-menu-sep"></div>
-    <button class="section-menu-item" onclick="copySection('${id}');closeSectionMenu()"><span class="smi">⎘</span> Copy${isPaired ? ' text only' : ''}</button>
-    ${isPaired ? `<button class="section-menu-item" onclick="copySectionWithImage('${id}');closeSectionMenu()"><span class="smi">⎘</span> Copy with image</button>` : ''}
-    <button class="section-menu-item${canPaste ? '' : ' disabled'}" onclick="pasteSection('${id}');closeSectionMenu()"><span class="smi">📋</span> Paste${isPaired ? ' text only' : ''}</button>
-    ${isPaired ? `<button class="section-menu-item${canPasteWithImg ? '' : ' disabled'}" onclick="pasteSectionWithImage('${id}');closeSectionMenu()"><span class="smi">📋</span> Paste with image</button>` : ''}
+    <button class="section-menu-item" onclick="copySection('${id}');closeSectionMenu()"><svg class="icon" style="width:13px;height:13px"><use href="#i-copy"/></svg> Copy${isPaired ? ' text only' : ''}</button>
+    ${isPaired ? `<button class="section-menu-item" onclick="copySectionWithImage('${id}');closeSectionMenu()"><svg class="icon" style="width:13px;height:13px"><use href="#i-copy"/></svg> Copy with image</button>` : ''}
+    <button class="section-menu-item${canPaste ? '' : ' disabled'}" onclick="pasteSection('${id}');closeSectionMenu()"><svg class="icon" style="width:13px;height:13px"><use href="#i-clipboard"/></svg> Paste${isPaired ? ' text only' : ''}</button>
+    ${isPaired ? `<button class="section-menu-item${canPasteWithImg ? '' : ' disabled'}" onclick="pasteSectionWithImage('${id}');closeSectionMenu()"><svg class="icon" style="width:13px;height:13px"><use href="#i-clipboard"/></svg> Paste with image</button>` : ''}
     <div class="section-menu-sep"></div>
-    <button class="section-menu-item" onclick="setSectionClass('${id}');closeSectionMenu()"><span class="smi">🏷</span> Class${s?.customClass ? `: <em style="color:#3e9684;font-size:10px;font-style:normal">${esc(s.customClass)}</em>` : ''}</button>
+    <button class="section-menu-item" onclick="setSectionClass('${id}');closeSectionMenu()"><svg class="icon" style="width:13px;height:13px"><use href="#i-tag"/></svg> Class${s?.customClass ? `: <em style="color:#3e9684;font-size:10px;font-style:normal">${esc(s.customClass)}</em>` : ''}</button>
     <div class="section-menu-sep"></div>
-    <button class="section-menu-item section-menu-item--danger${canDelete ? '' : ' disabled'}" onclick="deleteSection('${id}');closeSectionMenu()"><span class="smi">🗑</span> Delete</button>
+    <button class="section-menu-item section-menu-item--danger${canDelete ? '' : ' disabled'}" onclick="deleteSection('${id}');closeSectionMenu()"><svg class="icon" style="width:13px;height:13px"><use href="#i-trash"/></svg> Delete</button>
   `;
   menu.addEventListener('click', e => e.stopPropagation());
   btn.after(menu);

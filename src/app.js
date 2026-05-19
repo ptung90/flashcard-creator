@@ -344,8 +344,8 @@ function _renderListSidebar() {
       <span class="card-num">${i + 1}</span>
       <span class="card-title">${esc(c.title || t('card.untitled'))}</span>
       <span class="card-actions">
-        <button class="icon-btn" title="${t('misc.clone')}" onclick="event.stopPropagation();cloneCard('${c.id}')">⧉</button>
-        <button class="icon-btn" title="${t('misc.delete')}" onclick="event.stopPropagation();if(confirm(t('confirm.deleteCard')))deleteCard('${c.id}')">🗑</button>
+        <button class="icon-btn" title="${t('misc.clone')}" onclick="event.stopPropagation();cloneCard('${c.id}')"><svg class="icon" style="width:14px;height:14px"><use href="#i-clone"/></svg></button>
+        <button class="icon-btn" title="${t('misc.delete')}" onclick="event.stopPropagation();if(confirm(t('confirm.deleteCard')))deleteCard('${c.id}')"><svg class="icon" style="width:14px;height:14px"><use href="#i-trash"/></svg></button>
       </span>
     </div>
   `,
@@ -387,8 +387,8 @@ function _renderGridSidebar() {
       <span class="card-thumb-num">${i + 1}</span>
       <div class="card-thumb-title">${esc(c.title || t('card.untitled'))}</div>
       <div class="card-thumb-actions">
-        <button class="icon-btn" title="${t('misc.clone')}" onclick="event.stopPropagation();cloneCard('${c.id}')">⧉</button>
-        <button class="icon-btn" title="${t('misc.delete')}" onclick="event.stopPropagation();if(confirm(t('confirm.deleteCard')))deleteCard('${c.id}')">🗑</button>
+        <button class="icon-btn" title="${t('misc.clone')}" onclick="event.stopPropagation();cloneCard('${c.id}')"><svg class="icon" style="width:14px;height:14px"><use href="#i-clone"/></svg></button>
+        <button class="icon-btn" title="${t('misc.delete')}" onclick="event.stopPropagation();if(confirm(t('confirm.deleteCard')))deleteCard('${c.id}')"><svg class="icon" style="width:14px;height:14px"><use href="#i-trash"/></svg></button>
       </div>
     </div>
   `).join("") + '</div>';
