@@ -353,10 +353,11 @@ input[type="range"] { accent-color: var(--mint-600); }
 }
 
 /* Align buttons */
+.align-btn-group { display: inline-flex; }
 .align-btn {
   background: #fff;
   border: 1px solid var(--line-strong);
-  border-radius: 4px;
+  border-radius: 0;
   width: 22px; height: 22px;
   font-size: 11px;
   color: var(--ink-500);
@@ -364,10 +365,13 @@ input[type="range"] { accent-color: var(--mint-600); }
   align-items: center;
   justify-content: center;
   padding: 0;
+  margin-left: -1px;
 }
+.align-btn:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
+.align-btn:last-child { border-radius: 0 4px 4px 0; }
 .align-btn .icon { width: 13px; height: 13px; }
-.align-btn:hover { background: var(--mint-50); color: var(--mint-600); border-color: var(--mint-300); }
-.align-btn.active { background: var(--mint-50); color: var(--mint-600); border-color: var(--mint-400); }
+.align-btn:hover { background: var(--mint-50); color: var(--mint-600); border-color: var(--mint-300); z-index: 1; position: relative; }
+.align-btn.active { background: var(--mint-50); color: var(--mint-600); border-color: var(--mint-400); z-index: 1; position: relative; }
 
 /* Google font tags */
 .gfont-tag {
