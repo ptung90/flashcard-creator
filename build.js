@@ -25,7 +25,7 @@ const js = fs.readFileSync(path.join(SRC, "app.js"), "utf8");
 const CSS_DIR = path.join(SRC, "css");
 let css = "";
 if (fs.existsSync(CSS_DIR)) {
-  const cssFiles = ["base.css", "sidebar.css", "editor.css", "preview.css", "modal.css"];
+  const cssFiles = ["base.css", "sidebar.css", "editor.css", "preview.css", "modal.css", "tomoe.css"];
   css = cssFiles.filter(f => fs.existsSync(path.join(CSS_DIR, f)))
     .map(f => fs.readFileSync(path.join(CSS_DIR, f), "utf8"))
     .join("\n\n");

@@ -12,7 +12,7 @@ window.FC_CONFIG = {
   border: {
     width: 4, // px
     style: "double", // none | solid | dashed | dotted | double
-    color: "#6B21A8", // hex
+    color: "#3E9684", // hex
     radius: 0, // px
   },
 

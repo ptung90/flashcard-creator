@@ -637,6 +637,13 @@ function _buildEmojiPicker() {
   _emojiPickerBuilt = true;
 }
 
+function toggleSettingsBar() {
+  const bar = document.querySelector('.fc-settings-bar');
+  const btn = document.getElementById('setup-toggle-btn');
+  bar.classList.toggle('open');
+  btn?.setAttribute('aria-pressed', String(bar.classList.contains('open')));
+}
+
 function toggleEmojiPicker(event) {
   event.stopPropagation();
   _buildEmojiPicker();
