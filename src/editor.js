@@ -39,6 +39,9 @@ function _updateToolbarState() {
     else if (cmd === 'underline')    active = _activeEditor.isActive('underline');
     else if (cmd === 'bulletList')   active = _activeEditor.isActive('bulletList');
     else if (cmd === 'orderedList')  active = _activeEditor.isActive('orderedList');
+    else if (cmd === 'alignLeft')    active = _activeEditor.isActive({ textAlign: 'left' });
+    else if (cmd === 'alignCenter')  active = _activeEditor.isActive({ textAlign: 'center' });
+    else if (cmd === 'alignRight')   active = _activeEditor.isActive({ textAlign: 'right' });
     btn.classList.toggle('active', active);
   });
 }
@@ -54,6 +57,9 @@ function editorToolbarCmd(cmd) {
       case 'h2':          _activeEditor.chain().focus().toggleHeading({ level: 2 }).run(); break;
       case 'bulletList':  _activeEditor.chain().focus().toggleBulletList().run(); break;
       case 'orderedList': _activeEditor.chain().focus().toggleOrderedList().run(); break;
+      case 'alignLeft':   _activeEditor.chain().focus().setTextAlign('left').run(); break;
+      case 'alignCenter': _activeEditor.chain().focus().setTextAlign('center').run(); break;
+      case 'alignRight':  _activeEditor.chain().focus().setTextAlign('right').run(); break;
     }
   } catch (e) {
     console.warn('[editorToolbarCmd] editor no longer valid', e);
@@ -248,6 +254,10 @@ function renderEditor() {
           <button class="editor-toolbar-btn" data-cmd="h2" onclick="editorToolbarCmd('h2')" title="Heading 2">H2</button>
           <button class="editor-toolbar-btn" data-cmd="bulletList" onclick="editorToolbarCmd('bulletList')" title="Bullet list">•</button>
           <button class="editor-toolbar-btn" data-cmd="orderedList" onclick="editorToolbarCmd('orderedList')" title="Numbered list">1.</button>
+          <div class="editor-toolbar-divider"></div>
+          <button class="editor-toolbar-btn" data-cmd="alignLeft" onclick="editorToolbarCmd('alignLeft')" title="Align left">≡L</button>
+          <button class="editor-toolbar-btn" data-cmd="alignCenter" onclick="editorToolbarCmd('alignCenter')" title="Align center">≡C</button>
+          <button class="editor-toolbar-btn" data-cmd="alignRight" onclick="editorToolbarCmd('alignRight')" title="Align right">≡R</button>
         </div>
       </div>
       <div class="sections-list"
@@ -308,7 +318,11 @@ function _initTipTapInstances(card) {
 
     const editor = new window.TipTapEditor({
       element: el,
-      extensions: [window.TipTapStarterKit, window.TipTapUnderline].filter(Boolean),
+      extensions: [
+        window.TipTapStarterKit,
+        window.TipTapUnderline,
+        window.TipTapTextAlign?.configure({ types: ['paragraph', 'heading'] }),
+      ].filter(Boolean),
       content: mdParse(s.content || ''),
       editorProps: {
         attributes: {

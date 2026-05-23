@@ -17,9 +17,11 @@
         const { Editor } = await import('https://esm.sh/@tiptap/core@2')
         const { default: StarterKit } = await import('https://esm.sh/@tiptap/starter-kit@2')
         const { default: Underline } = await import('https://esm.sh/@tiptap/extension-underline@2')
+        const { default: TextAlign } = await import('https://esm.sh/@tiptap/extension-text-align@2')
         window.TipTapEditor = Editor
         window.TipTapStarterKit = StarterKit
         window.TipTapUnderline = Underline
+        window.TipTapTextAlign = TextAlign
         window.tiptapReady = true
       } catch (e) {
         window.tiptapReady = false
