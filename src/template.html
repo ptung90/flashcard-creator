@@ -468,6 +468,7 @@
 
         <div class="spacer"></div>
 
+        <button id="records-btn" class="btn btn-secondary btn-sm" onclick="showRecordsPanel()">Records</button>
         <button id="undo-btn" class="btn btn-secondary btn-sm btn-icon" onclick="undo()" title="Undo (Ctrl+Z)" disabled>
           <svg class="icon"><use href="#i-undo"/></svg>
         </button>
@@ -618,6 +619,8 @@
             </div>
           </div>
         </div>
+
+        <div id="records-panel" style="display:none;flex:1;flex-direction:column;overflow:auto;padding:16px;min-width:0;"></div>
       </div>
     </div>
 

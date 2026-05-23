@@ -290,6 +290,7 @@ function addCard() {
   };
   state.cards.push(card);
   activeCardId = card.id;
+  showCardPanel();
   dispatch('CARD_LIST_CHANGED');
 }
 
@@ -326,6 +327,7 @@ function moveCard(id, dir) {
 }
 
 function setActive(id) {
+  showCardPanel();
   activeCardId = id;
   dispatch('ACTIVE_CARD_CHANGED');
 }
@@ -648,6 +650,20 @@ function _buildEmojiPicker() {
       oninput="if(this.value.trim()){state.projectIcon=this.value.trim();document.getElementById('project-icon-btn').textContent=this.value.trim();setDirty();}"
     />${grid}`;
   _emojiPickerBuilt = true;
+}
+
+function showRecordsPanel() {
+  document.querySelector('.fc-editor').style.display  = 'none';
+  document.querySelector('.fc-preview-panel').style.display = 'none';
+  document.getElementById('records-panel').style.display = 'flex';
+  activeCardId = null;
+  renderRecordsPanel();
+}
+
+function showCardPanel() {
+  document.querySelector('.fc-editor').style.display  = 'flex';
+  document.querySelector('.fc-preview-panel').style.display = 'flex';
+  document.getElementById('records-panel').style.display = 'none';
 }
 
 function toggleMoreMenu(event) {

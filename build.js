@@ -20,6 +20,7 @@ const editor = fs.existsSync(path.join(SRC, "editor.js")) ? fs.readFileSync(path
 const preview = fs.existsSync(path.join(SRC, "preview.js")) ? fs.readFileSync(path.join(SRC, "preview.js"), "utf8") : "";
 const modals = fs.existsSync(path.join(SRC, "modals.js")) ? fs.readFileSync(path.join(SRC, "modals.js"), "utf8") : "";
 const undo = fs.existsSync(path.join(SRC, "undo.js")) ? fs.readFileSync(path.join(SRC, "undo.js"), "utf8") : "";
+const records = fs.existsSync(path.join(SRC, "records.js")) ? fs.readFileSync(path.join(SRC, "records.js"), "utf8") : "";
 const js = fs.readFileSync(path.join(SRC, "app.js"), "utf8");
 
 const CSS_DIR = path.join(SRC, "css");
@@ -32,7 +33,7 @@ if (fs.existsSync(CSS_DIR)) {
 } else if (fs.existsSync(path.join(SRC, "style.css"))) {
   css = fs.readFileSync(path.join(SRC, "style.css"), "utf8");
 }
-const allJs = [state, utils, storage, api, i18n, render, editor, preview, modals, undo, js].filter(Boolean).join("\n\n");
+const allJs = [state, utils, storage, api, i18n, render, editor, preview, modals, undo, records, js].filter(Boolean).join("\n\n");
 
 const output = template
   .replace("    <!-- BUILD:CONFIG -->", `    <script>\n${config}\n    </script>`)
