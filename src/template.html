@@ -1483,33 +1483,28 @@
     </div>
 
     <!-- Schema Editor Modal -->
-    <dialog id="schema-editor-modal" style="width:620px;max-width:95vw;max-height:90vh;
-            overflow:auto;padding:0;border-radius:8px;border:1px solid #ddd;">
-      <div style="padding:16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <strong style="font-size:15px;">Schema Editor</strong>
-          <button onclick="document.getElementById('schema-editor-modal').close()">✕</button>
-        </div>
-        <div id="schema-editor-content"></div>
-        <div style="margin-top:16px;display:flex;gap:8px;border-top:1px solid #f0f0f0;padding-top:12px;">
-          <button onclick="saveSchema()">Save</button>
-          <button onclick="document.getElementById('schema-editor-modal').close()">Cancel</button>
-        </div>
+    <dialog id="schema-editor-modal">
+      <div class="dialog-header">
+        <span class="dialog-title">Schema Editor</span>
+        <button class="btn btn-sm" onclick="document.getElementById('schema-editor-modal').close()">✕</button>
+      </div>
+      <div class="dialog-body" id="schema-editor-content"></div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-primary" onclick="saveSchema()">Save</button>
+        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('schema-editor-modal').close()">Cancel</button>
       </div>
     </dialog>
 
-    <dialog id="pack-dialog" style="width:400px;max-width:95vw;padding:0;border-radius:8px;border:1px solid #ddd;">
-      <div style="padding:16px;">
-        <div style="font-weight:600;margin-bottom:12px;">
-          Pack into <span id="pack-dialog-layout" style="font-family:monospace;"></span>
-        </div>
-        <div id="pack-dialog-records"
-             style="max-height:300px;overflow:auto;margin-bottom:12px;border:1px solid #f0f0f0;
-                    border-radius:4px;padding:8px;"></div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="confirmPack()">Pack</button>
-          <button onclick="document.getElementById('pack-dialog').close()">Cancel</button>
-        </div>
+    <dialog id="pack-dialog">
+      <div class="dialog-header">
+        <span class="dialog-title">Pack into <span id="pack-dialog-layout" style="font-family:'SF Mono',Consolas,monospace;"></span></span>
+      </div>
+      <div class="dialog-body">
+        <div id="pack-dialog-records"></div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-primary" onclick="confirmPack()">Pack</button>
+        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('pack-dialog').close()">Cancel</button>
       </div>
     </dialog>
 

@@ -656,6 +656,7 @@ function showRecordsPanel() {
   document.querySelector('.fc-editor').style.display  = 'none';
   document.querySelector('.fc-preview-panel').style.display = 'none';
   document.getElementById('records-panel').style.display = 'flex';
+  document.getElementById('records-btn')?.classList.add('active');
   activeCardId = null;
   renderRecordsPanel();
 }
@@ -664,6 +665,7 @@ function showCardPanel() {
   document.querySelector('.fc-editor').style.display  = 'flex';
   document.querySelector('.fc-preview-panel').style.display = 'flex';
   document.getElementById('records-panel').style.display = 'none';
+  document.getElementById('records-btn')?.classList.remove('active');
 }
 
 function toggleMoreMenu(event) {

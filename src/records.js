@@ -4,9 +4,9 @@ function renderRecordsPanel() {
   if (!panel) return;
   if (!state.schema) {
     panel.innerHTML = `
-      <div style="padding:32px;text-align:center;color:#555;">
+      <div class="records-empty">
         <p>No schema configured for this project.</p>
-        <button onclick="openSchemaEditor()">Setup Schema</button>
+        <button class="btn btn-sm btn-secondary" onclick="openSchemaEditor()">Setup Schema</button>
       </div>`;
     return;
   }
@@ -16,67 +16,52 @@ function renderRecordsPanel() {
 
   const packMenuItems = compoundTemplates.length
     ? compoundTemplates.map(t =>
-        `<div style="padding:6px 12px;cursor:pointer;" onmouseenter="this.style.background='#f3f4f6'"
-              onmouseleave="this.style.background=''" onclick="openPackDialog('${t.id}')">${esc(t.layout)}</div>`
+        `<button class="records-pack-item" onclick="openPackDialog('${t.id}')">${esc(t.layout)}</button>`
       ).join('')
-    : '<div style="padding:6px 12px;color:#999;">No compound templates</div>';
+    : '<div class="records-pack-item" style="color:var(--ink-400);cursor:default;">No compound templates</div>';
 
   const headerHtml = `
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-      <strong style="font-size:15px;">Records</strong>
-      <button onclick="addRecord()">+ Add</button>
-      <button onclick="generateAll()">Generate All</button>
-      <div style="position:relative;display:inline-block;">
-        <button onclick="togglePackMenu(event)">Pack ▾</button>
-        <div id="pack-menu" style="display:none;position:absolute;top:100%;left:0;background:white;
-             border:1px solid #ccc;border-radius:4px;z-index:100;min-width:130px;box-shadow:0 4px 8px rgba(0,0,0,.1);">
-          ${packMenuItems}
-        </div>
+    <div class="records-header">
+      <span class="records-header-title">Records</span>
+      <button class="btn btn-sm btn-secondary" onclick="addRecord()">+ Add</button>
+      <button class="btn btn-sm btn-secondary" onclick="generateAll()">Generate All</button>
+      <div class="records-pack-wrap">
+        <button class="btn btn-sm btn-secondary" onclick="togglePackMenu(event)">Pack ▾</button>
+        <div id="pack-menu">${packMenuItems}</div>
       </div>
-      <button onclick="openSchemaEditor()">⚙ Schema</button>
+      <button class="btn btn-sm btn-secondary" onclick="openSchemaEditor()">⚙ Schema</button>
     </div>`;
 
   const colHeaders = textFields.map(f =>
-    `<th style="text-align:left;padding:4px 8px;font-weight:600;">${esc(f.label)}</th>`
+    `<th>${esc(f.label)}</th>`
   ).join('');
 
   const rows = state.records.map(rec => {
     const status = getRecordStatus(rec);
-    const badge  = `<span style="padding:2px 6px;border-radius:10px;font-size:11px;
-      background:${status === 'synced' ? '#d1fae5' : '#fef3c7'};
-      color:${status === 'synced' ? '#065f46' : '#92400e'};">${status}</span>`;
+    const badge  = `<span class="rec-badge rec-badge--${status}">${status}</span>`;
     const cols = textFields.map(f => {
       const val = rec.fields[f.key] ?? '';
-      return `<td style="padding:4px 8px;vertical-align:middle;max-width:200px;
-                         overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-        ${esc(val.length > 42 ? val.slice(0, 42) + '…' : val)}
-      </td>`;
+      return `<td><span class="record-col-text">${esc(val.length > 42 ? val.slice(0, 42) + '…' : val)}</span></td>`;
     }).join('');
-    return `<tr class="record-row" onclick="openRecordDetail('${rec.id}')"
-              style="cursor:pointer;border-bottom:1px solid #f3f4f6;" data-id="${rec.id}"
-              onmouseenter="this.style.background='#f9fafb'" onmouseleave="this.style.background=''">
+    return `<tr class="record-row" onclick="openRecordDetail('${rec.id}')" data-id="${rec.id}">
       ${cols}
-      <td style="padding:4px 8px;">${badge}</td>
-      <td style="padding:4px 8px;">
-        <button onclick="event.stopPropagation();deleteRecord('${rec.id}')"
-                style="font-size:11px;padding:2px 5px;">✕</button>
+      <td>${badge}</td>
+      <td>
+        <button class="btn btn-sm record-del-btn" onclick="event.stopPropagation();deleteRecord('${rec.id}')">✕</button>
       </td>
     </tr>`;
   }).join('');
 
   const tableHtml = `
-    <table style="width:100%;border-collapse:collapse;font-size:13px;">
-      <thead><tr style="border-bottom:2px solid #e5e7eb;">${colHeaders}
-        <th style="padding:4px 8px;font-weight:600;">Status</th>
+    <table class="records-table">
+      <thead><tr>${colHeaders}
+        <th>Status</th>
         <th style="width:32px;"></th>
       </tr></thead>
-      <tbody>${rows || '<tr><td colspan="99" style="padding:12px 8px;color:#999;font-style:italic;">No records yet</td></tr>'}</tbody>
+      <tbody>${rows || '<tr><td colspan="99" style="padding:12px 8px;color:var(--ink-400);font-style:italic;">No records yet</td></tr>'}</tbody>
     </table>`;
 
-  panel.innerHTML = headerHtml + tableHtml +
-    `<div id="record-detail" style="display:none;position:fixed;right:16px;top:56px;bottom:16px;
-       width:340px;background:white;border:1px solid #ddd;border-radius:8px;
-       box-shadow:0 4px 16px rgba(0,0,0,.12);overflow:auto;padding:16px;z-index:50;"></div>`;
+  panel.innerHTML = headerHtml + tableHtml + `<div id="record-detail"></div>`;
 }
 
 function getRecordStatus(record) {
@@ -115,13 +100,13 @@ function deleteRecord(id) {
 function togglePackMenu(e) {
   e.stopPropagation();
   const menu = document.getElementById('pack-menu');
-  if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  if (menu) menu.classList.toggle('open');
 }
 
 // Close pack menu on outside click
 document.addEventListener('click', () => {
   const m = document.getElementById('pack-menu');
-  if (m) m.style.display = 'none';
+  if (m) m.classList.remove('open');
 });
 
 function openRecordDetail(id) {
@@ -137,24 +122,19 @@ function openRecordDetail(id) {
     const val = record.fields[f.key] ?? '';
     let input;
     if (f.type === 'image') {
-      input = `<div style="margin:4px 0;">
-        ${val ? `<img src="${val}" style="max-width:100%;max-height:80px;display:block;
-                      margin-bottom:4px;border-radius:4px;object-fit:contain;">` : ''}
-        <button onclick="_pickRecordImage('${record.id}','${f.key}')">Choose Image</button>
-        ${val ? `<button onclick="_clearRecordImage('${record.id}','${f.key}')">✕ Clear</button>` : ''}
+      input = `<div class="record-field-img">
+        ${val ? `<img src="${val}" class="record-field-img-preview">` : ''}
+        <button class="btn btn-sm btn-secondary" onclick="_pickRecordImage('${record.id}','${f.key}')">Choose Image</button>
+        ${val ? `<button class="btn btn-sm" onclick="_clearRecordImage('${record.id}','${f.key}')">✕ Clear</button>` : ''}
       </div>`;
     } else if (f.type === 'text-long') {
-      input = `<textarea rows="3" style="width:100%;box-sizing:border-box;resize:vertical;font-size:13px;"
-        onchange="_setRecordField('${record.id}','${f.key}',this.value)"
+      input = `<textarea rows="3" onchange="_setRecordField('${record.id}','${f.key}',this.value)"
         >${esc(val)}</textarea>`;
     } else {
-      input = `<input type="text" style="width:100%;box-sizing:border-box;font-size:13px;"
-        value="${esc(val)}" onchange="_setRecordField('${record.id}','${f.key}',this.value)">`;
+      input = `<input type="text" value="${esc(val)}" onchange="_setRecordField('${record.id}','${f.key}',this.value)">`;
     }
-    return `<div style="margin-bottom:10px;">
-      <label style="display:block;font-size:11px;color:#666;margin-bottom:2px;font-weight:600;">
-        ${esc(f.label)}
-      </label>
+    return `<div class="record-field-group">
+      <label class="record-field-label">${esc(f.label)}</label>
       ${input}
     </div>`;
   }).join('');
@@ -177,12 +157,10 @@ function openRecordDetail(id) {
         return { id: uid(), label: fld?.label ?? '', content: fld ? (record.fields[fld.key] ?? '') : '' };
       })
     };
-    return `<div style="display:inline-block;margin-right:8px;vertical-align:top;margin-bottom:8px;">
-      <div style="font-size:10px;color:#888;margin-bottom:2px;">${esc(t.size || '')} ${esc(t.layout)}</div>
-      <div style="width:${tw}px;height:${th}px;overflow:hidden;position:relative;
-                  border:1px solid #ddd;border-radius:2px;flex-shrink:0;">
-        <div style="transform:scale(${scale.toFixed(3)});transform-origin:top left;
-                    width:${px.w}px;height:${px.h}px;position:absolute;top:0;left:0;">
+    return `<div class="record-preview-thumb">
+      <div class="record-preview-thumb-label">${esc(t.size || '')} ${esc(t.layout)}</div>
+      <div style="width:${tw}px;height:${th}px;overflow:hidden;position:relative;border:1px solid var(--line);border-radius:2px;flex-shrink:0;">
+        <div style="transform:scale(${scale.toFixed(3)});transform-origin:top left;width:${px.w}px;height:${px.h}px;position:absolute;top:0;left:0;">
           ${buildCardHTML(tempCard, state.settings, false, px)}
         </div>
       </div>
@@ -190,20 +168,20 @@ function openRecordDetail(id) {
   }).join('');
 
   const previewSection = singleTemplates.length
-    ? `<div style="margin-top:14px;border-top:1px solid #f0f0f0;padding-top:10px;">
-        <div style="font-size:11px;color:#666;font-weight:600;margin-bottom:6px;">Preview</div>
+    ? `<div class="record-preview-strip">
+        <div class="record-field-label" style="margin-bottom:6px;">Preview</div>
         ${previews}
        </div>`
     : '';
 
   detail.style.display = 'block';
   detail.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <strong style="font-size:14px;">Edit Record</strong>
+    <div class="record-detail-header">
+      <span class="record-detail-title">Edit Record</span>
       <div style="display:flex;gap:6px;">
-        <button onclick="generateRecord(state.records.find(r=>r.id==='${record.id}'));
+        <button class="btn btn-sm btn-primary" onclick="generateRecord(state.records.find(r=>r.id==='${record.id}'));
                          renderRecordsPanel();openRecordDetail('${record.id}')">Generate</button>
-        <button onclick="document.getElementById('record-detail').style.display='none'">✕</button>
+        <button class="btn btn-sm" onclick="document.getElementById('record-detail').style.display='none'">✕</button>
       </div>
     </div>
     ${fieldInputs}
@@ -308,17 +286,17 @@ function openPackDialog(templateId) {
   const textFields  = state.schema.fields.filter(f => f.type !== 'image');
   const checkboxes  = state.records.map(r => {
     const label = textFields.slice(0, 2).map(f => r.fields[f.key] || '').filter(Boolean).join(' — ') || r.id;
-    return `<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;">
+    return `<label>
       <input type="checkbox" checked value="${r.id}">
-      <span style="font-size:13px;">${esc(label)}</span>
+      <span>${esc(label)}</span>
     </label>`;
   }).join('');
 
   document.getElementById('pack-dialog-records').innerHTML =
-    checkboxes || '<em style="color:#999;font-size:13px;">No records to pack</em>';
+    checkboxes || '<em style="color:var(--ink-400);font-size:13px;">No records to pack</em>';
 
   const menu = document.getElementById('pack-menu');
-  if (menu) menu.style.display = 'none';
+  if (menu) menu.classList.remove('open');
 
   document.getElementById('pack-dialog').showModal();
 }
@@ -408,7 +386,7 @@ function _renderSchemaEditor() {
         ${['image','text','text-long'].map(t =>
           `<option value="${t}" ${f.type===t?'selected':''}>${t}</option>`).join('')}
       </select>
-      <button onclick="_removeSchemaField(${i})">✕</button>
+      <button class="btn btn-sm" onclick="_removeSchemaField(${i})">✕</button>
     </div>`).join('');
 
   const templatesHtml = s.cardTemplates.map((t, i) => {
@@ -424,14 +402,14 @@ function _renderSchemaEditor() {
         `<option value="${f.id}" ${t.mapping.imageSlot===f.id?'selected':''}>${esc(f.label)}</option>`).join('');
       const txtOpts = txtFields.map(f =>
         `<option value="${f.id}" ${t.mapping.textSlot===f.id?'selected':''}>${esc(f.label)}</option>`).join('');
-      return `<div style="border:1px solid #e5e7eb;border-radius:6px;padding:10px;margin-bottom:8px;">
+      return `<div class="schema-template-card">
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
           ${typeToggle}
           <select onchange="_schemaTemplateChange(${i},'layout',this.value)">
             ${_COMPOUND_LAYOUTS.map(l =>
               `<option value="${l}" ${t.layout===l?'selected':''}>${l}</option>`).join('')}
           </select>
-          <button onclick="_removeSchemaTemplate(${i})">✕</button>
+          <button class="btn btn-sm" onclick="_removeSchemaTemplate(${i})">✕</button>
         </div>
         <div style="display:flex;gap:12px;font-size:12px;flex-wrap:wrap;">
           <label>Image field:
@@ -462,7 +440,7 @@ function _renderSchemaEditor() {
           ${txtFields.map(f =>
             `<option value="${f.id}" ${fid===f.id?'selected':''}>${esc(f.label)}</option>`).join('')}
         </select>`).join(' ');
-      return `<div style="border:1px solid #e5e7eb;border-radius:6px;padding:10px;margin-bottom:8px;">
+      return `<div class="schema-template-card">
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
           ${typeToggle}
           <select onchange="_schemaTemplateChange(${i},'layout',this.value)">
@@ -473,12 +451,12 @@ function _renderSchemaEditor() {
             ${_SINGLE_SIZES.map(sz =>
               `<option value="${sz}" ${(t.size||'A6')===sz?'selected':''}>${sz}</option>`).join('')}
           </select>
-          <button onclick="_removeSchemaTemplate(${i})">✕</button>
+          <button class="btn btn-sm" onclick="_removeSchemaTemplate(${i})">✕</button>
         </div>
         <div style="font-size:12px;">
           <div>Image slots: ${imgSlotSelects}</div>
           <div style="margin-top:4px;">Sections: ${secSelects}
-            <button style="font-size:11px;margin-left:4px;"
+            <button class="btn btn-sm" style="margin-left:4px;"
               onclick="_addSchemaSection(${i})">+ section</button>
           </div>
         </div>
@@ -488,14 +466,14 @@ function _renderSchemaEditor() {
 
   document.getElementById('schema-editor-content').innerHTML = `
     <div>
-      <div style="font-weight:600;margin-bottom:8px;">Fields</div>
+      <div class="dialog-section-title">Fields</div>
       ${fieldsHtml}
-      <button onclick="_addSchemaField()">+ Add Field</button>
+      <button class="btn btn-sm btn-secondary" onclick="_addSchemaField()">+ Add Field</button>
     </div>
     <div style="margin-top:16px;">
-      <div style="font-weight:600;margin-bottom:8px;">Card Templates</div>
+      <div class="dialog-section-title">Card Templates</div>
       ${templatesHtml}
-      <button onclick="_addSchemaTemplate()">+ Add Template</button>
+      <button class="btn btn-sm btn-secondary" onclick="_addSchemaTemplate()">+ Add Template</button>
     </div>`;
 }
 
