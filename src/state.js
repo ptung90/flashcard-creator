@@ -102,6 +102,8 @@ let state = {
   cards: [],
   projectName: "Untitled",
   projectIcon: "🗂️",
+  schema: null,
+  records: [],
 };
 
 let activeCardId = null;

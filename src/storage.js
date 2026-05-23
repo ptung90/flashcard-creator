@@ -602,9 +602,19 @@ function applyLoadedData(data) {
         orientation: ["portrait", "landscape"].includes(c.orientation) ? c.orientation : null,
         imageGridSplit: c.imageGridSplit || { ...LAYOUT_SPLIT_DEFAULTS[layout] },
         sections: (c.sections || []).map((s) => ({ id: s.id || uid(), ...s })),
+        recordId:        c.recordId        ?? null,
+        templateId:      c.templateId      ?? null,
+        paperSize:       c.paperSize       ?? null,
+        packedRecordIds: c.packedRecordIds ?? null,
       };
     });
   }
+  state.schema  = data.schema  ?? null;
+  state.records = (data.records ?? []).map(r => ({
+    id:         r.id,
+    fieldsHash: r.fieldsHash ?? '',
+    fields:     r.fields ?? {}
+  }));
   activeCardId = state.cards.length ? state.cards[0].id : null;
   if (!state.settings.googleFonts) state.settings.googleFonts = [];
   applyGoogleFonts(); applySettingsToUI();

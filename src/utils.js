@@ -54,3 +54,12 @@ function _compressImage(dataURL, maxPx = MAX_IMG_PX, quality = 0.82) {
     img.src = dataURL;
   });
 }
+
+function _hashStr(s) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) + h) ^ s.charCodeAt(i);
+    h >>>= 0;
+  }
+  return h.toString(36);
+}
