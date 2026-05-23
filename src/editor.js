@@ -128,9 +128,13 @@ function renderEditor() {
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
                 <div class="section-row-header">
                   <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)" style="${card.hideSectionLabels ? 'background:#f1f2ef;color:#9aa19e' : ''}">
+                  <input type="number" class="section-size-input" min="6" max="72" step="1" value="${s.fontSize || ''}" placeholder="–" title="Font size" oninput="updateSection('${s.id}','fontSize',this.value===''?null:+this.value)">
                   <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
                 </div>
-                <textarea class="section-content-input" rows="4" placeholder="${t('editor.pairedPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
+                ${window.tiptapReady === true
+                  ? `<div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}"></div>`
+                  : `<textarea class="section-content-input" rows="4" placeholder="${t('editor.pairedPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>`
+                }
               </div>
             </div>`;
       }
@@ -138,6 +142,7 @@ function renderEditor() {
           <div class="section-row" id="section-${s.id}">
             <div class="section-row-header">
               <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)" style="${card.hideSectionLabels ? 'background:#f1f2ef;color:#9aa19e' : ''}">
+              <input type="number" class="section-size-input" min="6" max="72" step="1" value="${s.fontSize || ''}" placeholder="–" title="Font size" oninput="updateSection('${s.id}','fontSize',this.value===''?null:+this.value)">
               <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
             </div>
             ${window.tiptapReady === true
@@ -229,18 +234,13 @@ function renderEditor() {
           </label>
         </div>
       </div>
-      <div id="editor-toolbar" class="editor-toolbar${isImgPairedLayout ? ' editor-toolbar--hidden' : ''}">
+      <div id="editor-toolbar" class="editor-toolbar">
         <div class="editor-toolbar-font">
           <label class="editor-toolbar-label">Title</label>
           <input type="number" class="editor-toolbar-size" min="6" max="72" step="1"
             value="${(card.titleFont || {}).size || ''}"
             placeholder="${state.settings.titleFont?.size || state.settings.font?.size || 16}"
             oninput="setCardFontProp('titleFont','size',this.value===''?null:+this.value)">
-          <label class="editor-toolbar-label">Content</label>
-          <input type="number" class="editor-toolbar-size" min="6" max="72" step="1"
-            value="${(card.contentFont || {}).size || ''}"
-            placeholder="${state.settings.contentFont?.size || state.settings.font?.size || 14}"
-            oninput="setCardFontProp('contentFont','size',this.value===''?null:+this.value)">
         </div>
         <div class="editor-toolbar-divider"></div>
         <div class="editor-toolbar-format" id="editor-toolbar-format">
@@ -303,8 +303,6 @@ function _destroyTipTapInstances() {
 
 function _initTipTapInstances(card) {
   _ensureTurndown();
-  const isImgPairedLayout = ["2img-2txt", "3img-3txt", "8img-8txt"].includes(card.layout);
-  if (isImgPairedLayout) return;
 
   card.sections.forEach((s) => {
     const el = document.getElementById('tiptap-' + s.id);

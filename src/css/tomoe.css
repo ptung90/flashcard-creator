@@ -311,6 +311,7 @@ body { background: var(--paper); color: var(--ink-900); }
 }
 .fc-editor input.title-input { font-size: 14px; font-weight: 600; }
 .section-label-input { font-weight: 600; font-size: 12px; padding: 4px 8px; }
+.section-size-input { width: 40px; font-size: 11px; padding: 3px 4px; text-align: center; flex-shrink: 0; }
 .section-content-input { font-family: 'SF Mono','Menlo','Consolas',monospace; font-size: 12px; line-height: 1.45; }
 
 .fc-editor input:focus,

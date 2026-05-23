@@ -74,7 +74,7 @@ function buildSectionsHtml(sections, hideLabels) {
       (sec) =>
         `<div class="fc-section${sec.customClass ? ` ${esc(sec.customClass)}` : ''}">` +
         (!hideLabels && sec.label ? '<span class="fc-section__label">• ' + esc(sec.label) + ': </span>' : '') +
-        '<div class="fc-section__content">' +
+        '<div class="fc-section__content"' + (sec.fontSize ? ` style="font-size:${sec.fontSize}px"` : '') + '>' +
         mdParse(sec.content) +
         "</div></div>",
     )
@@ -86,7 +86,7 @@ function buildSectionCellHtml(section, hideLabels) {
   return (
     `<div class="fc-section${section.customClass ? ` ${esc(section.customClass)}` : ''}">` +
     (!hideLabels && section.label ? '<span class="fc-section__label">• ' + esc(section.label) + ': </span>' : '') +
-    '<div class="fc-section__content">' +
+    '<div class="fc-section__content"' + (section.fontSize ? ` style="font-size:${section.fontSize}px"` : '') + '>' +
     mdParse(section.content) +
     "</div></div>"
   );
