@@ -381,7 +381,7 @@ function _removeSchemaField(i) {
 
 function _schemaFieldChange(i, prop, value) {
   _editingSchema.fields[i][prop] = value;
-  if (prop === 'label') {
+  if (prop === 'label' && !_editingSchema.fields[i].key) {
     _editingSchema.fields[i].key = _slugify(value);
   }
   if (prop !== 'key') _renderSchemaEditor();
@@ -425,10 +425,12 @@ function _schemaTemplateChange(i, prop, value) {
 }
 
 function _schemaSingleImageSlot(ti, si, value) {
+  if (!_editingSchema.cardTemplates[ti]?.mapping) return;
   _editingSchema.cardTemplates[ti].mapping.imageSlots[si] = value;
 }
 
 function _schemaSingleSection(ti, si, value) {
+  if (!_editingSchema.cardTemplates[ti]?.mapping) return;
   _editingSchema.cardTemplates[ti].mapping.sections[si] = value;
 }
 
