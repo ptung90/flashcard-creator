@@ -2,21 +2,23 @@
 
 ## Goal
 
-Add a record-based content management layer to the flashcard app. A "record" holds structured source data (fields); card templates define how that data maps to flashcards. Records generate cards automatically, and a Print Sheet composer lets users arrange cards on virtual A4 pages before printing.
+Add a record-based content management layer to the flashcard app. A "record" holds structured source data (fields); card templates define how that data maps to flashcards. Records generate two kinds of cards:
+
+1. **Single cards** — per-record, one card per template (e.g. one A5 overview card, one A6 name card)
+2. **Compound cards** — multiple records packed into one compound layout card (e.g. `8img-8txt`) for space-efficient printing
 
 ## Architecture
 
-Three new subsystems added to the existing app, each isolated:
+Two new subsystems:
 
-1. **Records module** (`src/records.js`) — schema editor UI, records table, detail editor, generate logic
-2. **Print Sheet module** (`src/printsheet.js`) — virtual A4 canvas composer + print
-3. State/storage extensions in existing files
+1. **Records module** (`src/records.js`) — schema editor UI, records table, detail editor, single generate logic, compound pack logic
+2. State/storage extensions in existing files
 
-Existing card system is unchanged. Generated cards are regular `state.cards` entries with two extra fields: `recordId` and `templateId`.
+Existing card system is unchanged. All generated cards (single and compound) are regular `state.cards` entries.
 
 ## Tech Stack
 
-Vanilla JS + DOM APIs (same as rest of app). Drag-and-drop via HTML5 Drag API. No new dependencies.
+Vanilla JS + DOM APIs. No new dependencies.
 
 ---
 
@@ -24,18 +26,18 @@ Vanilla JS + DOM APIs (same as rest of app). Drag-and-drop via HTML5 Drag API. N
 
 ### Paper sizes
 
-`A6: { w: 105, h: 148 }` already exists in `PAPER_MM` in `state.js`. `FC_CONFIG.paperSizes` already supports `"A6"` as a valid value. No changes needed to paper size config.
+`A6: { w: 105, h: 148 }` already exists in `PAPER_MM` in `state.js`. No changes needed.
 
 ### New state fields
 
-Added to `state` alongside `state.cards`:
-
 ```js
-state.schema = null  // null when project has no records feature
-state.records = []   // empty array when feature is active but no records yet
+state.schema  = null  // null when project has no records feature
+state.records = []    // empty array when feature is active but no records yet
 ```
 
-`state.schema` shape:
+### `state.schema` shape
+
+Card templates come in two types, distinguished by `templateType`.
 
 ```js
 {
@@ -43,53 +45,73 @@ state.records = []   // empty array when feature is active but no records yet
     { id: "f1", key: "image", type: "image",     label: "Image" },
     { id: "f2", key: "name",  type: "text",      label: "Name" },
     { id: "f3", key: "def1",  type: "text-long", label: "Definition" },
-    { id: "f4", key: "def2",  type: "text-long", label: "Definition (cloze)" },
+    { id: "f4", key: "def2",  type: "text-long", label: "Cloze" },
   ],
   cardTemplates: [
+    // ── Single templates (one card per record) ──────────────────
     {
       id: "t1",
-      size: "A5",            // FC_CONFIG-compatible paper size key
+      templateType: "single",
+      size: "A5",
       layout: "1left-2right",
       mapping: {
-        imageSlots: ["f1"],  // array — index maps to slot 0, 1, 2...
-        sections: ["f2", "f3"]  // array — index maps to section 0, 1, 2...
+        imageSlots: ["f1"],       // index → slot number
+        sections:   ["f2", "f3"] // index → section number
       }
     },
     {
       id: "t2",
+      templateType: "single",
       size: "A6",
       layout: "fullimage",
       mapping: { imageSlots: ["f1"], sections: [] }
     },
     {
       id: "t3",
+      templateType: "single",
       size: "A6",
       layout: "fulltext",
       mapping: { imageSlots: [], sections: ["f2"] }
     },
     {
       id: "t4",
+      templateType: "single",
       size: "A6",
       layout: "fulltext",
       mapping: { imageSlots: [], sections: ["f4"] }
     },
+    // ── Compound templates (N records → 1 card) ─────────────────
+    {
+      id: "tc1",
+      templateType: "compound",
+      layout: "8img-8txt",   // any existing compound layout
+      mapping: {
+        imageSlot: "f1",  // which field → every img slot
+        textSlot:  "f2"   // which field → every text slot
+      }
+      // size: not set — compound cards use global paper size
+    },
+    {
+      id: "tc2",
+      templateType: "compound",
+      layout: "3img-3txt",
+      mapping: { imageSlot: "f1", textSlot: "f4" }
+    }
   ]
 }
 ```
 
-**Field types:**
-- `image` — renders as image picker in detail editor
-- `text` — single-line input
-- `text-long` — textarea
+**Field types** (affect detail editor UI only, not generation):
+- `image` → image picker
+- `text` → single-line input
+- `text-long` → textarea
 
-Types only affect the detail editor UI. Card generation treats them identically.
-
-`state.records` entry shape:
+### `state.records` entry shape
 
 ```js
 {
   id: "rec_abc",
-  fieldsHash: "abc123",   // SHA-1 of JSON.stringify(fields) at last generate
+  fieldsHash: "abc123",  // djb2 hash of JSON.stringify(fields), set at last generate
   fields: {
     image: "data:image/...",
     name:  "parallel",
@@ -100,21 +122,22 @@ Types only affect the detail editor UI. Card generation treats them identically.
 }
 ```
 
-**`fieldsHash`** is a simple hash of `JSON.stringify(record.fields)` stored at generate time. Status = `synced` when current hash matches stored hash; `draft` otherwise. Hash function: `_hashStr(s)` in `utils.js` (add a simple djb2 implementation).
+### Card fields added
 
-**Card fields added** — inside the existing `.map(c => ({ ...c, ... }))` spread in `applyLoadedData` in `storage.js`:
+Inside the existing `.map(c => ({ ...c, ... }))` spread in `applyLoadedData` in `storage.js`:
 
 ```js
-recordId:   c.recordId   ?? null,
-templateId: c.templateId ?? null,
-paperSize:  c.paperSize  ?? null,
+recordId:    c.recordId    ?? null,  // set on single-generated cards
+templateId:  c.templateId  ?? null,  // set on single-generated cards
+paperSize:   c.paperSize   ?? null,  // set on single-generated cards
+packedRecordIds: c.packedRecordIds ?? null,  // set on compound-packed cards (array of record ids)
 ```
 
 ---
 
 ## Serialization
 
-`_buildDataObj()` in `storage.js` already spreads `state`, so `schema` and `records` serialize automatically. Files without these fields load as `null`/`[]` via the migration defaults above.
+`_buildDataObj()` spreads `state`, so `schema` and `records` serialize automatically.
 
 `applyLoadedData` additions:
 
@@ -131,7 +154,7 @@ state.records = (data.records ?? []).map(r => ({
 
 ## Status Computation
 
-Computed at read time — not stored:
+Computed at read time, not stored:
 
 ```js
 function getRecordStatus(record) {
@@ -142,7 +165,7 @@ function getRecordStatus(record) {
 }
 ```
 
-No `error` status — if a generated card was manually deleted, that card simply won't appear. Status is `synced` as long as the hash matches and at least one generated card exists.
+Status only tracks single-generated cards. Compound cards are independent — packing the same records again creates a new compound card (no sync concept for compound).
 
 ---
 
@@ -150,99 +173,105 @@ No `error` status — if a generated card was manually deleted, that card simply
 
 ### Toolbar
 
-Records button always visible. Print Sheet button hidden when `state.schema === null`.
+Records button always visible. No Print Sheet button.
 
 ```
-[New Card] [↻ Thumbs] ... [Records] [Print Sheet*] [More ▾]
-(* hidden when schema is null)
+[New Card] [↻ Thumbs] ... [Records] [More ▾]
 ```
 
-Clicking Records when `state.schema === null` shows a setup prompt: "This project has no record schema yet. Set one up?" with a [Setup Schema] button that opens the Schema Editor modal.
+Clicking Records when `state.schema === null` shows setup prompt with `[Setup Schema]` button.
 
 ### Tab switching
 
-Clicking Records or Print Sheet:
+Clicking Records:
 - Hides `.fc-editor` and `.fc-preview`
-- Shows the corresponding new panel (`#records-panel` or `#printsheet-panel`)
-- Deactivates the current active card: call `setActiveCard(null)` (or the equivalent — `activeCardId` is a module-level `let` in `state.js`, not a property on `state`; use whatever the existing deactivation path is in `app.js`)
-- Both panels are `<div>` siblings of `.fc-editor` inside the existing layout container
+- Shows `#records-panel`
+- Deactivates current card (`activeCardId` is a module-level `let` in `state.js` — use the existing deactivation path in `app.js`)
+- `#records-panel` is a `<div>` sibling of `.fc-editor` in the layout container
 
-Clicking any card in the sidebar or New Card returns to card editing view (re-shows editor/preview, hides panels).
+Clicking any card in sidebar or New Card returns to card editing view.
 
 ### Records Panel (`#records-panel`)
 
-Full-width, replaces editor+preview area.
+**Header:**
+```
+Records    [+ Add]  [Generate All]  [Pack ▾]  [⚙ Schema]
+```
 
-**Header:** `Records  [+ Add]  [Generate All]  [⚙ Schema]`
+**Table:** one row per record. Columns: one per non-image field (truncated ~40 chars) + Status badge (`synced` / `draft`).
 
-**Table:** one row per record, columns = non-image fields (text truncated to ~40 chars) + Status badge.
+**Detail panel** opens on row click (floats right, min-width 320px):
+- One input per field (image picker / text input / textarea per field type)
+- `[Generate]` button — generates/regenerates single cards for this record
+- Preview strip: one thumbnail per single template, rendered via `buildCardHTML()` using template's `size` as `paperSize` and `state.settings` for everything else
 
-**Detail panel** opens on row click, floats on the right (min-width 320px). Contains:
-- One input per field (image picker / text input / textarea based on field type)
-- `[Generate]` button — generates/regenerates cards for this record only
-- Preview strip: small thumbnails, one per card template, rendered with `buildCardHTML()` using template's `size` as `paperSize` and `state.settings` for everything else
+**Generate All:** sync loop over all records, skip `synced`. Toast: "Generated N cards".
 
-**Generate All:** generates all records sequentially (sync loop). Skips records with `status === 'synced'`. Shows a brief toast on completion: "Generated N cards".
+**Pack ▾ dropdown:** lists all compound templates from schema (by layout name). Clicking a compound template:
+1. Opens a small dialog: "Select records to pack into `8img-8txt`"
+2. Checkbox list of all records (pre-selects all)
+3. Records are slotted in table order; excess records beyond layout capacity are ignored (e.g. `3img-3txt` only uses first 3 selected records); if fewer records than slots, remaining slots are empty
+4. `[Pack]` — creates one new compound card and adds to `state.cards`
+5. Toast: "Packed N records into [layout]"
+
+Packed compound card title: auto-set to the layout name + timestamp (e.g. `8img-8txt · May 23`). User can rename it in the normal card editor.
 
 ### Schema Editor (Modal)
 
-Opened via ⚙ button. Two sections:
+Two sections, opened via ⚙:
 
-**Fields section:** add/remove fields (no drag-reorder in v1 — order is set by add order). Each field has: key (slug, auto-derived from label), label text, type dropdown.
+**Fields:** add/remove (no drag-reorder v1). Each: label, key (auto-slug), type dropdown.
 
-**Card Templates section:** add/remove templates. Each template has:
+**Card Templates:** add/remove. Each template has a `templateType` toggle (Single / Compound).
+
+*Single template fields:*
 - Size dropdown (A4 / A5 / A6 / Letter)
-- Layout dropdown (same options as card layout picker)
-- `imageSlots[]` mapping: per slot index, a dropdown of image-type fields (or "—" for empty)
-- `sections[]` mapping: per section index (determined by layout's slot count), a dropdown of text fields (or "—" for empty)
+- Layout dropdown
+- `imageSlots[]`: per slot, dropdown of image fields or "—"
+- `sections[]`: per section, dropdown of text fields or "—"
 
-Save closes modal and calls `setDirty()`. No live preview in schema editor (v1).
+*Compound template fields:*
+- Layout dropdown (filtered to compound layouts: `2img-2txt`, `3img-3txt`, `8img-8txt`)
+- Image slot field: dropdown of image fields
+- Text slot field: dropdown of text fields
 
-### Print Sheet Panel (`#printsheet-panel`)
-
-**Layout:** left sidebar (200px) + main canvas area.
-
-**Sidebar:** lists all generated cards grouped by record. Each card shown as a small labeled chip: `rec1 · A5`, `rec1 · A6`, etc. Ungenerated records shown as disabled. Drag chips to canvas.
-
-**Canvas:** one or more A4 sheet(s). Each sheet is a fixed-size div (A4 proportions, scaled to fit screen). Cards snap to a 5mm grid on drop (no free-floating, no overlap — cards placed on grid cells, later drops on occupied cells push to nearest free cell). Cards render at their physical A-size scaled to screen.
-
-**Buttons:** `[Auto-fill]` — places all unplaced cards using a greedy fit (A5 takes top-left half, A6 fills remaining quarters). `[Clear]` — removes all cards from all sheets. `[+ Sheet]` — adds a new blank A4 sheet. `[Print Sheet]` — renders via `html2canvas` + `jsPDF`, one A4 page per sheet, portrait orientation.
-
-Sheet orientation: portrait A4 only (v1). Landscape and custom sheet sizes are out of scope.
+Save calls `setDirty()`. No live preview (v1).
 
 ---
 
 ## Generate Logic
 
+### Single cards
+
 ```js
 function generateRecord(record) {
-  for (const template of state.schema.cardTemplates) {
+  const singleTemplates = state.schema.cardTemplates.filter(t => t.templateType === 'single')
+  for (const template of singleTemplates) {
     let card = state.cards.find(
       c => c.recordId === record.id && c.templateId === template.id
     )
     if (!card) {
-      // Inline card construction (addCard() in app.js builds inline — extract into
-      // a newCard() factory as part of this task, then call it here)
+      // addCard() in app.js builds card inline with FC_CONFIG.newCard defaults.
+      // Extract a newCard() factory that returns bare defaults only (layout: "1full",
+      // empty images[], empty sections[], no title) — generated cards must NOT inherit
+      // the user's FC_CONFIG.newCard preferences (layout, default sections, etc.).
+      // addCard() continues to apply FC_CONFIG.newCard on top of newCard() for user-created cards.
       card = newCard()
       card.recordId   = record.id
       card.templateId = template.id
       state.cards.push(card)
     }
-    // Apply template mapping
-    card.layout = template.layout
-    card.orientation = 'portrait'  // all generated cards are portrait
-    // paperSize override stored on card for render
-    card.paperSize = template.size
-    // Images
-    card.images = template.mapping.imageSlots
+    card.layout      = template.layout
+    card.orientation = 'portrait'
+    card.paperSize   = template.size
+    card.images      = template.mapping.imageSlots
       .map((fieldId, slot) => ({ slot, url: fieldId ? record.fields[fieldId] ?? '' : '' }))
       .filter(img => img.url)
-    // Sections
-    card.sections = template.mapping.sections
-      .filter(fieldId => fieldId)
-      .map((fieldId, i) => ({
-        id: uid(),
-        label: state.schema.fields.find(f => f.id === fieldId)?.label ?? '',
+    card.sections    = template.mapping.sections
+      .filter(Boolean)
+      .map(fieldId => ({
+        id:      uid(),
+        label:   state.schema.fields.find(f => f.id === fieldId)?.label ?? '',
         content: record.fields[fieldId] ?? ''
       }))
   }
@@ -251,24 +280,72 @@ function generateRecord(record) {
 }
 ```
 
-**`card.paperSize`** — new optional field on card. When set, `buildCardHTML()` uses it instead of `state.settings.paperSize`. Migration default: `null` (falls back to global setting).
+**`card.paperSize`** — new optional field. When set, callers of `buildCardHTML()` must pass `getPaperPx(card.paperSize, card.orientation || s.orientation)` as `overridePx` instead of `null`. Migration default: `null`.
 
-**Undo:** generate operations do NOT push to undo stack. `generateRecord` calls `setDirty()` directly without `pushUndo()`.
+All existing `buildCardHTML` call sites must be updated with this conditional:
+- `renderPreview()` in `preview.js`
+- Thumbnail generator (`scheduleThumbRefresh` / `refreshAllThumbs`) in `app.js`
+- Print path in `modals.js` (single-card print)
+- PDF export path in `modals.js`
 
-`pushUndo()` in `undo.js` calls `_encodeState()` which does `JSON.parse(JSON.stringify(state))` — a full snapshot of the entire `state` object. Since `state.schema` and `state.records` will be on `state`, they would be captured in every undo snapshot, potentially making snapshots large (especially with base64 images in record fields).
+Pattern at each call site:
+```js
+const overridePx = card.paperSize ? getPaperPx(card.paperSize, card.orientation || s.orientation) : null
+buildCardHTML(card, s, forPrint, overridePx)
+```
 
-**Fix required in `undo.js`:** modify `_encodeState()` to snapshot only `cards`, `settings`, and `projectName` — preserving the existing image-pool interning (`_internImg`) logic. The current code snapshots the entire `state` object; the fix narrows what is snapshotted while keeping the pool optimization intact:
+### Compound cards
 
 ```js
-// Keep existing _internImg and image pool logic unchanged.
-// Only change: build snap from specific fields rather than full state spread.
+function packRecords(template, selectedRecords) {
+  const layout      = template.layout
+  const slotCount   = LAYOUT_SLOTS[layout] ?? 0
+  const records     = selectedRecords.slice(0, slotCount)  // cap to slot count
+
+  const card        = newCard()
+  card.layout       = layout
+  card.orientation  = 'portrait'
+  card.packedRecordIds = records.map(r => r.id)
+  card.title        = layout + ' · ' + new Date().toLocaleDateString()
+
+  card.images = records.map((rec, slot) => ({
+    slot,
+    url: template.mapping.imageSlot ? rec.fields[template.mapping.imageSlot] ?? '' : ''
+  })).filter(img => img.url)
+
+  card.sections = records.map((rec, i) => ({
+    id:      uid(),
+    label:   '',
+    content: template.mapping.textSlot ? rec.fields[template.mapping.textSlot] ?? '' : ''
+  }))
+
+  // Pad sections to slotCount if fewer records than slots
+  while (card.sections.length < slotCount) {
+    card.sections.push({ id: uid(), label: '', content: '' })
+  }
+
+  state.cards.push(card)
+  setDirty()
+}
+```
+
+Compound cards do NOT set `recordId` or `templateId` (those are single-card fields). They set `packedRecordIds` for reference only — no sync or regenerate concept.
+
+---
+
+## Undo
+
+Generate and pack operations do NOT call `pushUndo()`.
+
+**Fix required in `undo.js`:** `_encodeState()` currently snapshots the full `state` object. Narrow it to exclude `schema` and `records` while preserving the image-pool interning:
+
+```js
 function _encodeState() {
   const snap = {
-    cards: JSON.parse(JSON.stringify(state.cards)),
-    settings: JSON.parse(JSON.stringify(state.settings)),
+    cards:       JSON.parse(JSON.stringify(state.cards)),
+    settings:    JSON.parse(JSON.stringify(state.settings)),
     projectName: state.projectName
   }
-  // existing image interning pass (unchanged)
   for (const card of snap.cards) {
     for (const img of (card.images || [])) {
       if (img.url?.startsWith('data:')) { img._k = _internImg(img.url); delete img.url; }
@@ -278,39 +355,40 @@ function _encodeState() {
 }
 
 function _decodeState(s) {
-  const snap = _decodeSnap(s)   // existing pool-restore logic — unchanged
-  state.cards = snap.cards
-  state.settings = snap.settings
+  const snap = _decodeSnap(s)  // existing pool-restore logic — unchanged
+  state.cards       = snap.cards
+  state.settings    = snap.settings
   state.projectName = snap.projectName
   // schema and records intentionally not restored by undo
 }
 ```
 
-**Delete record:**
+---
+
+## Delete Record
+
 ```
 Prompt: "Delete generated cards for this record too?"
-  Yes → state.cards = state.cards.filter(c => c.recordId !== record.id)
-  No  → state.cards.forEach(c => { if (c.recordId === id) { c.recordId = null; c.templateId = null } })
+  Yes → remove all cards where c.recordId === record.id
+  No  → clear recordId/templateId on those cards (orphan them)
 state.records = state.records.filter(r => r.id !== record.id)
 setDirty()
 ```
+
+Compound cards (`packedRecordIds`) are NOT deleted when a record is deleted — they are standalone cards.
 
 ---
 
 ## Build System
 
-Current concat order in `build.js` (from the actual file):
+Current concat order: `state, utils, storage, api, i18n, render, editor, preview, modals, undo, app`
+
+Updated: insert `records` before `app`:
 ```
-state, utils, storage, api, i18n, render, editor, preview, modals, undo, app
+state, utils, storage, api, i18n, render, editor, preview, modals, undo, records, app
 ```
 
-Updated order — insert `records` and `printsheet` after `modals` and `undo`, before `app`:
-```
-state, utils, storage, api, i18n, render, editor, preview, modals, undo, records, printsheet, app
-```
-
-`records.js` depends on: `render.js` (buildCardHTML), `state.js`, `storage.js` (setDirty), `utils.js` (uid, _hashStr).
-`printsheet.js` depends on: `render.js`, `state.js`, `storage.js`.
+`records.js` depends on: `render.js` (`buildCardHTML`, `LAYOUT_SLOTS`), `state.js`, `storage.js` (`setDirty`), `utils.js` (`uid`, `_hashStr`).
 
 ---
 
@@ -318,26 +396,25 @@ state, utils, storage, api, i18n, render, editor, preview, modals, undo, records
 
 | File | Change |
 |------|--------|
-| `src/records.js` | New — records panel, schema editor modal, generate logic |
-| `src/printsheet.js` | New — print sheet panel, drag-drop, auto-fill, print |
+| `src/records.js` | New — records panel, schema editor modal, generate + pack logic |
 | `src/state.js` | Add `schema: null`, `records: []` to default state |
-| `src/storage.js` | Add schema/records to `applyLoadedData`; add `card.recordId`/`templateId` migration |
+| `src/storage.js` | Add schema/records to `applyLoadedData`; add `recordId`, `templateId`, `paperSize`, `packedRecordIds` to card migration |
 | `src/utils.js` | Add `_hashStr(s)` (djb2) |
-| `src/undo.js` | Modify `_encodeState`/`_decodeState` to exclude `schema` and `records` |
-| `src/render.js` | Respect `card.paperSize` override in `buildCardHTML()` |
-| `src/app.js` | Extract `newCard()` factory from `addCard()`; add tab switching logic |
-| `src/template.html` | Add Records + Print Sheet toolbar buttons; add `#records-panel`, `#printsheet-panel` divs |
-| `src/app.js` | (see above) |
-| `build.js` | Add records.js + printsheet.js to concat order |
+| `src/undo.js` | Narrow `_encodeState`/`_decodeState` to exclude `schema` and `records` |
+| `src/render.js` | Respect `card.paperSize` in `buildCardHTML()` via `overridePx` |
+| `src/app.js` | Extract `newCard()` factory from `addCard()`; tab switching for Records panel |
+| `src/template.html` | Add Records toolbar button; add `#records-panel` div |
+| `build.js` | Add `records.js` to concat order before `app.js` |
 
 ---
 
 ## Out of Scope (v1)
 
+- Print sheet drag-drop composer
 - AI-assisted cloze generation
 - CSV import for bulk record creation
 - Multiple schema types per project
 - Editing a generated card pushes changes back to record
 - Drag-to-reorder fields in schema editor
-- Print sheet landscape orientation or non-A4 sheet size
-- Undo/redo for generate, schema, or record operations
+- Undo/redo for generate, pack, schema, or record operations
+- Regenerating compound cards (pack again to create a new one)
