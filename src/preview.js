@@ -8,7 +8,7 @@ function renderPreview() {
     return;
   }
   const { w, h } = getPaperPx(
-    state.settings.paperSize,
+    card.paperSize || state.settings.paperSize,
     card.orientation || state.settings.orientation,
   );
   const panelW = document.getElementById("fc-preview-panel").clientWidth - 32;
@@ -32,7 +32,8 @@ function renderPreview() {
     "px;height:" +
     h +
     'px;position:absolute;top:0;left:0;">' +
-    buildCardHTML(card, state.settings, false) +
+    buildCardHTML(card, state.settings, false,
+      card.paperSize ? getPaperPx(card.paperSize, card.orientation || state.settings.orientation) : null) +
     "</div></div>";
   attachPreviewDragHandlers(card);
 }
@@ -148,11 +149,12 @@ function printAll() {
   wrap.innerHTML = state.cards
     .map((c) => {
       const orientation = getCardOrientation(c);
+      const overridePx  = c.paperSize ? getPaperPx(c.paperSize, orientation) : null;
       return (
         '<div class="fc-print-sheet fc-print-sheet--' +
         orientation +
         '">' +
-        buildCardHTML(c, state.settings, true) +
+        buildCardHTML(c, state.settings, true, overridePx) +
         "</div>"
       );
     })
@@ -169,11 +171,12 @@ function printOne() {
   const wrap = document.getElementById("preview-card-wrap");
   const orig = wrap.innerHTML;
   const styleEl = mountPrintPageStyle();
+  const overridePx = card.paperSize ? getPaperPx(card.paperSize, getCardOrientation(card)) : null;
   wrap.innerHTML =
     '<div class="fc-print-sheet fc-print-sheet--' +
     getCardOrientation(card) +
     '">' +
-    buildCardHTML(card, state.settings, true) +
+    buildCardHTML(card, state.settings, true, overridePx) +
     "</div>";
   window.print();
   wrap.innerHTML = orig;
@@ -236,7 +239,7 @@ async function exportOnePDF() {
   const { jsPDF } = window.jspdf;
   const s = state.settings;
   const orientation = getCardOrientation(card);
-  const { w: pw, h: ph } = getPaperMm(s.paperSize, orientation);
+  const { w: pw, h: ph } = getPaperMm(card.paperSize || s.paperSize, orientation);
   const pdf = new jsPDF({
     orientation: orientation === "landscape" ? "l" : "p",
     unit: "mm",
@@ -291,7 +294,7 @@ async function exportPDF() {
   for (let i = 0; i < state.cards.length; i++) {
     const card = state.cards[i];
     const orientation = getCardOrientation(card);
-    const { w: pw, h: ph } = getPaperMm(s.paperSize, orientation);
+    const { w: pw, h: ph } = getPaperMm(card.paperSize || s.paperSize, orientation);
     wrap.innerHTML = buildCaptureHTML(card, s);
     const el = wrap.firstElementChild;
 

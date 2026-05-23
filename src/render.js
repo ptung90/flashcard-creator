@@ -537,14 +537,13 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
 }
 
 function buildCaptureHTML(card, settings) {
-  const { w, h } = getPaperPx(settings.paperSize, getCardOrientation(card));
+  const paperSize = card.paperSize || settings.paperSize;
+  const orient    = getCardOrientation(card);
+  const { w, h }  = getPaperPx(paperSize, orient);
+  const overridePx = card.paperSize ? { w, h } : null;
   return (
-    '<div style="width:' +
-    w +
-    "px;height:" +
-    h +
-    'px;background:white;position:relative;overflow:hidden;">' +
-    buildCardHTML(card, settings, true) +
-    "</div>"
+    '<div style="width:' + w + 'px;height:' + h + 'px;background:white;position:relative;overflow:hidden;">' +
+    buildCardHTML(card, settings, true, overridePx) +
+    '</div>'
   );
 }

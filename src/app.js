@@ -460,7 +460,8 @@ async function _generateThumbs(genId, targetItems = null) {
     offscreen.style.width = w + 'px';
     offscreen.style.height = h + 'px';
 
-    offscreen.innerHTML = buildCardHTML(card, state.settings, true);
+    const overridePx = card.paperSize ? getPaperPx(card.paperSize, orientation) : null;
+    offscreen.innerHTML = buildCardHTML(card, state.settings, true, overridePx);
     await new Promise(r => setTimeout(r, 30));
 
     try {
