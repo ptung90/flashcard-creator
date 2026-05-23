@@ -2,6 +2,7 @@
 
 let _tiptapInstances = {}; // sectionId → TipTap Editor instance
 let _activeEditor = null;  // currently focused TipTap instance
+let _activeSectionId = null;
 let _turndownService = null;
 
 function _ensureTurndown() {
@@ -65,6 +66,26 @@ function editorToolbarCmd(cmd) {
     console.warn('[editorToolbarCmd] editor no longer valid', e);
   }
   _updateToolbarState();
+}
+
+function setActiveSectionFontProp(prop, val) {
+  if (!_activeSectionId) return;
+  const card = getActiveCard();
+  if (!card) return;
+  const s = card.sections.find(s => s.id === _activeSectionId);
+  if (!s) return;
+  s[prop] = val;
+  dispatch('CARD_CONTENT_CHANGED');
+}
+
+function _syncToolbarSectionInputs() {
+  const labelInput = document.getElementById('toolbar-section-label-size');
+  const contentInput = document.getElementById('toolbar-section-content-size');
+  if (!labelInput || !contentInput) return;
+  const card = getActiveCard();
+  const s = _activeSectionId ? card?.sections.find(s => s.id === _activeSectionId) : null;
+  labelInput.value = s?.labelSize || '';
+  contentInput.value = s?.fontSize || '';
 }
 
 function renderEditor() {
@@ -135,8 +156,7 @@ function renderEditor() {
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
                 <div class="section-row-header">
                   <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)" style="${card.hideSectionLabels ? 'background:#f1f2ef;color:#9aa19e' : ''}">
-                  <input type="number" class="section-size-input" min="6" max="72" step="1" value="${s.fontSize || ''}" placeholder="–" title="Font size" oninput="updateSection('${s.id}','fontSize',this.value===''?null:+this.value)">
-                  <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
+                      <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
                 </div>
                 ${window.tiptapReady === true
                   ? `<div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}"></div>`
@@ -149,7 +169,6 @@ function renderEditor() {
           <div class="section-row" id="section-${s.id}">
             <div class="section-row-header">
               <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)" style="${card.hideSectionLabels ? 'background:#f1f2ef;color:#9aa19e' : ''}">
-              <input type="number" class="section-size-input" min="6" max="72" step="1" value="${s.fontSize || ''}" placeholder="–" title="Font size" oninput="updateSection('${s.id}','fontSize',this.value===''?null:+this.value)">
               <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
             </div>
             ${window.tiptapReady === true
@@ -238,15 +257,12 @@ function renderEditor() {
         </div>
       </div>
       <div id="editor-toolbar" class="editor-toolbar">
-        <div class="editor-toolbar-font">
-          <label class="editor-toolbar-label">Title</label>
-          <input type="number" class="editor-toolbar-size" min="6" max="72" step="1"
-            value="${(card.titleFont || {}).size || ''}"
-            placeholder="${state.settings.titleFont?.size || state.settings.font?.size || 16}"
-            oninput="setCardFontProp('titleFont','size',this.value===''?null:+this.value)">
-        </div>
-        <div class="editor-toolbar-divider"></div>
         <div class="editor-toolbar-format" id="editor-toolbar-format">
+          <label class="editor-toolbar-label">Title</label>
+          <input type="number" id="toolbar-section-label-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" oninput="setActiveSectionFontProp('labelSize',this.value===''?null:+this.value)">
+          <label class="editor-toolbar-label">Content</label>
+          <input type="number" id="toolbar-section-content-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" oninput="setActiveSectionFontProp('fontSize',this.value===''?null:+this.value)">
+          <div class="editor-toolbar-divider"></div>
           <button class="editor-toolbar-btn" data-cmd="bold" onclick="editorToolbarCmd('bold')" title="Bold (Ctrl+B)"><strong>B</strong></button>
           <button class="editor-toolbar-btn" data-cmd="italic" onclick="editorToolbarCmd('italic')" title="Italic (Ctrl+I)"><em>I</em></button>
           <button class="editor-toolbar-btn" data-cmd="underline" onclick="editorToolbarCmd('underline')" title="Underline (Ctrl+U)"><u>U</u></button>
@@ -352,8 +368,10 @@ function _initTipTapInstances(card) {
 
     editor.on('focus', () => {
       _activeEditor = editor;
+      _activeSectionId = s.id;
       const fmt = document.getElementById('editor-toolbar-format');
       if (fmt) fmt.classList.add('active');
+      _syncToolbarSectionInputs();
     });
 
     editor.on('blur', () => {
@@ -362,8 +380,10 @@ function _initTipTapInstances(card) {
         const anyFocused = Object.values(_tiptapInstances).some(ed => ed.isFocused);
         if (!anyFocused) {
           _activeEditor = null;
+          _activeSectionId = null;
           const fmt = document.getElementById('editor-toolbar-format');
           if (fmt) fmt.classList.remove('active');
+          _syncToolbarSectionInputs();
         }
       }, 150);
     });

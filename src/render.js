@@ -73,7 +73,7 @@ function buildSectionsHtml(sections, hideLabels) {
     .map(
       (sec) =>
         `<div class="fc-section${sec.customClass ? ` ${esc(sec.customClass)}` : ''}">` +
-        (!hideLabels && sec.label ? '<span class="fc-section__label">• ' + esc(sec.label) + ': </span>' : '') +
+        (!hideLabels && sec.label ? '<span class="fc-section__label"' + (sec.labelSize ? ` style="font-size:${sec.labelSize}px"` : '') + '>• ' + esc(sec.label) + ': </span>' : '') +
         '<div class="fc-section__content"' + (sec.fontSize ? ` style="font-size:${sec.fontSize}px"` : '') + '>' +
         mdParse(sec.content) +
         "</div></div>",
@@ -85,7 +85,7 @@ function buildSectionCellHtml(section, hideLabels) {
   if (!section) return '<div class="fc-section fc-section--empty"></div>';
   return (
     `<div class="fc-section${section.customClass ? ` ${esc(section.customClass)}` : ''}">` +
-    (!hideLabels && section.label ? '<span class="fc-section__label">• ' + esc(section.label) + ': </span>' : '') +
+    (!hideLabels && section.label ? '<span class="fc-section__label"' + (section.labelSize ? ` style="font-size:${section.labelSize}px"` : '') + '>• ' + esc(section.label) + ': </span>' : '') +
     '<div class="fc-section__content"' + (section.fontSize ? ` style="font-size:${section.fontSize}px"` : '') + '>' +
     mdParse(section.content) +
     "</div></div>"
