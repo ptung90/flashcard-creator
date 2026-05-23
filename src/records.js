@@ -296,7 +296,6 @@ function generateAll() {
   }
 }
 
-// Stubs for later tasks
 let _packTemplateId = null;
 
 function openPackDialog(templateId) {
@@ -350,11 +349,13 @@ function confirmPack() {
 function packRecords(template, selectedRecords) {
   const layout    = template.layout;
   const slotCount = LAYOUT_SLOTS[layout] ?? 0;
+  if (slotCount === 0) return;
   const records   = selectedRecords.slice(0, slotCount);
 
   const card           = newCard();
   card.layout          = layout;
   card.orientation     = 'portrait';
+  card.imageGridSplit  = { ...(LAYOUT_SPLIT_DEFAULTS[layout] || LAYOUT_SPLIT_DEFAULTS['1full']) };
   card.packedRecordIds = records.map(r => r.id);
   card.title           = layout + ' · ' + new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short' });
 
