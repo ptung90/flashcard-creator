@@ -251,29 +251,42 @@ function applySettingsToUI() {
 }
 
 // ── Card Management ────────────────────────────────────────────────
+function newCard() {
+  return {
+    id:                uid(),
+    layout:            '1full',
+    imageHeightPercent: 55,
+    imageGridSplit:    { ...LAYOUT_SPLIT_DEFAULTS['1full'] },
+    images:            [],
+    title:             '',
+    hideTitle:         false,
+    hideSectionLabels: false,
+    titleFont:         null,
+    contentFont:       null,
+    orientation:       null,
+    customCss:         '',
+    sections:          [],
+    recordId:          null,
+    templateId:        null,
+    paperSize:         null,
+    packedRecordIds:   null,
+  };
+}
+
 function addCard() {
   pushUndo();
-  const nc = (window.FC_CONFIG || {}).newCard || {};
-  const layout = nc.layout || "2top-1bot";
-  const card = {
-    id: uid(),
+  const nc     = (window.FC_CONFIG || {}).newCard || {};
+  const layout = nc.layout || '2top-1bot';
+  const card   = {
+    ...newCard(),
     layout,
+    imageGridSplit:     { ...LAYOUT_SPLIT_DEFAULTS[layout] },
+    title:              t('card.new'),
     imageHeightPercent: nc.imageHeightPercent ?? 55,
-    imageGridSplit: { ...LAYOUT_SPLIT_DEFAULTS[layout] },
-    images: [],
-    title: t('card.new'),
-    hideTitle: false,
-    hideSectionLabels: false,
-    titleFont: null,
-    contentFont: null,
-    orientation: null,
-    customCss: "",
-    sections: (
-      nc.defaultSections || [
-        { label: "Đặc điểm", content: "" },
-        { label: "Môi trường", content: "" },
-      ]
-    ).map((s) => ({ id: uid(), ...s })),
+    sections: (nc.defaultSections || [
+      { label: 'Đặc điểm', content: '' },
+      { label: 'Môi trường', content: '' },
+    ]).map((s) => ({ id: uid(), ...s })),
   };
   state.cards.push(card);
   activeCardId = card.id;
