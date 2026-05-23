@@ -1,13 +1,3 @@
-/* ── List-as-indent ── */
-.fc-card--list-indent .fc-section__content ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.fc-card--list-indent .fc-section__content ul > li {
-  text-indent: 2em;
-}
-
 /* ── Preview Panel ── */
 .fc-preview-panel {
   width: 40%;

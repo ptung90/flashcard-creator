@@ -264,7 +264,6 @@ function addCard() {
     title: t('card.new'),
     hideTitle: false,
     hideSectionLabels: false,
-    listIndent: false,
     titleFont: null,
     contentFont: null,
     orientation: null,
@@ -660,6 +659,13 @@ function toggleSettingsBar() {
   if (!bar) return;
   const open = bar.classList.toggle('open');
   if (btn) btn.setAttribute('aria-pressed', open ? 'true' : 'false');
+  if (open) return;
+  document.getElementById('font-settings-panel')?.classList.remove('open');
+  document.getElementById('btn-font-toggle')?.classList.remove('open');
+  document.getElementById('border-settings-panel')?.classList.remove('open');
+  document.getElementById('btn-border-toggle')?.classList.remove('open');
+  document.getElementById('img-settings-panel')?.classList.remove('open');
+  document.getElementById('btn-img-toggle')?.classList.remove('open');
 }
 
 function toggleEmojiPicker(event) {

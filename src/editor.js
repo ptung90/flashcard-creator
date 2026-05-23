@@ -230,10 +230,6 @@ function renderEditor() {
             <input type="checkbox" ${card.hideSectionLabels ? "checked" : ""} onchange="updateCardProp('hideSectionLabels',this.checked)">
             ${t('editor.hideLabels')}
           </label>
-          <label style="font-size:12px;color:#1f2a28;display:flex;align-items:center;gap:6px">
-            <input type="checkbox" ${card.listIndent ? "checked" : ""} onchange="updateCardProp('listIndent',this.checked)">
-            ${t('editor.listIndent')}
-          </label>
         </div>
       </div>
       <div id="editor-toolbar" class="editor-toolbar">
