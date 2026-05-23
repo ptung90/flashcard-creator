@@ -1,7 +1,19 @@
 // ── Editor ─────────────────────────────────────────────────────────
 
+let _tiptapInstances = {}; // sectionId → TipTap Editor instance
+let _activeEditor = null;  // currently focused TipTap instance
+let _turndownService = null;
+
+function _ensureTurndown() {
+  if (!_turndownService && window.TurndownService) {
+    _turndownService = new window.TurndownService({ headingStyle: 'atx', bulletListMarker: '-' });
+  }
+}
+
 // stub — replaced in Task 4 with full TipTap toolbar implementation
 function editorToolbarCmd(cmd) {}
+function _updateToolbarState() {}
+function _cleanWordHtml(html) { return html; }
 
 function renderEditor() {
   const card = getActiveCard();
@@ -14,6 +26,7 @@ function renderEditor() {
   }
   empty.style.display = "none";
   content.style.display = "";
+  _destroyTipTapInstances();
 
   const slotCount = LAYOUT_SLOTS[card.layout] ?? 3;
   const slotRow = (i, hidden) => {
@@ -83,7 +96,10 @@ function renderEditor() {
               <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)" style="${card.hideSectionLabels ? 'background:#f1f2ef;color:#9aa19e' : ''}">
               <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
             </div>
-            <textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>
+            ${window.tiptapReady === true
+              ? `<div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}"></div>`
+              : `<textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>`
+            }
           </div>`;
     })
     .join("");
@@ -229,10 +245,79 @@ function renderEditor() {
       </div>
     </div>`;
   attachSlotDragHandlers();
+  if (window.tiptapReady === true) _initTipTapInstances(card);
   // apply initial paste-block visibility from config
   const pba = document.getElementById("paste-block-area");
   if (pba) pba.style.display = (window.FC_CONFIG || {}).pasteBlock ? "" : "none";
 }
+
+function _destroyTipTapInstances() {
+  Object.values(_tiptapInstances).forEach(ed => { try { ed.destroy(); } catch (e) {} });
+  _tiptapInstances = {};
+  _activeEditor = null;
+}
+
+function _initTipTapInstances(card) {
+  _ensureTurndown();
+  const isImgPairedLayout = ["2img-2txt", "3img-3txt", "8img-8txt"].includes(card.layout);
+  if (isImgPairedLayout) return;
+
+  card.sections.forEach((s) => {
+    const el = document.getElementById('tiptap-' + s.id);
+    if (!el || _tiptapInstances[s.id]) return;
+
+    const editor = new window.TipTapEditor({
+      element: el,
+      extensions: [window.TipTapStarterKit],
+      content: mdParse(s.content || ''),
+      editorProps: {
+        attributes: {
+          'data-placeholder': t('editor.contentPh') || 'Write something...',
+        },
+      },
+    });
+
+    editor.on('update', () => {
+      if (!_turndownService) return;
+      s.content = _turndownService.turndown(editor.getHTML());
+      setDirty();
+    });
+
+    editor.on('focus', () => {
+      _activeEditor = editor;
+      const fmt = document.getElementById('editor-toolbar-format');
+      if (fmt) fmt.classList.add('active');
+    });
+
+    editor.on('blur', () => {
+      pushUndo();
+      setTimeout(() => {
+        const anyFocused = Object.values(_tiptapInstances).some(ed => ed.isFocused);
+        if (!anyFocused) {
+          _activeEditor = null;
+          const fmt = document.getElementById('editor-toolbar-format');
+          if (fmt) fmt.classList.remove('active');
+        }
+      }, 150);
+    });
+
+    editor.on('selectionUpdate', () => _updateToolbarState());
+    editor.on('transaction', () => _updateToolbarState());
+
+    el.addEventListener('paste', (e) => {
+      const html = e.clipboardData?.getData('text/html');
+      if (!html || !html.includes('mso-')) return;
+      e.preventDefault();
+      editor.commands.insertContent(_cleanWordHtml(html));
+    });
+
+    _tiptapInstances[s.id] = editor;
+  });
+}
+
+document.addEventListener('tiptap-ready', () => {
+  if (getActiveCard()) renderEditor();
+});
 
 function layoutIcon(layout, selected) {
   const icons = {
