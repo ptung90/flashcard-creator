@@ -211,7 +211,9 @@ async function newProject() {
       if (!confirm("Start a new project? Current project has been saved.")) return;
     } else if (!confirm("Start a new project? Unsaved changes will be lost.")) return;
   }
-  state.cards = [];
+  state.cards   = [];
+  state.schema  = null;
+  state.records = [];
   state.projectName = "Untitled";
   activeCardId = null;
   currentFileName = null;
