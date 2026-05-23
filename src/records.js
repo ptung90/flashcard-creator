@@ -248,6 +248,7 @@ function _fieldVal(record, fieldId) {
 }
 
 function generateRecord(record, { skipDispatch = false } = {}) {
+  if (!state.schema) return;
   const singleTemplates = state.schema.cardTemplates.filter(t => t.templateType === 'single');
   for (const template of singleTemplates) {
     let card = state.cards.find(c => c.recordId === record.id && c.templateId === template.id);
@@ -271,7 +272,6 @@ function generateRecord(record, { skipDispatch = false } = {}) {
       });
   }
   record.fieldsHash = _hashStr(JSON.stringify(record.fields));
-  setDirty();
   if (!skipDispatch) dispatch('CARD_LIST_CHANGED');
 }
 
@@ -283,6 +283,7 @@ function generateAll() {
     generateRecord(record, { skipDispatch: true });
     count++;
   }
+  setDirty();
   dispatch('CARD_LIST_CHANGED');
   renderRecordsPanel();
   const msg = 'Generated ' + count + ' card' + (count !== 1 ? 's' : '');
