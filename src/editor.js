@@ -319,6 +319,16 @@ function _initTipTapInstances(card) {
         attributes: {
           'data-placeholder': t('editor.contentPh') || 'Write something...',
         },
+        handleKeyDown(view, event) {
+          if (event.key === 'Tab') {
+            const { $from } = view.state.selection;
+            if ($from.parent.type.name === 'listItem') return false;
+            event.preventDefault();
+            view.dispatch(view.state.tr.insertText('    '));
+            return true;
+          }
+          return false;
+        },
       },
     });
 
