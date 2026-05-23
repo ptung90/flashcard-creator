@@ -110,7 +110,6 @@ function renderEditor() {
   const hiddenImgs = card.images.filter((im) => im.slot >= slotCount);
   const hiddenSlots = hiddenImgs.map((im) => slotRow(im.slot, true)).join("");
   const slots = activeSlots + hiddenSlots;
-  const isCompoundTextLayout = ["2img-2txt", "2img-4txt", "3img-3txt", "txtgrid", "8img-8txt"].includes(card.layout);
   const isImgPairedLayout = ["2img-2txt", "3img-3txt", "8img-8txt"].includes(card.layout);
   const sectionRows = card.layout === "fulltext" ? 6 : 4;
 
@@ -251,7 +250,7 @@ function renderEditor() {
           <button class="editor-toolbar-btn" data-cmd="orderedList" onclick="editorToolbarCmd('orderedList')" title="Numbered list">1.</button>
         </div>
       </div>
-      <div class="sections-list${isCompoundTextLayout && card.layout !== 'txtgrid' ? ' sections-list--2col' : ''}"
+      <div class="sections-list"
         ${card.layout === 'txtgrid' ? `style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:8px;align-items:start"` : ''}
         id="sections-list">
         ${sections || `<div style="color:#555;font-size:12px;padding:8px 0">${t('editor.noSections')}</div>`}
