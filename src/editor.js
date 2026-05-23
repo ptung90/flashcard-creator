@@ -149,9 +149,6 @@ function renderEditor() {
       <input class="title-input" type="text" value="${esc(card.title)}" placeholder="${t('editor.titlePh')}"
         onfocus="pushUndo()" oninput="updateCardProp('title',this.value)"
         style="${card.hideTitle ? 'background:#f1f2ef;color:#9aa19e' : ''}">
-      <div style="margin-top:6px">
-        ${cardFontControls("titleFont")}
-      </div>
     </div>
 
     <div class="editor-section">
@@ -168,8 +165,28 @@ function renderEditor() {
           </label>
         </div>
       </div>
-      <div style="margin-bottom:8px;margin-top:6px">
-        ${cardFontControls("contentFont")}
+      <div id="editor-toolbar" class="editor-toolbar${isImgPairedLayout ? ' editor-toolbar--hidden' : ''}">
+        <div class="editor-toolbar-font">
+          <label class="editor-toolbar-label">Title</label>
+          <input type="number" class="editor-toolbar-size" min="6" max="72" step="1"
+            value="${(card.titleFont || {}).size || ''}"
+            placeholder="${state.settings.titleFont?.size || state.settings.font?.size || 16}"
+            oninput="setCardFontProp('titleFont','size',this.value===''?null:+this.value)">
+          <label class="editor-toolbar-label">Content</label>
+          <input type="number" class="editor-toolbar-size" min="6" max="72" step="1"
+            value="${(card.contentFont || {}).size || ''}"
+            placeholder="${state.settings.contentFont?.size || state.settings.font?.size || 14}"
+            oninput="setCardFontProp('contentFont','size',this.value===''?null:+this.value)">
+        </div>
+        <div class="editor-toolbar-divider"></div>
+        <div class="editor-toolbar-format" id="editor-toolbar-format">
+          <button class="editor-toolbar-btn" data-cmd="bold" onclick="editorToolbarCmd('bold')" title="Bold (Ctrl+B)"><strong>B</strong></button>
+          <button class="editor-toolbar-btn" data-cmd="italic" onclick="editorToolbarCmd('italic')" title="Italic (Ctrl+I)"><em>I</em></button>
+          <button class="editor-toolbar-btn" data-cmd="h1" onclick="editorToolbarCmd('h1')" title="Heading 1">H1</button>
+          <button class="editor-toolbar-btn" data-cmd="h2" onclick="editorToolbarCmd('h2')" title="Heading 2">H2</button>
+          <button class="editor-toolbar-btn" data-cmd="bulletList" onclick="editorToolbarCmd('bulletList')" title="Bullet list">•</button>
+          <button class="editor-toolbar-btn" data-cmd="orderedList" onclick="editorToolbarCmd('orderedList')" title="Numbered list">1.</button>
+        </div>
       </div>
       <div class="sections-list${isCompoundTextLayout && card.layout !== 'txtgrid' ? ' sections-list--2col' : ''}"
         ${card.layout === 'txtgrid' ? `style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:8px;align-items:start"` : ''}
