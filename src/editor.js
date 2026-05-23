@@ -278,9 +278,12 @@ function _initTipTapInstances(card) {
     });
 
     editor.on('update', () => {
-      if (!_turndownService) return;
+      if (!_turndownService) {
+        console.warn('[TipTap] turndown not ready — content change dropped');
+        return;
+      }
       s.content = _turndownService.turndown(editor.getHTML());
-      setDirty();
+      dispatch('CARD_CONTENT_CHANGED');
     });
 
     editor.on('focus', () => {
