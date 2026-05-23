@@ -240,8 +240,62 @@ function _clearRecordImage(recordId, key) {
   _setRecordField(recordId, key, '');
 }
 
+// ── Record Generation ────────────────────────────────────────────────────────────
+
+function _fieldVal(record, fieldId) {
+  const f = state.schema.fields.find(x => x.id === fieldId);
+  return f ? (record.fields[f.key] ?? '') : '';
+}
+
+function generateRecord(record, { skipDispatch = false } = {}) {
+  const singleTemplates = state.schema.cardTemplates.filter(t => t.templateType === 'single');
+  for (const template of singleTemplates) {
+    let card = state.cards.find(c => c.recordId === record.id && c.templateId === template.id);
+    if (!card) {
+      card = newCard();
+      card.recordId   = record.id;
+      card.templateId = template.id;
+      state.cards.push(card);
+    }
+    card.layout      = template.layout;
+    card.orientation = 'portrait';
+    card.paperSize   = template.size || null;
+    card.images      = (template.mapping.imageSlots || [])
+      .map((fid, slot) => ({ slot, url: fid ? _fieldVal(record, fid) : '' }))
+      .filter(img => img.url);
+    card.sections    = (template.mapping.sections || [])
+      .filter(Boolean)
+      .map(fid => {
+        const f = state.schema.fields.find(x => x.id === fid);
+        return { id: uid(), label: f?.label ?? '', content: _fieldVal(record, fid) };
+      });
+  }
+  record.fieldsHash = _hashStr(JSON.stringify(record.fields));
+  setDirty();
+  if (!skipDispatch) dispatch('CARD_LIST_CHANGED');
+}
+
+function generateAll() {
+  if (!state.schema) return;
+  let count = 0;
+  for (const record of state.records) {
+    if (getRecordStatus(record) === 'synced') continue;
+    generateRecord(record, { skipDispatch: true });
+    count++;
+  }
+  dispatch('CARD_LIST_CHANGED');
+  renderRecordsPanel();
+  const msg = 'Generated ' + count + ' card' + (count !== 1 ? 's' : '');
+  if (typeof showToast === 'function') showToast(msg);
+  else {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:8px 16px;border-radius:6px;z-index:9999;font-size:13px;';
+    document.body.appendChild(t); setTimeout(() => t.remove(), 2500);
+  }
+}
+
 // Stubs for later tasks
-function generateAll()        { /* implemented in Task 9 */ }
 function openPackDialog(id)   { /* implemented in Task 10 */ }
 
 // ── Schema Editor ─────────────────────────────────────────────────────────────
