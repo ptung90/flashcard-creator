@@ -106,12 +106,12 @@
 .fc-section__content {
   font-size: 0.75em;
   line-height: 1.4;
-  display: inline;
+  display: block;
 }
 
 .fc-section__content>p {
-  display: inline;
-  margin: 0;
+  display: block;
+  margin: 0 0 2px;
 }
 
 .fc-section__content>ul,
