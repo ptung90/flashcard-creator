@@ -255,9 +255,9 @@ function renderEditor() {
           <button class="editor-toolbar-btn" data-cmd="bulletList" onclick="editorToolbarCmd('bulletList')" title="Bullet list">•</button>
           <button class="editor-toolbar-btn" data-cmd="orderedList" onclick="editorToolbarCmd('orderedList')" title="Numbered list">1.</button>
           <div class="editor-toolbar-divider"></div>
-          <button class="editor-toolbar-btn" data-cmd="alignLeft" onclick="editorToolbarCmd('alignLeft')" title="Align left">≡L</button>
-          <button class="editor-toolbar-btn" data-cmd="alignCenter" onclick="editorToolbarCmd('alignCenter')" title="Align center">≡C</button>
-          <button class="editor-toolbar-btn" data-cmd="alignRight" onclick="editorToolbarCmd('alignRight')" title="Align right">≡R</button>
+          <button class="editor-toolbar-btn" data-cmd="alignLeft" onclick="editorToolbarCmd('alignLeft')" title="Align left"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-left"/></svg></button>
+          <button class="editor-toolbar-btn" data-cmd="alignCenter" onclick="editorToolbarCmd('alignCenter')" title="Align center"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-center"/></svg></button>
+          <button class="editor-toolbar-btn" data-cmd="alignRight" onclick="editorToolbarCmd('alignRight')" title="Align right"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-right"/></svg></button>
         </div>
       </div>
       <div class="sections-list"
