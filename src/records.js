@@ -297,7 +297,85 @@ function generateAll() {
 }
 
 // Stubs for later tasks
-function openPackDialog(id)   { /* implemented in Task 10 */ }
+let _packTemplateId = null;
+
+function openPackDialog(templateId) {
+  _packTemplateId = templateId;
+  const template  = state.schema?.cardTemplates.find(t => t.id === templateId);
+  if (!template) return;
+
+  document.getElementById('pack-dialog-layout').textContent = template.layout;
+
+  const textFields  = state.schema.fields.filter(f => f.type !== 'image');
+  const checkboxes  = state.records.map(r => {
+    const label = textFields.slice(0, 2).map(f => r.fields[f.key] || '').filter(Boolean).join(' — ') || r.id;
+    return `<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;">
+      <input type="checkbox" checked value="${r.id}">
+      <span style="font-size:13px;">${esc(label)}</span>
+    </label>`;
+  }).join('');
+
+  document.getElementById('pack-dialog-records').innerHTML =
+    checkboxes || '<em style="color:#999;font-size:13px;">No records to pack</em>';
+
+  const menu = document.getElementById('pack-menu');
+  if (menu) menu.style.display = 'none';
+
+  document.getElementById('pack-dialog').showModal();
+}
+
+function confirmPack() {
+  const template = state.schema?.cardTemplates.find(t => t.id === _packTemplateId);
+  if (!template) return;
+
+  const checkedIds = [...document.querySelectorAll('#pack-dialog-records input[type=checkbox]:checked')]
+    .map(cb => cb.value);
+  const selectedRecords = state.records.filter(r => checkedIds.includes(r.id));
+
+  packRecords(template, selectedRecords);
+  dispatch('CARD_LIST_CHANGED');
+  document.getElementById('pack-dialog').close();
+
+  const used = Math.min(selectedRecords.length, LAYOUT_SLOTS[template.layout] ?? 0);
+  const msg  = 'Packed ' + used + ' record' + (used !== 1 ? 's' : '') + ' into ' + template.layout;
+  if (typeof showToast === 'function') showToast(msg);
+  else {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:8px 16px;border-radius:6px;z-index:9999;font-size:13px;';
+    document.body.appendChild(t); setTimeout(() => t.remove(), 2500);
+  }
+}
+
+function packRecords(template, selectedRecords) {
+  const layout    = template.layout;
+  const slotCount = LAYOUT_SLOTS[layout] ?? 0;
+  const records   = selectedRecords.slice(0, slotCount);
+
+  const card           = newCard();
+  card.layout          = layout;
+  card.orientation     = 'portrait';
+  card.packedRecordIds = records.map(r => r.id);
+  card.title           = layout + ' · ' + new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+
+  card.images = records.map((rec, slot) => ({
+    slot,
+    url: template.mapping.imageSlot ? _fieldVal(rec, template.mapping.imageSlot) : ''
+  })).filter(img => img.url);
+
+  card.sections = records.map(rec => ({
+    id:      uid(),
+    label:   '',
+    content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot) : ''
+  }));
+
+  while (card.sections.length < slotCount) {
+    card.sections.push({ id: uid(), label: '', content: '' });
+  }
+
+  state.cards.push(card);
+  setDirty();
+}
 
 // ── Schema Editor ─────────────────────────────────────────────────────────────
 let _editingSchema = null;
