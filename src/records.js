@@ -124,8 +124,123 @@ document.addEventListener('click', () => {
   if (m) m.style.display = 'none';
 });
 
+function openRecordDetail(id) {
+  const record = state.records.find(r => r.id === id);
+  if (!record) return;
+  const detail = document.getElementById('record-detail');
+  if (!detail) return;
+
+  const fields          = state.schema.fields;
+  const singleTemplates = state.schema.cardTemplates.filter(t => t.templateType === 'single');
+
+  const fieldInputs = fields.map(f => {
+    const val = record.fields[f.key] ?? '';
+    let input;
+    if (f.type === 'image') {
+      input = `<div style="margin:4px 0;">
+        ${val ? `<img src="${val}" style="max-width:100%;max-height:80px;display:block;
+                      margin-bottom:4px;border-radius:4px;object-fit:contain;">` : ''}
+        <button onclick="_pickRecordImage('${record.id}','${f.key}')">Choose Image</button>
+        ${val ? `<button onclick="_clearRecordImage('${record.id}','${f.key}')">✕ Clear</button>` : ''}
+      </div>`;
+    } else if (f.type === 'text-long') {
+      input = `<textarea rows="3" style="width:100%;box-sizing:border-box;resize:vertical;font-size:13px;"
+        onchange="_setRecordField('${record.id}','${f.key}',this.value)"
+        >${esc(val)}</textarea>`;
+    } else {
+      input = `<input type="text" style="width:100%;box-sizing:border-box;font-size:13px;"
+        value="${esc(val)}" onchange="_setRecordField('${record.id}','${f.key}',this.value)">`;
+    }
+    return `<div style="margin-bottom:10px;">
+      <label style="display:block;font-size:11px;color:#666;margin-bottom:2px;font-weight:600;">
+        ${esc(f.label)}
+      </label>
+      ${input}
+    </div>`;
+  }).join('');
+
+  const previews = singleTemplates.map(t => {
+    const px      = getPaperPx(t.size || 'A6', 'portrait');
+    const scale   = 130 / px.w;
+    const tw      = Math.round(px.w * scale);
+    const th      = Math.round(px.h * scale);
+    const tempCard = {
+      ...newCard(),
+      layout:    t.layout,
+      paperSize: t.size,
+      images: (t.mapping.imageSlots || []).map((fid, slot) => {
+        const fld = fields.find(x => x.id === fid);
+        return { slot, url: fld ? (record.fields[fld.key] ?? '') : '' };
+      }).filter(img => img.url),
+      sections: (t.mapping.sections || []).filter(Boolean).map(fid => {
+        const fld = fields.find(x => x.id === fid);
+        return { id: uid(), label: fld?.label ?? '', content: fld ? (record.fields[fld.key] ?? '') : '' };
+      })
+    };
+    return `<div style="display:inline-block;margin-right:8px;vertical-align:top;margin-bottom:8px;">
+      <div style="font-size:10px;color:#888;margin-bottom:2px;">${esc(t.size || '')} ${esc(t.layout)}</div>
+      <div style="width:${tw}px;height:${th}px;overflow:hidden;position:relative;
+                  border:1px solid #ddd;border-radius:2px;flex-shrink:0;">
+        <div style="transform:scale(${scale.toFixed(3)});transform-origin:top left;
+                    width:${px.w}px;height:${px.h}px;position:absolute;top:0;left:0;">
+          ${buildCardHTML(tempCard, state.settings, false, px)}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const previewSection = singleTemplates.length
+    ? `<div style="margin-top:14px;border-top:1px solid #f0f0f0;padding-top:10px;">
+        <div style="font-size:11px;color:#666;font-weight:600;margin-bottom:6px;">Preview</div>
+        ${previews}
+       </div>`
+    : '';
+
+  detail.style.display = 'block';
+  detail.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <strong style="font-size:14px;">Edit Record</strong>
+      <div style="display:flex;gap:6px;">
+        <button onclick="generateRecord(state.records.find(r=>r.id==='${record.id}'));
+                         renderRecordsPanel();openRecordDetail('${record.id}')">Generate</button>
+        <button onclick="document.getElementById('record-detail').style.display='none'">✕</button>
+      </div>
+    </div>
+    ${fieldInputs}
+    ${previewSection}
+  `;
+}
+
+function _setRecordField(recordId, key, value) {
+  const record = state.records.find(r => r.id === recordId);
+  if (!record) return;
+  record.fields[key] = value;
+  setDirty();
+  openRecordDetail(recordId);  // refresh preview strip
+}
+
+function _pickRecordImage(recordId, key) {
+  const input = document.createElement('input');
+  input.type   = 'file';
+  input.accept = 'image/*';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const compressed = await _compressImage(ev.target.result);
+      _setRecordField(recordId, key, compressed);
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function _clearRecordImage(recordId, key) {
+  _setRecordField(recordId, key, '');
+}
+
 // Stubs for later tasks
-function openRecordDetail(id) { /* implemented in Task 7 */ }
 function generateAll()        { /* implemented in Task 9 */ }
 function openPackDialog(id)   { /* implemented in Task 10 */ }
 
