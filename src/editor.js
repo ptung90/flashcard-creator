@@ -1,4 +1,8 @@
 // ── Editor ─────────────────────────────────────────────────────────
+
+// stub — replaced in Task 4 with full TipTap toolbar implementation
+function editorToolbarCmd(cmd) {}
+
 function renderEditor() {
   const card = getActiveCard();
   const empty = document.getElementById("editor-empty");
