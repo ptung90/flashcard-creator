@@ -1482,6 +1482,22 @@
       </div>
     </div>
 
+    <!-- Schema Editor Modal -->
+    <dialog id="schema-editor-modal" style="width:620px;max-width:95vw;max-height:90vh;
+            overflow:auto;padding:0;border-radius:8px;border:1px solid #ddd;">
+      <div style="padding:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <strong style="font-size:15px;">Schema Editor</strong>
+          <button onclick="document.getElementById('schema-editor-modal').close()">✕</button>
+        </div>
+        <div id="schema-editor-content"></div>
+        <div style="margin-top:16px;display:flex;gap:8px;border-top:1px solid #f0f0f0;padding-top:12px;">
+          <button onclick="saveSchema()">Save</button>
+          <button onclick="document.getElementById('schema-editor-modal').close()">Cancel</button>
+        </div>
+      </div>
+    </dialog>
+
     <div id="fc-toast"></div>
     <!-- BUILD:JS -->
   </body>

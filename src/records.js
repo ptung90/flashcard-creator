@@ -244,4 +244,203 @@ function _clearRecordImage(recordId, key) {
 function generateAll()        { /* implemented in Task 9 */ }
 function openPackDialog(id)   { /* implemented in Task 10 */ }
 
-function openSchemaEditor() { /* implemented in Task 8 */ }
+// ── Schema Editor ─────────────────────────────────────────────────────────────
+let _editingSchema = null;
+
+function openSchemaEditor() {
+  _editingSchema = state.schema
+    ? JSON.parse(JSON.stringify(state.schema))
+    : { fields: [], cardTemplates: [] };
+  _renderSchemaEditor();
+  document.getElementById('schema-editor-modal').showModal();
+}
+
+const _COMPOUND_LAYOUTS = ['2img-2txt', '3img-3txt', '8img-8txt'];
+const _SINGLE_SIZES     = ['A4', 'A5', 'A6', 'Letter'];
+
+function _renderSchemaEditor() {
+  const s           = _editingSchema;
+  const imgFields   = s.fields.filter(f => f.type === 'image');
+  const txtFields   = s.fields.filter(f => f.type !== 'image');
+  const singleLayouts = LAYOUTS.filter(l => !_COMPOUND_LAYOUTS.includes(l) && l !== 'txtgrid');
+
+  const fieldsHtml = s.fields.map((f, i) => `
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+      <input type="text" placeholder="Label" value="${esc(f.label)}" style="flex:1;min-width:80px;"
+        oninput="_schemaFieldChange(${i},'label',this.value)">
+      <input type="text" placeholder="key" value="${esc(f.key)}" style="width:90px;"
+        oninput="_schemaFieldChange(${i},'key',this.value)">
+      <select onchange="_schemaFieldChange(${i},'type',this.value)" style="width:90px;">
+        ${['image','text','text-long'].map(t =>
+          `<option value="${t}" ${f.type===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+      <button onclick="_removeSchemaField(${i})">✕</button>
+    </div>`).join('');
+
+  const templatesHtml = s.cardTemplates.map((t, i) => {
+    const isCompound = t.templateType === 'compound';
+    const typeToggle = `
+      <select onchange="_schemaTemplateChange(${i},'templateType',this.value)" style="width:80px;">
+        <option value="single"   ${!isCompound?'selected':''}>Single</option>
+        <option value="compound" ${isCompound?'selected':''}>Compound</option>
+      </select>`;
+
+    if (isCompound) {
+      const imgOpts = imgFields.map(f =>
+        `<option value="${f.id}" ${t.mapping.imageSlot===f.id?'selected':''}>${esc(f.label)}</option>`).join('');
+      const txtOpts = txtFields.map(f =>
+        `<option value="${f.id}" ${t.mapping.textSlot===f.id?'selected':''}>${esc(f.label)}</option>`).join('');
+      return `<div style="border:1px solid #e5e7eb;border-radius:6px;padding:10px;margin-bottom:8px;">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+          ${typeToggle}
+          <select onchange="_schemaTemplateChange(${i},'layout',this.value)">
+            ${_COMPOUND_LAYOUTS.map(l =>
+              `<option value="${l}" ${t.layout===l?'selected':''}>${l}</option>`).join('')}
+          </select>
+          <button onclick="_removeSchemaTemplate(${i})">✕</button>
+        </div>
+        <div style="display:flex;gap:12px;font-size:12px;flex-wrap:wrap;">
+          <label>Image field:
+            <select onchange="_schemaTemplateChange(${i},'imageSlot',this.value)">
+              <option value="">—</option>${imgOpts}
+            </select>
+          </label>
+          <label>Text field:
+            <select onchange="_schemaTemplateChange(${i},'textSlot',this.value)">
+              <option value="">—</option>${txtOpts}
+            </select>
+          </label>
+        </div>
+      </div>`;
+    } else {
+      const numImgSlots = LAYOUT_SLOTS[t.layout] ?? 1;
+      const imgSlots = [...(t.mapping.imageSlots || [])];
+      while (imgSlots.length < numImgSlots) imgSlots.push('');
+      const imgSlotSelects = imgSlots.map((fid, si) =>
+        `<select onchange="_schemaSingleImageSlot(${i},${si},this.value)">
+          <option value="">—</option>
+          ${imgFields.map(f =>
+            `<option value="${f.id}" ${fid===f.id?'selected':''}>${esc(f.label)}</option>`).join('')}
+        </select>`).join(' ');
+      const secSelects = (t.mapping.sections || []).map((fid, si) =>
+        `<select onchange="_schemaSingleSection(${i},${si},this.value)">
+          <option value="">—</option>
+          ${txtFields.map(f =>
+            `<option value="${f.id}" ${fid===f.id?'selected':''}>${esc(f.label)}</option>`).join('')}
+        </select>`).join(' ');
+      return `<div style="border:1px solid #e5e7eb;border-radius:6px;padding:10px;margin-bottom:8px;">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+          ${typeToggle}
+          <select onchange="_schemaTemplateChange(${i},'layout',this.value)">
+            ${singleLayouts.map(l =>
+              `<option value="${l}" ${t.layout===l?'selected':''}>${l}</option>`).join('')}
+          </select>
+          <select onchange="_schemaTemplateChange(${i},'size',this.value)" style="width:60px;">
+            ${_SINGLE_SIZES.map(sz =>
+              `<option value="${sz}" ${(t.size||'A6')===sz?'selected':''}>${sz}</option>`).join('')}
+          </select>
+          <button onclick="_removeSchemaTemplate(${i})">✕</button>
+        </div>
+        <div style="font-size:12px;">
+          <div>Image slots: ${imgSlotSelects}</div>
+          <div style="margin-top:4px;">Sections: ${secSelects}
+            <button style="font-size:11px;margin-left:4px;"
+              onclick="_addSchemaSection(${i})">+ section</button>
+          </div>
+        </div>
+      </div>`;
+    }
+  }).join('');
+
+  document.getElementById('schema-editor-content').innerHTML = `
+    <div>
+      <div style="font-weight:600;margin-bottom:8px;">Fields</div>
+      ${fieldsHtml}
+      <button onclick="_addSchemaField()">+ Add Field</button>
+    </div>
+    <div style="margin-top:16px;">
+      <div style="font-weight:600;margin-bottom:8px;">Card Templates</div>
+      ${templatesHtml}
+      <button onclick="_addSchemaTemplate()">+ Add Template</button>
+    </div>`;
+}
+
+function _slugify(s) {
+  return s.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+}
+
+function _addSchemaField() {
+  _editingSchema.fields.push({ id: 'f' + uid(), key: '', type: 'text', label: '' });
+  _renderSchemaEditor();
+}
+
+function _removeSchemaField(i) {
+  _editingSchema.fields.splice(i, 1);
+  _renderSchemaEditor();
+}
+
+function _schemaFieldChange(i, prop, value) {
+  _editingSchema.fields[i][prop] = value;
+  if (prop === 'label') {
+    _editingSchema.fields[i].key = _slugify(value);
+  }
+  if (prop !== 'key') _renderSchemaEditor();
+}
+
+function _addSchemaTemplate() {
+  _editingSchema.cardTemplates.push({
+    id: 't' + uid(), templateType: 'single',
+    size: 'A6', layout: 'fulltext',
+    mapping: { imageSlots: [], sections: [''] }
+  });
+  _renderSchemaEditor();
+}
+
+function _removeSchemaTemplate(i) {
+  _editingSchema.cardTemplates.splice(i, 1);
+  _renderSchemaEditor();
+}
+
+function _schemaTemplateChange(i, prop, value) {
+  const t = _editingSchema.cardTemplates[i];
+  if (prop === 'templateType') {
+    t.templateType = value;
+    if (value === 'compound') {
+      t.layout  = '8img-8txt';
+      t.mapping = { imageSlot: '', textSlot: '' };
+      delete t.size;
+    } else {
+      t.layout  = 'fulltext';
+      t.size    = 'A6';
+      t.mapping = { imageSlots: [], sections: [''] };
+    }
+  } else if (prop === 'imageSlot' || prop === 'textSlot') {
+    t.mapping[prop] = value;
+  } else if (prop === 'layout') {
+    t.layout = value;
+  } else if (prop === 'size') {
+    t.size = value;
+  }
+  _renderSchemaEditor();
+}
+
+function _schemaSingleImageSlot(ti, si, value) {
+  _editingSchema.cardTemplates[ti].mapping.imageSlots[si] = value;
+}
+
+function _schemaSingleSection(ti, si, value) {
+  _editingSchema.cardTemplates[ti].mapping.sections[si] = value;
+}
+
+function _addSchemaSection(ti) {
+  _editingSchema.cardTemplates[ti].mapping.sections.push('');
+  _renderSchemaEditor();
+}
+
+function saveSchema() {
+  state.schema = _editingSchema;
+  if (!Array.isArray(state.records)) state.records = [];
+  setDirty();
+  document.getElementById('schema-editor-modal').close();
+  renderRecordsPanel();
+}
