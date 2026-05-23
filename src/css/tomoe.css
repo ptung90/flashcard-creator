@@ -657,10 +657,8 @@ input[type="range"] { accent-color: var(--mint-600); }
 }
 
 /* Dialogs */
-#schema-editor-modal {
-  width: 620px; max-width: 95vw; max-height: 90vh;
-  display: flex; flex-direction: column;
-}
+#schema-editor-modal { width: 620px; max-width: 95vw; max-height: 90vh; }
+#schema-editor-modal[open] { display: flex; flex-direction: column; }
 #pack-dialog { width: 400px; max-width: 95vw; }
 #schema-editor-modal,
 #pack-dialog {
