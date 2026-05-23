@@ -12,13 +12,14 @@ function _internImg(dataUrl) {
 }
 
 function _encodeState() {
-  const snap = JSON.parse(JSON.stringify(state));
+  const snap = {
+    cards:       JSON.parse(JSON.stringify(state.cards)),
+    settings:    JSON.parse(JSON.stringify(state.settings)),
+    projectName: state.projectName
+  };
   for (const card of snap.cards) {
     for (const img of (card.images || [])) {
-      if (img.url && img.url.startsWith('data:')) {
-        img._k = _internImg(img.url);
-        delete img.url;
-      }
+      if (img.url?.startsWith('data:')) { img._k = _internImg(img.url); delete img.url; }
     }
   }
   return JSON.stringify(snap);
@@ -51,7 +52,9 @@ function pushUndo() {
 }
 
 function _restoreState(snap) {
-  Object.assign(state, snap);
+  state.cards       = snap.cards;
+  state.settings    = snap.settings;
+  state.projectName = snap.projectName;
   if (!state.cards.find(c => c.id === activeCardId))
     activeCardId = state.cards.length ? state.cards[state.cards.length - 1].id : null;
 }
