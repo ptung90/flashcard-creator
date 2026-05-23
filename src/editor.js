@@ -27,7 +27,8 @@ function _cleanWordHtml(html) {
 
 function _updateToolbarState() {
   if (!_activeEditor) return;
-  const btns = document.querySelectorAll('.editor-toolbar-btn[data-cmd]');
+  const fmt = document.getElementById('editor-toolbar-format');
+  const btns = fmt ? fmt.querySelectorAll('.editor-toolbar-btn[data-cmd]') : [];
   btns.forEach(btn => {
     const cmd = btn.dataset.cmd;
     let active = false;
@@ -43,13 +44,17 @@ function _updateToolbarState() {
 
 function editorToolbarCmd(cmd) {
   if (!_activeEditor) return;
-  switch (cmd) {
-    case 'bold':        _activeEditor.chain().focus().toggleBold().run(); break;
-    case 'italic':      _activeEditor.chain().focus().toggleItalic().run(); break;
-    case 'h1':          _activeEditor.chain().focus().toggleHeading({ level: 1 }).run(); break;
-    case 'h2':          _activeEditor.chain().focus().toggleHeading({ level: 2 }).run(); break;
-    case 'bulletList':  _activeEditor.chain().focus().toggleBulletList().run(); break;
-    case 'orderedList': _activeEditor.chain().focus().toggleOrderedList().run(); break;
+  try {
+    switch (cmd) {
+      case 'bold':        _activeEditor.chain().focus().toggleBold().run(); break;
+      case 'italic':      _activeEditor.chain().focus().toggleItalic().run(); break;
+      case 'h1':          _activeEditor.chain().focus().toggleHeading({ level: 1 }).run(); break;
+      case 'h2':          _activeEditor.chain().focus().toggleHeading({ level: 2 }).run(); break;
+      case 'bulletList':  _activeEditor.chain().focus().toggleBulletList().run(); break;
+      case 'orderedList': _activeEditor.chain().focus().toggleOrderedList().run(); break;
+    }
+  } catch (e) {
+    console.warn('[editorToolbarCmd] editor no longer valid', e);
   }
   _updateToolbarState();
 }
