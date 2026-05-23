@@ -33,18 +33,18 @@ function _updateToolbarState() {
   btns.forEach(btn => {
     const cmd = btn.dataset.cmd;
     let active = false;
-    if (cmd === 'bold')        active = _activeEditor.isActive('bold');
+    if (cmd === 'bold') active = _activeEditor.isActive('bold');
     else if (cmd === 'italic') active = _activeEditor.isActive('italic');
-    else if (cmd === 'h1')     active = _activeEditor.isActive('heading', { level: 1 });
-    else if (cmd === 'h2')     active = _activeEditor.isActive('heading', { level: 2 });
-    else if (cmd === 'underline')    active = _activeEditor.isActive('underline');
-    else if (cmd === 'bulletList')   active = _activeEditor.isActive('bulletList');
-    else if (cmd === 'orderedList')  active = _activeEditor.isActive('orderedList');
-    else if (cmd === 'alignLeft' || cmd === 'alignCenter' || cmd === 'alignRight') {
+    else if (cmd === 'h1') active = _activeEditor.isActive('heading', { level: 1 });
+    else if (cmd === 'h2') active = _activeEditor.isActive('heading', { level: 2 });
+    else if (cmd === 'underline') active = _activeEditor.isActive('underline');
+    else if (cmd === 'bulletList') active = _activeEditor.isActive('bulletList');
+    else if (cmd === 'orderedList') active = _activeEditor.isActive('orderedList');
+    else if (cmd === 'alignLeft' || cmd === 'alignCenter' || cmd === 'alignRight' || cmd === 'alignClear') {
       const card = getActiveCard();
       const s = _activeSectionId ? card?.sections.find(s => s.id === _activeSectionId) : null;
-      const align = s?.textAlign || 'left';
-      active = (cmd === 'align' + align.charAt(0).toUpperCase() + align.slice(1));
+      if (cmd === 'alignClear') { active = !s?.textAlign; }
+      else { const align = s?.textAlign || ''; active = !!align && cmd === 'align' + align.charAt(0).toUpperCase() + align.slice(1); }
     }
     btn.classList.toggle('active', active);
   });
@@ -54,16 +54,17 @@ function editorToolbarCmd(cmd) {
   if (!_activeEditor) return;
   try {
     switch (cmd) {
-      case 'bold':        _activeEditor.chain().focus().toggleBold().run(); break;
-      case 'italic':      _activeEditor.chain().focus().toggleItalic().run(); break;
-      case 'underline':   _activeEditor.chain().focus().toggleUnderline().run(); break;
-      case 'h1':          _activeEditor.chain().focus().toggleHeading({ level: 1 }).run(); break;
-      case 'h2':          _activeEditor.chain().focus().toggleHeading({ level: 2 }).run(); break;
-      case 'bulletList':  _activeEditor.chain().focus().toggleBulletList().run(); break;
+      case 'bold': _activeEditor.chain().focus().toggleBold().run(); break;
+      case 'italic': _activeEditor.chain().focus().toggleItalic().run(); break;
+      case 'underline': _activeEditor.chain().focus().toggleUnderline().run(); break;
+      case 'h1': _activeEditor.chain().focus().toggleHeading({ level: 1 }).run(); break;
+      case 'h2': _activeEditor.chain().focus().toggleHeading({ level: 2 }).run(); break;
+      case 'bulletList': _activeEditor.chain().focus().toggleBulletList().run(); break;
       case 'orderedList': _activeEditor.chain().focus().toggleOrderedList().run(); break;
-      case 'alignLeft':   _activeEditor.chain().focus().setTextAlign('left').run(); setActiveSectionFontProp('textAlign', 'left'); break;
+      case 'alignLeft': _activeEditor.chain().focus().setTextAlign('left').run(); setActiveSectionFontProp('textAlign', 'left'); break;
       case 'alignCenter': _activeEditor.chain().focus().setTextAlign('center').run(); setActiveSectionFontProp('textAlign', 'center'); break;
-      case 'alignRight':  _activeEditor.chain().focus().setTextAlign('right').run(); setActiveSectionFontProp('textAlign', 'right'); break;
+      case 'alignRight': _activeEditor.chain().focus().setTextAlign('right').run(); setActiveSectionFontProp('textAlign', 'right'); break;
+      case 'alignClear': _activeEditor.chain().focus().unsetTextAlign().run(); setActiveSectionFontProp('textAlign', null); break;
     }
   } catch (e) {
     console.warn('[editorToolbarCmd] editor no longer valid', e);
@@ -162,9 +163,9 @@ function renderEditor() {
                       <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
                 </div>
                 ${window.tiptapReady === true
-                  ? `<div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}"></div>`
-                  : `<textarea class="section-content-input" rows="4" placeholder="${t('editor.pairedPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>`
-                }
+            ? `<div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}"></div>`
+            : `<textarea class="section-content-input" rows="4" placeholder="${t('editor.pairedPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>`
+          }
               </div>
             </div>`;
       }
@@ -175,9 +176,9 @@ function renderEditor() {
               <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
             </div>
             ${window.tiptapReady === true
-              ? `<div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}"></div>`
-              : `<textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>`
-            }
+          ? `<div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}"></div>`
+          : `<textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>`
+        }
           </div>`;
     })
     .join("");
@@ -261,26 +262,38 @@ function renderEditor() {
       </div>
       <div id="editor-toolbar" class="editor-toolbar">
         <div class="editor-toolbar-format" id="editor-toolbar-format">
-          <label class="editor-toolbar-label">Title</label>
-          <input type="number" id="toolbar-section-label-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" oninput="setActiveSectionFontProp('labelSize',this.value===''?null:+this.value)">
-          <label class="editor-toolbar-label">Content</label>
-          <input type="number" id="toolbar-section-content-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" oninput="setActiveSectionFontProp('fontSize',this.value===''?null:+this.value)">
+          <div class="editor-toolbar-group">
+            ${card.layout === 'txtgrid' ? `
+            <label class="editor-toolbar-label">${t('toolbar.gridFontSize')}</label>
+            <input type="number" id="toolbar-grid-font-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" value="${card.gridFontSize ?? ''}" oninput="updateCardProp('gridFontSize',this.value===''?null:+this.value)">
+            ` : `
+            <label class="editor-toolbar-label">${t('toolbar.labelSize')}</label>
+            <input type="number" id="toolbar-section-label-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" oninput="setActiveSectionFontProp('labelSize',this.value===''?null:+this.value)">
+            <label class="editor-toolbar-label">${t('toolbar.contentSize')}</label>
+            <input type="number" id="toolbar-section-content-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" oninput="setActiveSectionFontProp('fontSize',this.value===''?null:+this.value)">
+            `}
+          </div>
           <div class="editor-toolbar-divider"></div>
-          <button class="editor-toolbar-btn" data-cmd="bold" onclick="editorToolbarCmd('bold')" title="Bold (Ctrl+B)"><strong>B</strong></button>
-          <button class="editor-toolbar-btn" data-cmd="italic" onclick="editorToolbarCmd('italic')" title="Italic (Ctrl+I)"><em>I</em></button>
-          <button class="editor-toolbar-btn" data-cmd="underline" onclick="editorToolbarCmd('underline')" title="Underline (Ctrl+U)"><u>U</u></button>
-          <button class="editor-toolbar-btn" data-cmd="h1" onclick="editorToolbarCmd('h1')" title="Heading 1">H1</button>
-          <button class="editor-toolbar-btn" data-cmd="h2" onclick="editorToolbarCmd('h2')" title="Heading 2">H2</button>
-          <button class="editor-toolbar-btn" data-cmd="bulletList" onclick="editorToolbarCmd('bulletList')" title="Bullet list">•</button>
-          <button class="editor-toolbar-btn" data-cmd="orderedList" onclick="editorToolbarCmd('orderedList')" title="Numbered list">1.</button>
+          <div class="editor-toolbar-group">
+            <button class="editor-toolbar-btn" data-cmd="bold" onclick="editorToolbarCmd('bold')" title="Bold (Ctrl+B)"><strong>B</strong></button>
+            <button class="editor-toolbar-btn" data-cmd="italic" onclick="editorToolbarCmd('italic')" title="Italic (Ctrl+I)"><em>I</em></button>
+            <button class="editor-toolbar-btn" data-cmd="underline" onclick="editorToolbarCmd('underline')" title="Underline (Ctrl+U)"><u>U</u></button>
+            <button class="editor-toolbar-btn" data-cmd="h1" onclick="editorToolbarCmd('h1')" title="Heading 1">H1</button>
+            <button class="editor-toolbar-btn" data-cmd="h2" onclick="editorToolbarCmd('h2')" title="Heading 2">H2</button>
+            <button class="editor-toolbar-btn" data-cmd="bulletList" onclick="editorToolbarCmd('bulletList')" title="Bullet list">•</button>
+            <button class="editor-toolbar-btn" data-cmd="orderedList" onclick="editorToolbarCmd('orderedList')" title="Numbered list">1.</button>
+          </div>
           <div class="editor-toolbar-divider"></div>
-          <button class="editor-toolbar-btn" data-cmd="alignLeft" onclick="editorToolbarCmd('alignLeft')" title="Align left"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-left"/></svg></button>
-          <button class="editor-toolbar-btn" data-cmd="alignCenter" onclick="editorToolbarCmd('alignCenter')" title="Align center"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-center"/></svg></button>
-          <button class="editor-toolbar-btn" data-cmd="alignRight" onclick="editorToolbarCmd('alignRight')" title="Align right"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-right"/></svg></button>
+          <div class="editor-toolbar-group">
+            <button class="editor-toolbar-btn" data-cmd="alignClear" onclick="editorToolbarCmd('alignClear')" title="Clear align">–</button>
+            <button class="editor-toolbar-btn" data-cmd="alignLeft" onclick="editorToolbarCmd('alignLeft')" title="Align left"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-left"/></svg></button>
+            <button class="editor-toolbar-btn" data-cmd="alignCenter" onclick="editorToolbarCmd('alignCenter')" title="Align center"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-center"/></svg></button>
+            <button class="editor-toolbar-btn" data-cmd="alignRight" onclick="editorToolbarCmd('alignRight')" title="Align right"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-right"/></svg></button>
+          </div>
         </div>
       </div>
       <div class="sections-list"
-        ${card.layout === 'txtgrid' ? `style="display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:8px;align-items:start"` : ''}
+        ${card.layout === 'txtgrid' ? `style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;align-items:start"` : ''}
         id="sections-list">
         ${sections || `<div style="color:#555;font-size:12px;padding:8px 0">${t('editor.noSections')}</div>`}
       </div>
@@ -323,7 +336,7 @@ function renderEditor() {
 }
 
 function _destroyTipTapInstances() {
-  Object.values(_tiptapInstances).forEach(ed => { try { ed.destroy(); } catch (e) {} });
+  Object.values(_tiptapInstances).forEach(ed => { try { ed.destroy(); } catch (e) { } });
   _tiptapInstances = {};
   _activeEditor = null;
 }
@@ -381,13 +394,13 @@ function _initTipTapInstances(card) {
       pushUndo();
       setTimeout(() => {
         const anyFocused = Object.values(_tiptapInstances).some(ed => ed.isFocused);
-        if (!anyFocused) {
-          _activeEditor = null;
-          _activeSectionId = null;
-          const fmt = document.getElementById('editor-toolbar-format');
-          if (fmt) fmt.classList.remove('active');
-          _syncToolbarSectionInputs();
-        }
+        const toolbarHasFocus = document.getElementById('editor-toolbar-format')?.contains(document.activeElement);
+        if (anyFocused || toolbarHasFocus) return;
+        _activeEditor = null;
+        _activeSectionId = null;
+        const fmt = document.getElementById('editor-toolbar-format');
+        if (fmt) fmt.classList.remove('active');
+        _syncToolbarSectionInputs();
       }, 150);
     });
 

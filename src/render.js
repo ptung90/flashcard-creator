@@ -481,13 +481,14 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
       "grid-template-columns:" + colTracks + ";" +
       "grid-auto-rows:" + gridAutoRows + ";";
     const cellCount = (card.textRows || 1) * cols;
+    const gridContentStyle = card.gridFontSize ? contentStyle + 'font-size:' + card.gridFontSize + 'px;' : contentStyle;
     return (
       cardStyleTag +
       '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id +
       '" style="' + compoundWrapperStyle + '">' +
       (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + '</div>' : '') +
       '<div style="flex:1;overflow:auto;display:grid;gap:' + marginPx + 'px;' + gridStyle3 + '">' +
-      buildSectionCellsHtml(card.sections, cellCount, compoundTextBase + contentStyle, compoundCellOptions, hideLabels) +
+      buildSectionCellsHtml(card.sections, cellCount, compoundTextBase + gridContentStyle, compoundCellOptions, hideLabels) +
       '</div></div>'
     );
   }

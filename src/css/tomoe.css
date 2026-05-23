@@ -639,6 +639,9 @@ input[type="range"].mint-fill::-webkit-slider-runnable-track {
   border-radius: 6px;
   margin-bottom: 8px;
   flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 .editor-toolbar--hidden { display: none; }
 
@@ -648,7 +651,7 @@ input[type="range"].mint-fill::-webkit-slider-runnable-track {
   white-space: nowrap;
 }
 .editor-toolbar-size {
-  width: 44px;
+  width: 56px;
   font-size: 11px;
   border: 1px solid #d1d5db;
   border-radius: 4px;
@@ -669,10 +672,18 @@ input[type="range"].mint-fill::-webkit-slider-runnable-track {
 }
 .editor-toolbar-format {
   display: flex;
-  gap: 2px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
   opacity: 0.4;
   pointer-events: none;
   transition: opacity 0.15s;
+}
+.editor-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
 }
 .editor-toolbar-format.active {
   opacity: 1;
