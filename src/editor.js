@@ -36,6 +36,7 @@ function _updateToolbarState() {
     else if (cmd === 'italic') active = _activeEditor.isActive('italic');
     else if (cmd === 'h1')     active = _activeEditor.isActive('heading', { level: 1 });
     else if (cmd === 'h2')     active = _activeEditor.isActive('heading', { level: 2 });
+    else if (cmd === 'underline')    active = _activeEditor.isActive('underline');
     else if (cmd === 'bulletList')   active = _activeEditor.isActive('bulletList');
     else if (cmd === 'orderedList')  active = _activeEditor.isActive('orderedList');
     btn.classList.toggle('active', active);
@@ -48,6 +49,7 @@ function editorToolbarCmd(cmd) {
     switch (cmd) {
       case 'bold':        _activeEditor.chain().focus().toggleBold().run(); break;
       case 'italic':      _activeEditor.chain().focus().toggleItalic().run(); break;
+      case 'underline':   _activeEditor.chain().focus().toggleUnderline().run(); break;
       case 'h1':          _activeEditor.chain().focus().toggleHeading({ level: 1 }).run(); break;
       case 'h2':          _activeEditor.chain().focus().toggleHeading({ level: 2 }).run(); break;
       case 'bulletList':  _activeEditor.chain().focus().toggleBulletList().run(); break;
@@ -246,6 +248,7 @@ function renderEditor() {
         <div class="editor-toolbar-format" id="editor-toolbar-format">
           <button class="editor-toolbar-btn" data-cmd="bold" onclick="editorToolbarCmd('bold')" title="Bold (Ctrl+B)"><strong>B</strong></button>
           <button class="editor-toolbar-btn" data-cmd="italic" onclick="editorToolbarCmd('italic')" title="Italic (Ctrl+I)"><em>I</em></button>
+          <button class="editor-toolbar-btn" data-cmd="underline" onclick="editorToolbarCmd('underline')" title="Underline (Ctrl+U)"><u>U</u></button>
           <button class="editor-toolbar-btn" data-cmd="h1" onclick="editorToolbarCmd('h1')" title="Heading 1">H1</button>
           <button class="editor-toolbar-btn" data-cmd="h2" onclick="editorToolbarCmd('h2')" title="Heading 2">H2</button>
           <button class="editor-toolbar-btn" data-cmd="bulletList" onclick="editorToolbarCmd('bulletList')" title="Bullet list">•</button>
@@ -310,7 +313,7 @@ function _initTipTapInstances(card) {
 
     const editor = new window.TipTapEditor({
       element: el,
-      extensions: [window.TipTapStarterKit],
+      extensions: [window.TipTapStarterKit, window.TipTapUnderline].filter(Boolean),
       content: mdParse(s.content || ''),
       editorProps: {
         attributes: {
