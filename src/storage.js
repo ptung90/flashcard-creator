@@ -610,8 +610,8 @@ function applyLoadedData(data) {
     });
   }
   state.schema  = data.schema  ?? null;
-  state.records = (data.records ?? []).map(r => ({
-    id:         r.id,
+  state.records = (Array.isArray(data.records) ? data.records : []).map(r => ({
+    id:         r.id ?? ('rec_' + uid()),
     fieldsHash: r.fieldsHash ?? '',
     fields:     r.fields ?? {}
   }));
