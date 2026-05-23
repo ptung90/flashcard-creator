@@ -10,10 +10,49 @@ function _ensureTurndown() {
   }
 }
 
-// stub — replaced in Task 4 with full TipTap toolbar implementation
-function editorToolbarCmd(cmd) {}
-function _updateToolbarState() {}
-function _cleanWordHtml(html) { return html; }
+function _cleanWordHtml(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  div.querySelectorAll('o\\:p, w\\:sdt, w\\:sdtContent').forEach(el => el.remove());
+  div.querySelectorAll('[style]').forEach(el => {
+    if (el.style.cssText.includes('mso-') || el.tagName === 'SPAN') {
+      el.removeAttribute('style');
+    }
+  });
+  div.querySelectorAll('[class]').forEach(el => {
+    if (/^(Mso|mso)/i.test(el.className)) el.removeAttribute('class');
+  });
+  return div.innerHTML;
+}
+
+function _updateToolbarState() {
+  if (!_activeEditor) return;
+  const btns = document.querySelectorAll('.editor-toolbar-btn[data-cmd]');
+  btns.forEach(btn => {
+    const cmd = btn.dataset.cmd;
+    let active = false;
+    if (cmd === 'bold')        active = _activeEditor.isActive('bold');
+    else if (cmd === 'italic') active = _activeEditor.isActive('italic');
+    else if (cmd === 'h1')     active = _activeEditor.isActive('heading', { level: 1 });
+    else if (cmd === 'h2')     active = _activeEditor.isActive('heading', { level: 2 });
+    else if (cmd === 'bulletList')   active = _activeEditor.isActive('bulletList');
+    else if (cmd === 'orderedList')  active = _activeEditor.isActive('orderedList');
+    btn.classList.toggle('active', active);
+  });
+}
+
+function editorToolbarCmd(cmd) {
+  if (!_activeEditor) return;
+  switch (cmd) {
+    case 'bold':        _activeEditor.chain().focus().toggleBold().run(); break;
+    case 'italic':      _activeEditor.chain().focus().toggleItalic().run(); break;
+    case 'h1':          _activeEditor.chain().focus().toggleHeading({ level: 1 }).run(); break;
+    case 'h2':          _activeEditor.chain().focus().toggleHeading({ level: 2 }).run(); break;
+    case 'bulletList':  _activeEditor.chain().focus().toggleBulletList().run(); break;
+    case 'orderedList': _activeEditor.chain().focus().toggleOrderedList().run(); break;
+  }
+  _updateToolbarState();
+}
 
 function renderEditor() {
   const card = getActiveCard();
