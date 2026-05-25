@@ -29,6 +29,10 @@ function mdParse(text) {
   return marked.parse((text || "").replace(/^ +/gm, (m) => " ".repeat(m.length)));
 }
 
+function mdParseInline(text) {
+  return marked.parseInline(text || "");
+}
+
 function esc(str) {
   return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }

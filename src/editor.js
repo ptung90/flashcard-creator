@@ -8,6 +8,12 @@ let _turndownService = null;
 function _ensureTurndown() {
   if (!_turndownService && window.TurndownService) {
     _turndownService = new window.TurndownService({ headingStyle: 'atx', bulletListMarker: '-' });
+    _turndownService.addRule('alignedParagraph', {
+      filter: (node) => node.nodeName === 'P' && node.style && node.style.textAlign,
+      replacement: (content, node) => {
+        return '\n\n<p style="text-align:' + node.style.textAlign + '">' + content + '</p>\n\n';
+      },
+    });
   }
 }
 
@@ -65,6 +71,7 @@ function editorToolbarCmd(cmd) {
       case 'alignCenter': _activeEditor.chain().focus().setTextAlign('center').run(); setActiveSectionFontProp('textAlign', 'center'); break;
       case 'alignRight': _activeEditor.chain().focus().setTextAlign('right').run(); setActiveSectionFontProp('textAlign', 'right'); break;
       case 'alignClear': _activeEditor.chain().focus().unsetTextAlign().run(); setActiveSectionFontProp('textAlign', null); break;
+      case 'clearFormat': _activeEditor.chain().focus().unsetAllMarks().clearNodes().run(); break;
     }
   } catch (e) {
     console.warn('[editorToolbarCmd] editor no longer valid', e);
@@ -80,6 +87,11 @@ function setActiveSectionFontProp(prop, val) {
   if (!s) return;
   s[prop] = val;
   dispatch('CARD_CONTENT_CHANGED');
+}
+
+function _onSectionLabelFocus(sectionId) {
+  _activeSectionId = sectionId;
+  _syncToolbarSectionInputs();
 }
 
 function _syncToolbarSectionInputs() {
@@ -141,25 +153,48 @@ function renderEditor() {
   const hiddenImgs = card.images.filter((im) => im.slot >= slotCount);
   const hiddenSlots = hiddenImgs.map((im) => slotRow(im.slot, true)).join("");
   const slots = activeSlots + hiddenSlots;
-  const isImgPairedLayout = ["2img-2txt", "3img-3txt", "8img-8txt"].includes(card.layout);
+  const isImgPairedLayout = ["2img-2txt", "3img-3txt", "8img-8txt", "img3-txt3"].includes(card.layout);
   const sectionRows = card.layout === "fulltext" ? 6 : 4;
 
   const sections = card.sections
     .map((s, si) => {
       if (isImgPairedLayout) {
         const img = card.images.find((im) => im.slot === si);
-        const thumb = img && img.url
-          ? `<div style="width:100%;height:100%;background-image:url('${esc(img.url)}');background-size:cover;background-position:center;"></div>`
+        const url = img?.url || '';
+        const curSize = img?.size ?? null;
+        const sizeBtns = [
+          ['cover',   'Fill',       'i-img-fill'],
+          ['contain', 'Contain',    'i-img-fit'],
+          ['100% auto','Fit width', 'i-arrow-lr'],
+          ['auto 100%','Fit height','i-arrow-tb'],
+        ];
+        const pairOverride = url ? `<div class="pair-size-group">
+          ${sizeBtns.map(([v,label,icon])=>`<button class="btn btn-secondary btn-sm btn-icon${curSize===v?' active':''}" onclick="setSlotSize(${si},'${v}')" title="${label}"><svg class="icon" style="width:12px;height:12px"><use href="#${icon}"/></svg></button>`).join('')}
+          ${curSize && curSize !== 'cover' ? `<input type="color" value="${img.color||'#e5e7e4'}" onchange="updateImgProp(${si},'color',this.value)" title="${t('editor.bgColor')}" class="pair-size-color">` : ''}
+        </div>` : '';
+        const thumb = url
+          ? `<div style="width:100%;height:100%;background-image:url('${esc(url)}');background-size:${img?.size||'cover'};background-position:center;"></div>`
           : `<span style="font-size:16px">📷</span>`;
+        const thumbBtns = `
+          <div class="pair-thumb-btns">
+            <button class="btn btn-secondary btn-sm btn-icon" onclick="openImgModal(${si})" title="${t('editor.search')}"><svg class="icon" style="width:12px;height:12px"><use href="#i-search"/></svg></button>
+            ${url ? `<button class="btn btn-secondary btn-sm btn-icon" onclick="copySlot(${si})" title="Copy"><svg class="icon" style="width:12px;height:12px"><use href="#i-copy"/></svg></button>` : ''}
+            <button class="btn btn-secondary btn-sm btn-icon" onclick="pasteToSlot(${si})" title="Paste"><svg class="icon" style="width:12px;height:12px"><use href="#i-clipboard"/></svg></button>
+            ${url ? `<button class="btn btn-danger btn-sm btn-icon" onclick="clearSlot(${si})" title="Clear"><svg class="icon" style="width:12px;height:12px"><use href="#i-x"/></svg></button>` : ''}
+          </div>`;
 
         const minSections = LAYOUT_SLOTS[card.layout] || 0;
         const disableDelete = card.sections.length <= minSections;
         return `
             <div class="section-row section-row--paired" id="section-${s.id}">
-              <div class="pair-thumb" onclick="openImgModal(${si})" title="${t('editor.clickImg')}">${thumb}</div>
+              <div class="pair-thumb-col">
+                <div class="pair-thumb" onclick="openImgModal(${si})" title="${t('editor.clickImg')}">${thumb}</div>
+                ${thumbBtns}
+                ${pairOverride}
+              </div>
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
                 <div class="section-row-header">
-                  <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)" style="${card.hideSectionLabels ? 'background:#f1f2ef;color:#9aa19e' : ''}">
+                  <div class="section-label-input section-tiptap-editor section-label-tiptap" id="tiptap-label-${s.id}"${card.hideSectionLabels ? ' data-hidden-label="1"' : ''}></div>
                       <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
                 </div>
                 ${window.tiptapReady === true
@@ -172,7 +207,7 @@ function renderEditor() {
       return `
           <div class="section-row" id="section-${s.id}">
             <div class="section-row-header">
-              <input class="section-label-input" value="${esc(s.label)}" placeholder="${t('editor.labelPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','label',this.value)" style="${card.hideSectionLabels ? 'background:#f1f2ef;color:#9aa19e' : ''}">
+              <div class="section-label-input section-tiptap-editor section-label-tiptap" id="tiptap-label-${s.id}"${card.hideSectionLabels ? ' data-hidden-label="1"' : ''}></div>
               <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
             </div>
             ${window.tiptapReady === true
@@ -218,10 +253,7 @@ function renderEditor() {
       </div>
     </div>` : ''}
 
-    ${card.layout !== 'fullimage' &&
-      card.layout !== 'fulltext' &&
-      card.layout !== '2img-4txt' &&
-      card.layout !== 'txtgrid' ? `
+    ${!['fullimage', 'fulltext', '2img-4txt', 'txtgrid', 'img3-txt3'].includes(card.layout) ? `
     <div class="editor-section">
       <h3>${t('editor.imgHeight')}</h3>
       <div class="height-slider-row">
@@ -231,7 +263,16 @@ function renderEditor() {
       </div>
     </div>` : ''}
 
-    ${card.layout !== 'txtgrid' ? `
+    ${card.layout === 'img3-txt3' ? `
+    <div class="editor-section">
+      <label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" ${card.imageGridSplit?.rowBorders ? 'checked' : ''}
+          onchange="updateGridSplitProp('rowBorders', this.checked)">
+        Row borders
+      </label>
+    </div>` : ''}
+
+    ${card.layout !== 'txtgrid' && !isImgPairedLayout ? `
     <div class="editor-section">
       <h3>${t('editor.images')} (${slotCount} ${t('editor.slots')})</h3>
       <div class="image-slots">${slots}</div>
@@ -261,19 +302,30 @@ function renderEditor() {
         </div>
       </div>
       <div id="editor-toolbar" class="editor-toolbar">
+        ${card.layout !== 'txtgrid' ? `
+        <div class="editor-toolbar-group">
+          <label class="editor-toolbar-label">${t('toolbar.labelSizeAll')}</label>
+          <input type="number" id="toolbar-card-label-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" value="${card.labelSize ?? ''}" oninput="updateCardProp('labelSize',this.value===''?null:+this.value)">
+        </div>
+        <div class="editor-toolbar-divider"></div>
+        ` : ''}
+        ${card.layout !== 'txtgrid' ? `
+        <div class="editor-toolbar-group">
+          <label class="editor-toolbar-label">${t('toolbar.labelSize')}</label>
+          <input type="number" id="toolbar-section-label-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" oninput="setActiveSectionFontProp('labelSize',this.value===''?null:+this.value)">
+          <label class="editor-toolbar-label">${t('toolbar.contentSize')}</label>
+          <input type="number" id="toolbar-section-content-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" oninput="setActiveSectionFontProp('fontSize',this.value===''?null:+this.value)">
+        </div>
+        <div class="editor-toolbar-divider"></div>
+        ` : ''}
         <div class="editor-toolbar-format" id="editor-toolbar-format">
+          ${card.layout === 'txtgrid' ? `
           <div class="editor-toolbar-group">
-            ${card.layout === 'txtgrid' ? `
             <label class="editor-toolbar-label">${t('toolbar.gridFontSize')}</label>
             <input type="number" id="toolbar-grid-font-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" value="${card.gridFontSize ?? ''}" oninput="updateCardProp('gridFontSize',this.value===''?null:+this.value)">
-            ` : `
-            <label class="editor-toolbar-label">${t('toolbar.labelSize')}</label>
-            <input type="number" id="toolbar-section-label-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" oninput="setActiveSectionFontProp('labelSize',this.value===''?null:+this.value)">
-            <label class="editor-toolbar-label">${t('toolbar.contentSize')}</label>
-            <input type="number" id="toolbar-section-content-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" oninput="setActiveSectionFontProp('fontSize',this.value===''?null:+this.value)">
-            `}
           </div>
           <div class="editor-toolbar-divider"></div>
+          ` : ''}
           <div class="editor-toolbar-group">
             <button class="editor-toolbar-btn" data-cmd="bold" onclick="editorToolbarCmd('bold')" title="Bold (Ctrl+B)"><strong>B</strong></button>
             <button class="editor-toolbar-btn" data-cmd="italic" onclick="editorToolbarCmd('italic')" title="Italic (Ctrl+I)"><em>I</em></button>
@@ -289,6 +341,10 @@ function renderEditor() {
             <button class="editor-toolbar-btn" data-cmd="alignLeft" onclick="editorToolbarCmd('alignLeft')" title="Align left"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-left"/></svg></button>
             <button class="editor-toolbar-btn" data-cmd="alignCenter" onclick="editorToolbarCmd('alignCenter')" title="Align center"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-center"/></svg></button>
             <button class="editor-toolbar-btn" data-cmd="alignRight" onclick="editorToolbarCmd('alignRight')" title="Align right"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-right"/></svg></button>
+          </div>
+          <div class="editor-toolbar-divider"></div>
+          <div class="editor-toolbar-group">
+            <button class="editor-toolbar-btn" data-cmd="clearFormat" onclick="editorToolbarCmd('clearFormat')" title="Clear formatting"><svg class="icon" style="width:13px;height:13px"><use href="#i-clear-format"/></svg></button>
           </div>
         </div>
       </div>
@@ -341,6 +397,51 @@ function _destroyTipTapInstances() {
   _activeEditor = null;
 }
 
+// Shared Tiptap config used by both card editor and record editor
+function _tiptapBaseConfig(placeholder) {
+  return {
+    extensions: [
+      window.TipTapStarterKit,
+      window.TipTapUnderline,
+      window.TipTapTextAlign?.configure({ types: ['paragraph', 'heading'] }),
+    ].filter(Boolean),
+    editorProps: {
+      attributes: { 'data-placeholder': placeholder || '' },
+      handleKeyDown(view, event) {
+        if (event.key === 'Tab') {
+          const { $from } = view.state.selection;
+          if ($from.parent.type.name === 'listItem') return false;
+          event.preventDefault();
+          view.dispatch(view.state.tr.insertText('    '));
+          return true;
+        }
+        return false;
+      },
+    },
+  };
+}
+window._tiptapBaseConfig = _tiptapBaseConfig;
+
+// Single-line config for label editors: Enter blurs, Tab moves to content
+function _tiptapLabelConfig(placeholder) {
+  const base = _tiptapBaseConfig(placeholder);
+  const origKeyDown = base.editorProps.handleKeyDown;
+  return {
+    ...base,
+    editorProps: {
+      ...base.editorProps,
+      handleKeyDown(view, event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          view.dom.blur();
+          return true;
+        }
+        return origKeyDown(view, event);
+      },
+    },
+  };
+}
+
 function _initTipTapInstances(card) {
   _ensureTurndown();
 
@@ -350,27 +451,8 @@ function _initTipTapInstances(card) {
 
     const editor = new window.TipTapEditor({
       element: el,
-      extensions: [
-        window.TipTapStarterKit,
-        window.TipTapUnderline,
-        window.TipTapTextAlign?.configure({ types: ['paragraph', 'heading'] }),
-      ].filter(Boolean),
+      ...(_tiptapBaseConfig(t('editor.contentPh') || 'Write something...')),
       content: mdParse(s.content || ''),
-      editorProps: {
-        attributes: {
-          'data-placeholder': t('editor.contentPh') || 'Write something...',
-        },
-        handleKeyDown(view, event) {
-          if (event.key === 'Tab') {
-            const { $from } = view.state.selection;
-            if ($from.parent.type.name === 'listItem') return false;
-            event.preventDefault();
-            view.dispatch(view.state.tr.insertText('    '));
-            return true;
-          }
-          return false;
-        },
-      },
     });
 
     editor.on('update', () => {
@@ -395,7 +477,8 @@ function _initTipTapInstances(card) {
       setTimeout(() => {
         const anyFocused = Object.values(_tiptapInstances).some(ed => ed.isFocused);
         const toolbarHasFocus = document.getElementById('editor-toolbar-format')?.contains(document.activeElement);
-        if (anyFocused || toolbarHasFocus) return;
+        const labelInputFocused = document.activeElement?.classList.contains('section-label-input');
+        if (anyFocused || toolbarHasFocus || labelInputFocused) return;
         _activeEditor = null;
         _activeSectionId = null;
         const fmt = document.getElementById('editor-toolbar-format');
@@ -415,6 +498,44 @@ function _initTipTapInstances(card) {
     });
 
     _tiptapInstances[s.id] = editor;
+
+    // Label editor (single-line)
+    const labelEl = document.getElementById('tiptap-label-' + s.id);
+    if (labelEl && !_tiptapInstances['label:' + s.id]) {
+      const labelEditor = new window.TipTapEditor({
+        element: labelEl,
+        ...(_tiptapLabelConfig(t('editor.labelPh') || 'Label')),
+        content: mdParse(s.label || ''),
+      });
+      labelEditor.on('update', () => {
+        if (!_turndownService) return;
+        s.label = _turndownService.turndown(labelEditor.getHTML());
+        dispatch('CARD_CONTENT_CHANGED');
+      });
+      labelEditor.on('focus', () => {
+        pushUndo();
+        _activeEditor = labelEditor;
+        _activeSectionId = s.id;
+        const fmt = document.getElementById('editor-toolbar-format');
+        if (fmt) fmt.classList.add('active');
+        _syncToolbarSectionInputs();
+      });
+      labelEditor.on('blur', () => {
+        setTimeout(() => {
+          const anyFocused = Object.values(_tiptapInstances).some(ed => ed.isFocused);
+          const toolbarHasFocus = document.getElementById('editor-toolbar-format')?.contains(document.activeElement);
+          if (anyFocused || toolbarHasFocus) return;
+          _activeEditor = null;
+          _activeSectionId = null;
+          const fmt = document.getElementById('editor-toolbar-format');
+          if (fmt) fmt.classList.remove('active');
+          _syncToolbarSectionInputs();
+        }, 150);
+      });
+      labelEditor.on('selectionUpdate', () => _updateToolbarState());
+      labelEditor.on('transaction', () => _updateToolbarState());
+      _tiptapInstances['label:' + s.id] = labelEditor;
+    }
   });
 }
 
@@ -556,6 +677,21 @@ function layoutIcon(layout, selected) {
           </div>
         `,
 
+    "img3-txt3": `
+          <div class="lo-row" style="flex:1">
+            <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+              <div class="lo-block" style="flex:1"></div>
+              <div class="lo-block" style="flex:1"></div>
+              <div class="lo-block" style="flex:1"></div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+              <div class="lo-text" style="flex:1;height:auto"></div>
+              <div class="lo-text" style="flex:1;height:auto"></div>
+              <div class="lo-text" style="flex:1;height:auto"></div>
+            </div>
+          </div>
+        `,
+
     "txtgrid": `
           <div style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:2px">
             <div class="lo-text"></div><div class="lo-text"></div><div class="lo-text"></div>
@@ -604,9 +740,10 @@ function setLayout(layout) {
   if (!card) return;
   card.layout = layout;
   card.imageGridSplit = { ...LAYOUT_SPLIT_DEFAULTS[layout] };
+  if (HIDE_TITLE_LAYOUTS.has(layout)) card.hideTitle = true;
   if (layout === "8img-8txt") {
     while (card.sections.length < 8) card.sections.push({ id: uid(), label: "", content: "" });
-  } else if (layout === "3img-3txt") {
+  } else if (layout === "3img-3txt" || layout === "img3-txt3") {
     while (card.sections.length < 3) card.sections.push({ id: uid(), label: "Section", content: "" });
   } else if (layout === "txtgrid") {
     if (!card.textCols) card.textCols = 3;
@@ -785,6 +922,16 @@ function updateCardProp(prop, val) {
   dispatch(prop === "title" ? "CARD_TITLE_CHANGED" : "CARD_CONTENT_CHANGED");
 }
 
+function updateGridSplitProp(key, val) {
+  const card = getActiveCard();
+  if (!card) return;
+  if (!card.imageGridSplit) card.imageGridSplit = {};
+  card.imageGridSplit[key] = val;
+  setDirty();
+  renderPreview();
+  dispatch("CARD_CONTENT_CHANGED");
+}
+
 
 function toggleFontPanel() {
   const panel = document.getElementById("font-settings-panel");
@@ -813,6 +960,17 @@ function toggleImgPanel() {
   const btn = document.getElementById("btn-img-toggle");
   const open = panel.classList.toggle("open");
   btn.classList.toggle("open", open);
+}
+
+function setSlotSize(slot, val) {
+  const card = getActiveCard();
+  if (!card) return;
+  const img = card.images.find((im) => im.slot === slot);
+  if (!img) return;
+  if (img.size === val) { img.size = null; img.color = null; }
+  else img.size = val;
+  setDirty();
+  dispatch('CARD_UI_CHANGED');
 }
 
 function toggleImgOverride(slot, enabled) {

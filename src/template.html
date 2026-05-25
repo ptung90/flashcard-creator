@@ -85,6 +85,10 @@
         <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-valign-top" viewBox="0 0 24 24"><path d="M4 4h16"/><rect x="9" y="8" width="6" height="13" rx="1"/></symbol>
         <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-valign-middle" viewBox="0 0 24 24"><path d="M4 12h5M15 12h5"/><rect x="9" y="5" width="6" height="14" rx="1"/></symbol>
         <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-valign-bottom" viewBox="0 0 24 24"><path d="M4 20h16"/><rect x="9" y="3" width="6" height="13" rx="1"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-clear-format" viewBox="0 0 24 24"><path d="M6 3h13l-7 8"/><path d="M11 13l-5 8"/><path d="M3 21l18-18"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-arrow-tb" viewBox="0 0 24 24"><path d="M7 8l5-5 5 5M7 16l5 5 5-5M12 3v18"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-img-fit" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="6" y="7" width="12" height="10" rx="1"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-img-fill" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18M3 16h18M8 3v18M16 3v18"/></symbol>
       </defs>
     </svg>
 
@@ -447,6 +451,7 @@
         <button class="btn btn-primary btn-sm" onclick="addCard()" data-i18n-title="toolbar.newCard" title="New Card">
           <svg class="icon"><use href="#i-plus"/></svg><span class="btn-label" data-i18n="toolbar.newCard">New Card</span>
         </button>
+        <button id="records-btn" class="btn btn-secondary btn-sm" onclick="showRecordsPanel()" data-i18n="toolbar.records">Records</button>
         <button class="btn btn-secondary btn-sm btn-icon" onclick="refreshAllThumbs()" title="Regenerate all thumbnails">
           <svg class="icon"><use href="#i-refresh"/></svg>
         </button>
@@ -461,7 +466,7 @@
           <input id="project-name-input" type="text" value="Untitled" title="Project name — click to rename" onfocus="pushUndo()" onchange="state.projectName = this.value.trim() || 'Untitled'; this.value = state.projectName; setDirty();" />
           <div id="emoji-picker" class="emoji-picker" style="display: none" onclick="event.stopPropagation()"></div>
           <button class="btn btn-secondary btn-sm" onclick="openLoadModal()" data-i18n-title="toolbar.load" title="Load project">
-            <svg class="icon"><use href="#i-folder"/></svg><span class="btn-label" data-i18n="toolbar.load">Load</span>
+            <svg class="icon"><use href="#i-folder"/></svg><span id="load-btn-label" class="btn-label">Load</span>
           </button>
           <input type="file" id="load-file" accept=".json" style="display: none" onchange="loadJSON(event)" />
         </div>
@@ -486,8 +491,6 @@
         <button class="btn btn-primary btn-sm" onclick="exportPDF()" data-i18n-title="toolbar.pdfAll" title="Export PDF (all)">
           <svg class="icon"><use href="#i-download"/></svg><span class="btn-label" data-i18n="toolbar.pdfAll">PDF All</span>
         </button>
-
-        <button id="records-btn" class="btn btn-secondary btn-sm" onclick="showRecordsPanel()">Records</button>
 
         <!-- More menu -->
         <div class="toolbar-more-wrap">
@@ -1153,6 +1156,30 @@
       </div>
     </div>
 
+    <!-- Save As Modal -->
+    <div class="modal-backdrop" id="save-as-modal" style="display:none">
+      <div class="modal" style="max-width:340px;width:90%">
+        <div class="modal-header">
+          <span>Save As</span>
+          <button class="modal-close" onclick="closeSaveAsModal()">×</button>
+        </div>
+        <div class="modal-body" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="font-size:12px;font-weight:600;color:#374151">Folder</label>
+            <select id="save-as-folder" style="font-size:13px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;background:#fff"></select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="font-size:12px;font-weight:600;color:#374151">File name</label>
+            <input id="save-as-name" type="text" style="font-size:13px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px" onkeydown="if(event.key==='Enter')executeSaveAs()">
+          </div>
+        </div>
+        <div class="modal-footer" style="padding:10px 16px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #e5e7eb">
+          <button class="btn btn-secondary btn-sm" onclick="closeSaveAsModal()">Cancel</button>
+          <button class="btn btn-primary btn-sm" onclick="executeSaveAs()">Save</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Settings Modal -->
     <div
       class="modal-backdrop settings-modal"
@@ -1486,25 +1513,27 @@
     <dialog id="schema-editor-modal">
       <div class="dialog-header">
         <span class="dialog-title">Schema Editor</span>
-        <button class="btn btn-sm" onclick="document.getElementById('schema-editor-modal').close()">✕</button>
+        <button class="btn btn-sm modal-close" onclick="closeSchemaEditor()">×</button>
       </div>
       <div class="dialog-body" id="schema-editor-content"></div>
       <div class="dialog-footer">
         <button class="btn btn-sm btn-primary" onclick="saveSchema()">Save</button>
-        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('schema-editor-modal').close()">Cancel</button>
+        <button class="btn btn-sm btn-secondary" onclick="closeSchemaEditor()">Cancel</button>
       </div>
     </dialog>
 
+    <!-- Pack Dialog -->
     <dialog id="pack-dialog">
       <div class="dialog-header">
         <span class="dialog-title">Pack into <span id="pack-dialog-layout" style="font-family:'SF Mono',Consolas,monospace;"></span></span>
+        <button class="btn btn-sm modal-close" onclick="closePackDialog()">×</button>
       </div>
       <div class="dialog-body">
         <div id="pack-dialog-records"></div>
       </div>
       <div class="dialog-footer">
         <button class="btn btn-sm btn-primary" onclick="confirmPack()">Pack</button>
-        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('pack-dialog').close()">Cancel</button>
+        <button class="btn btn-sm btn-secondary" onclick="closePackDialog()">Cancel</button>
       </div>
     </dialog>
 

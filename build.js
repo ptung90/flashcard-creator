@@ -4,6 +4,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
 
 const ROOT = __dirname;
 const SRC = path.join(ROOT, "src");
@@ -40,12 +41,23 @@ const output = template
   .replace("    <!-- BUILD:CSS -->", `    <style>\n${css}\n    </style>`)
   .replace("    <!-- BUILD:JS -->", `    <script>\n${allJs}\n    </script>`);
 
-fs.writeFileSync(path.join(ROOT, "index.html"), output, "utf8");
+function writeAtomic(dest, content) {
+  const tmp = path.join(os.tmpdir(), path.basename(dest) + ".tmp");
+  fs.writeFileSync(tmp, content, "utf8");
+  try {
+    fs.renameSync(tmp, dest);
+  } catch {
+    fs.copyFileSync(tmp, dest);
+    fs.unlinkSync(tmp);
+  }
+}
+
+writeAtomic(path.join(ROOT, "index.html"), output);
 
 const DIST = path.join(ROOT, "FlashCardApp2");
 const DIST_FILE = "FlashCard Creator.html";
 if (!fs.existsSync(DIST)) fs.mkdirSync(DIST);
-fs.copyFileSync(path.join(ROOT, "index.html"), path.join(DIST, DIST_FILE));
+writeAtomic(path.join(DIST, DIST_FILE), output);
 
 const lines = output.split("\n").length;
 console.log(`✓ index.html rebuilt — ${lines} lines → FlashCardApp2/${DIST_FILE}`);

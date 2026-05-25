@@ -399,14 +399,8 @@
 }
 
 .breadcrumb-back {
-  /* color: #3e9684; */
   cursor: pointer;
 }
-
-
-/* .breadcrumb-back:hover {
-  text-decoration: underline;
-} */
 
 .breadcrumb-sep {
   color: #9ca3af;
@@ -490,13 +484,63 @@
 
 .move-menu-item:hover {
   background: #f3e8ff;
-  color: #3e9684;
+  color: #5b21b6;
 }
 
 .folder-divider {
   height: 1px;
   background: #e5e7eb;
   margin: 6px 0;
+}
+
+.folder-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 4px;
+  margin-top: 6px;
+  margin-bottom: 2px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background 0.1s;
+}
+.folder-group-header:hover { background: var(--mint-100); }
+.folder-group-header:first-child { margin-top: 0; }
+.folder-group-name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.folder-group-header--pinned {
+  background: #f0fdf4;
+  border-left: 3px solid #3e9684;
+  padding-left: 7px;
+}
+.folder-group-header--pinned:hover { background: #dcfce7; }
+.folder-pin-btn {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
+  font-size: 13px;
+  opacity: 0.25;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.folder-group-header:hover .folder-pin-btn { opacity: 0.55; }
+.folder-pin-btn--active { opacity: 1 !important; }
+
+.folder-group-file {
+  padding-left: 10px;
+}
+.folder-group-file::before {
+  content: "└";
+  color: #d1d5db;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
 /* JSON Export Modal */
@@ -530,7 +574,7 @@
 
 .json-action-desc {
   font-size: 11px;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 /* AI Generate section */
@@ -549,7 +593,7 @@
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
-  color: #3e9684;
+  color: #1a5c4c;
   user-select: none;
 }
 

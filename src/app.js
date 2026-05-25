@@ -273,6 +273,8 @@ function newCard() {
   };
 }
 
+const HIDE_TITLE_LAYOUTS = new Set(['2img-2txt', '8img-8txt', 'img3-txt3', 'txtgrid', 'fullimage', 'fulltext']);
+
 function addCard() {
   pushUndo();
   const nc     = (window.FC_CONFIG || {}).newCard || {};
@@ -283,6 +285,7 @@ function addCard() {
     imageGridSplit:     { ...LAYOUT_SPLIT_DEFAULTS[layout] },
     title:              t('card.new'),
     imageHeightPercent: nc.imageHeightPercent ?? 55,
+    hideTitle:          HIDE_TITLE_LAYOUTS.has(layout),
     sections: (nc.defaultSections || [
       { label: 'Đặc điểm', content: '' },
       { label: 'Môi trường', content: '' },
@@ -384,7 +387,7 @@ function _renderGridSidebar() {
       const titleEl = el.querySelector('.card-thumb-title');
       if (titleEl) titleEl.textContent = state.cards[i].title || t('card.untitled');
       const numEl = el.querySelector('.card-thumb-num');
-      if (numEl) numEl.textContent = i + 1;
+      if (numEl) numEl.textContent = '#' + (i + 1);
     });
     if (_thumbRenderedVersion !== _thumbDirtyVersion) {
       _requestThumbGeneration(items);
@@ -398,7 +401,7 @@ function _renderGridSidebar() {
     <div class="fc-card-thumb-item ${c.id === activeCardId ? "active" : ""} ${getCardOrientation(c) === "landscape" ? "fc-card-thumb-item--landscape" : "fc-card-thumb-item--portrait"}"
          draggable="true" onclick="setActive('${c.id}')" data-id="${c.id}">
       <div class="card-thumb-img thumb-loading"></div>
-      <span class="card-thumb-num">${i + 1}</span>
+      <span class="card-thumb-num">#${i + 1}</span>
       <div class="card-thumb-title">${esc(c.title || t('card.untitled'))}</div>
       <div class="card-thumb-actions">
         <button class="icon-btn" title="${t('misc.clone')}" onclick="event.stopPropagation();cloneCard('${c.id}')"><svg class="icon" style="width:14px;height:14px"><use href="#i-clone"/></svg></button>
@@ -507,7 +510,7 @@ async function _generateThumbs(genId, targetItems = null) {
 }
 
 function refreshAllThumbs() {
-  if (sidebarView !== 'grid') return;
+  if (sidebarView !== 'grid') setViewMode('grid');
   const items = [...document.querySelectorAll('.fc-card-thumb-item')];
   if (items.length) _requestThumbGeneration(items);
 }

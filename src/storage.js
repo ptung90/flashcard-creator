@@ -120,7 +120,6 @@ async function _renderFolderSection() {
   if (!workDirHandle) { folderSection.style.display = "none"; return; }
   folderSection.style.display = "block";
 
-  // breadcrumb
   if (_modalSubfolder) {
     breadcrumb.innerHTML = `<span class="breadcrumb-back" onclick="browseSubfolder(null)">📁 ${esc(workDirHandle.name)}</span><span class="breadcrumb-sep">›</span><span class="breadcrumb-cur">📁 ${esc(_modalSubfolder)}</span>`;
     newFolderBtn.style.display = "none";
@@ -134,53 +133,113 @@ async function _renderFolderSection() {
     const perm = await workDirHandle.requestPermission({ mode: "readwrite" });
     if (perm !== "granted") throw new Error("Permission denied — click Set Folder again");
 
-    const activeDir = _modalSubfolder
-      ? await workDirHandle.getDirectoryHandle(_modalSubfolder)
-      : workDirHandle;
-
-    const folders = [], files = [];
-    for await (const [name, handle] of activeDir.entries()) {
-      if (handle.kind === "directory" && !_modalSubfolder) {
-        folders.push(name);
-      } else if (handle.kind === "file" && name.endsWith(".json") && name !== "user-config.json") {
-        const file = await handle.getFile();
-        let projectName = name, projectIcon = "🗂️";
-        try { const d = JSON.parse(await file.text()); projectName = d.project_name || name; projectIcon = d.project_icon || "🗂️"; } catch (_) {}
-        files.push({ name, projectName, projectIcon, lastModified: file.lastModified });
+    if (_modalSubfolder) {
+      // ── Subfolder detail view ─────────────────────────────────────
+      const dir = await workDirHandle.getDirectoryHandle(_modalSubfolder);
+      const files = [];
+      for await (const [name, handle] of dir.entries()) {
+        if (handle.kind === "file" && name.endsWith(".json") && name !== "user-config.json") {
+          const file = await handle.getFile();
+          let projectName = name, projectIcon = "🗂️";
+          try { const d = JSON.parse(await file.text()); projectName = d.project_name || name; projectIcon = d.project_icon || "🗂️"; } catch (_) {}
+          files.push({ name, projectName, projectIcon, lastModified: file.lastModified });
+        }
       }
+      files.sort((a, b) => b.lastModified - a.lastModified);
+      folderList.innerHTML = files.map(f => {
+        const sn = JSON.stringify(f.name);
+        const isActive = f.name === currentFileName && _modalSubfolder === currentSubfolder;
+        return `<div class="recent-item${isActive ? " recent-item--active" : ""}">
+          <div class="recent-item-info">
+            <div class="recent-item-name">${esc(f.projectIcon)} ${esc(f.projectName)}</div>
+            <div class="recent-item-meta">${esc(f.name)} · ${formatRelDate(f.lastModified)}</div>
+          </div>
+          <div class="recent-item-btns" style="position:relative">
+            <button class="btn btn-primary btn-sm" onclick='loadFromFolder(${sn})'>Open</button>
+            <button class="btn btn-secondary btn-sm" onclick='showMoveMenu(${sn},this)' title="Move to folder">⇄</button>
+            <button class="btn btn-danger btn-sm btn-icon" onclick='deleteFromFolder(${sn},this)'><svg class="icon" style="width:13px;height:13px"><use href="#i-trash"/></svg></button>
+          </div>
+        </div>`;
+      }).join("") || '<div class="recent-empty">Empty folder</div>';
+
+    } else {
+      // ── Root view: all subfolders expanded inline ─────────────────
+      const subfolders = [], rootFiles = [];
+      for await (const [name, handle] of workDirHandle.entries()) {
+        if (handle.kind === "directory") subfolders.push({ name, handle });
+        else if (handle.kind === "file" && name.endsWith(".json") && name !== "user-config.json") {
+          const file = await handle.getFile();
+          let projectName = name, projectIcon = "🗂️";
+          try { const d = JSON.parse(await file.text()); projectName = d.project_name || name; projectIcon = d.project_icon || "🗂️"; } catch (_) {}
+          rootFiles.push({ name, projectName, projectIcon, lastModified: file.lastModified });
+        }
+      }
+      const pinnedFolder = localStorage.getItem("fc_pinned_folder");
+      subfolders.sort((a, b) => {
+        if (a.name === pinnedFolder) return -1;
+        if (b.name === pinnedFolder) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      rootFiles.sort((a, b) => b.lastModified - a.lastModified);
+      _modalFolders = subfolders.map(s => s.name);
+
+      let html = "";
+      for (const sf of subfolders) {
+        const sfFiles = [];
+        for await (const [name, handle] of sf.handle.entries()) {
+          if (handle.kind === "file" && name.endsWith(".json") && name !== "user-config.json") {
+            const file = await handle.getFile();
+            let projectName = name, projectIcon = "🗂️";
+            try { const d = JSON.parse(await file.text()); projectName = d.project_name || name; projectIcon = d.project_icon || "🗂️"; } catch (_) {}
+            sfFiles.push({ name, projectName, projectIcon, lastModified: file.lastModified });
+          }
+        }
+        if (!sfFiles.length) continue;
+        sfFiles.sort((a, b) => b.lastModified - a.lastModified);
+        const isPinned = sf.name === pinnedFolder;
+        const sfJson = JSON.stringify(sf.name);
+        html += `<div class="folder-group-header${isPinned ? " folder-group-header--pinned" : ""}" onclick='browseSubfolder(${sfJson})'>
+          <span class="folder-icon">📁</span>
+          <span class="folder-group-name">${esc(sf.name)}</span>
+          <button class="folder-pin-btn${isPinned ? " folder-pin-btn--active" : ""}" onclick='event.stopPropagation();togglePinFolder(${sfJson})' title="${isPinned ? "Unpin" : "Pin this folder"}">📌</button>
+          <span class="folder-item-arrow">›</span>
+        </div>`;
+        html += sfFiles.map(f => {
+          const isActive = f.name === currentFileName && sf.name === currentSubfolder;
+          return `<div class="recent-item folder-group-file${isActive ? " recent-item--active" : ""}">
+            <div class="recent-item-info">
+              <div class="recent-item-name">${esc(f.projectIcon)} ${esc(f.projectName)}</div>
+              <div class="recent-item-meta">${formatRelDate(f.lastModified)}</div>
+            </div>
+            <div class="recent-item-btns">
+              <button class="btn btn-primary btn-sm" onclick='loadFromFolder(${JSON.stringify(f.name)},${JSON.stringify(sf.name)})'>Open</button>
+            </div>
+          </div>`;
+        }).join("");
+      }
+
+      // root-level files
+      if (rootFiles.length) {
+        if (html) html += '<div class="folder-divider"></div>';
+        html += rootFiles.map(f => {
+          const sn = JSON.stringify(f.name);
+          const isActive = f.name === currentFileName && !currentSubfolder;
+          return `<div class="recent-item${isActive ? " recent-item--active" : ""}">
+            <div class="recent-item-info">
+              <div class="recent-item-name">${esc(f.projectIcon)} ${esc(f.projectName)}</div>
+              <div class="recent-item-meta">${esc(f.name)} · ${formatRelDate(f.lastModified)}</div>
+            </div>
+            <div class="recent-item-btns" style="position:relative">
+              <button class="btn btn-primary btn-sm" onclick='loadFromFolder(${sn})'>Open</button>
+              <button class="btn btn-secondary btn-sm" onclick='showMoveMenu(${sn},this)' title="Move to folder">⇄</button>
+              <button class="btn btn-danger btn-sm btn-icon" onclick='deleteFromFolder(${sn},this)'><svg class="icon" style="width:13px;height:13px"><use href="#i-trash"/></svg></button>
+            </div>
+          </div>`;
+        }).join("");
+      }
+
+      folderList.innerHTML = html || '<div class="recent-empty">Empty folder</div>';
     }
-    folders.sort((a, b) => a.localeCompare(b));
-    files.sort((a, b) => b.lastModified - a.lastModified);
-    _modalFolders = folders;
-
-    const folderHtml = folders.map(f => {
-      const sn = JSON.stringify(f);
-      return `<div class="folder-item" onclick='browseSubfolder(${sn})'>
-        <span class="folder-tree">└</span><span class="folder-icon">📁</span>
-        <span class="folder-item-name">${esc(f)}</span>
-        <span class="folder-item-arrow">›</span>
-      </div>`;
-    }).join("");
-
-    const fileHtml = files.map(f => {
-      const sn = JSON.stringify(f.name);
-      const isActive = f.name === currentFileName && _modalSubfolder === currentSubfolder;
-      return `<div class="recent-item${isActive ? " recent-item--active" : ""}">
-        <div class="recent-item-info">
-          <div class="recent-item-name">${esc(f.projectIcon)} ${esc(f.projectName)}</div>
-          <div class="recent-item-meta">${esc(f.name)} · ${formatRelDate(f.lastModified)}</div>
-        </div>
-        <div class="recent-item-btns" style="position:relative">
-          <button class="btn btn-primary btn-sm" onclick='loadFromFolder(${sn})'>Open</button>
-          <button class="btn btn-secondary btn-sm" onclick='showMoveMenu(${sn},this)' title="Move to folder">⇄</button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick='deleteFromFolder(${sn},this)'><svg class="icon" style="width:13px;height:13px"><use href="#i-trash"/></svg></button>
-        </div>
-      </div>`;
-    }).join("");
-
-    const divider = folderHtml && fileHtml ? '<div class="folder-divider"></div>' : "";
-    folderList.innerHTML = folderHtml + divider + fileHtml
-      || '<div class="recent-empty">Empty folder</div>';
   } catch (err) {
     folderList.innerHTML = `<div class="recent-empty">${esc(err.message)}</div>`;
   }
@@ -189,6 +248,13 @@ async function _renderFolderSection() {
 async function browseSubfolder(name) {
   _modalSubfolder = name;
   await _renderFolderSection();
+}
+
+function togglePinFolder(name) {
+  const current = localStorage.getItem("fc_pinned_folder");
+  if (current === name) localStorage.removeItem("fc_pinned_folder");
+  else localStorage.setItem("fc_pinned_folder", name);
+  _renderFolderSection();
 }
 
 async function createSubfolder() {
@@ -279,18 +345,13 @@ async function _autoSaveToFile() {
 }
 
 function _updateLabels() {
-  const dirLabel = document.getElementById("work-dir-label");
   const pnInput = document.getElementById("project-name-input");
   const dot = document.getElementById("dirty-dot");
-  if (dirLabel) dirLabel.textContent = workDirHandle ? workDirHandle.name : "Set Folder";
   if (pnInput && pnInput !== document.activeElement) pnInput.value = state.projectName || "Untitled";
   const iconBtn = document.getElementById("project-icon-btn");
   if (iconBtn) iconBtn.textContent = state.projectIcon || "🗂️";
-  const fileLabel = document.getElementById("current-file-label");
-  if (fileLabel) {
-    const path = currentSubfolder && currentFileName ? `${currentSubfolder}/${currentFileName}` : (currentFileName || "");
-    fileLabel.textContent = path;
-  }
+  const loadBtnLabel = document.getElementById("load-btn-label");
+  if (loadBtnLabel) loadBtnLabel.textContent = currentSubfolder || "Load";
   if (dot) dot.style.display = dirty ? "inline" : "none";
 }
 
@@ -372,31 +433,12 @@ async function saveJSON() {
 }
 
 async function saveJSONAs() {
+  if (workDirHandle) {
+    await openSaveAsModal();
+    return;
+  }
   const dataObj = _buildDataObj();
   const json = JSON.stringify(dataObj, null, 2);
-  if (workDirHandle) {
-    const raw = prompt("File name:", _timestampedFileName());
-    if (!raw) return;
-    const name = raw.endsWith(".json") ? raw : raw + ".json";
-    if (name !== currentFileName) {
-      const dir = await _getActiveDirHandle();
-      let exists = false;
-      try {
-        await dir.getFileHandle(name, { create: false });
-        exists = true;
-      } catch (e) { if (e.name !== "NotFoundError") exists = true; }
-      if (exists && !confirm(`"${name}" already exists. Overwrite?`)) return;
-    }
-    try {
-      await _writeToDir(name, json);
-      currentFileName = name;
-      const path = currentSubfolder ? `${currentSubfolder}/${name}` : name;
-      localStorage.setItem("fc_last_file", path);
-      addToRecent(name, dataObj).catch(() => { });
-      clearDirty();
-      return;
-    } catch (err) { if (err.name === "AbortError") return; }
-  }
   if (window.showSaveFilePicker) {
     try {
       const handle = await window.showSaveFilePicker({
@@ -416,19 +458,81 @@ async function saveJSONAs() {
   addToRecent(currentFileName || "flashcards.json", dataObj).catch(() => { });
 }
 
-async function loadFromFolder(fileName) {
+async function openSaveAsModal() {
+  const folderSelect = document.getElementById("save-as-folder");
+  const nameInput = document.getElementById("save-as-name");
+
+  // populate folder options
+  const subfolders = [];
   try {
-    const dir = _modalSubfolder
-      ? await workDirHandle.getDirectoryHandle(_modalSubfolder)
+    const perm = await workDirHandle.requestPermission({ mode: "readwrite" });
+    if (perm === "granted") {
+      for await (const [name, handle] of workDirHandle.entries()) {
+        if (handle.kind === "directory") subfolders.push(name);
+      }
+      subfolders.sort((a, b) => a.localeCompare(b));
+    }
+  } catch (_) {}
+
+  folderSelect.innerHTML = `<option value="">${workDirHandle.name} (root)</option>`
+    + subfolders.map(f => `<option value="${esc(f)}"${f === currentSubfolder ? " selected" : ""}>${esc(f)}</option>`).join("");
+  if (currentSubfolder) folderSelect.value = currentSubfolder;
+
+  nameInput.value = _timestampedFileName();
+  document.getElementById("save-as-modal").style.display = "flex";
+  setTimeout(() => nameInput.select(), 50);
+}
+
+function closeSaveAsModal() {
+  document.getElementById("save-as-modal").style.display = "none";
+}
+
+async function executeSaveAs() {
+  const folderSelect = document.getElementById("save-as-folder");
+  const nameInput = document.getElementById("save-as-name");
+  const raw = nameInput.value.trim();
+  if (!raw) return;
+  const name = raw.endsWith(".json") ? raw : raw + ".json";
+  const targetSubfolder = folderSelect.value || null;
+
+  try {
+    const dir = targetSubfolder
+      ? await workDirHandle.getDirectoryHandle(targetSubfolder)
       : workDirHandle;
+    let exists = false;
+    try { await dir.getFileHandle(name, { create: false }); exists = true; }
+    catch (e) { if (e.name !== "NotFoundError") exists = true; }
+    if (exists && !confirm(`"${name}" already exists. Overwrite?`)) return;
+
+    const dataObj = _buildDataObj();
+    const json = JSON.stringify(dataObj, null, 2);
+    const fh = await dir.getFileHandle(name, { create: true });
+    const w = await fh.createWritable();
+    await w.write(json);
+    await w.close();
+
+    currentSubfolder = targetSubfolder;
+    currentFileName = name;
+    const path = targetSubfolder ? `${targetSubfolder}/${name}` : name;
+    localStorage.setItem("fc_last_file", path);
+    addToRecent(name, dataObj, path).catch(() => { });
+    clearDirty();
+    closeSaveAsModal();
+  } catch (err) { alert("Save failed: " + err.message); }
+}
+
+async function loadFromFolder(fileName, subfolder) {
+  const sf = subfolder !== undefined ? subfolder : _modalSubfolder;
+  try {
+    const dir = sf ? await workDirHandle.getDirectoryHandle(sf) : workDirHandle;
     const fh = await dir.getFileHandle(fileName);
     const file = await fh.getFile();
     const data = JSON.parse(await file.text());
-    currentSubfolder = _modalSubfolder;
+    currentSubfolder = sf;
     currentFileName = fileName;
     _updateLabels();
     applyLoadedData(data);
-    const fullPath = _modalSubfolder ? `${_modalSubfolder}/${fileName}` : fileName;
+    const fullPath = sf ? `${sf}/${fileName}` : fileName;
     addToRecent(fileName, data, fullPath).catch(() => { });
     closeLoadModal();
   } catch (err) { alert("Không đọc được file: " + err.message); }

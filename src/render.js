@@ -32,6 +32,7 @@ const HANDLE_STRATEGIES = {
   "2img-4txt": (r, c, n) => "",
   "2img-2txt": (r, c, n) => "",
   "3img-3txt": (r, c, n) => "",
+  "img3-txt3": (r, c, n) => _H("col", `left:${c}%;top:0;bottom:0;${_COL}`),
   "txtgrid": (r, c, n) => ""
 };
 
@@ -73,7 +74,7 @@ function buildSectionsHtml(sections, hideLabels) {
     .map(
       (sec) =>
         `<div class="fc-section${sec.customClass ? ` ${esc(sec.customClass)}` : ''}">` +
-        (!hideLabels && sec.label ? '<span class="fc-section__label"' + (sec.labelSize ? ` style="font-size:${sec.labelSize}px"` : '') + '>• ' + esc(sec.label) + ': </span>' : '') +
+        (!hideLabels && sec.label ? '<span class="fc-section__label"' + (sec.labelSize ? ` style="font-size:${sec.labelSize}px"` : '') + '>• ' + mdParseInline(sec.label) + ': </span>' : '') +
         '<div class="fc-section__content"' + ((sec.fontSize || sec.textAlign) ? ` style="${sec.fontSize ? `font-size:${sec.fontSize}px;` : ''}${sec.textAlign ? `text-align:${sec.textAlign};` : ''}"` : '') + '>' +
         mdParse(sec.content) +
         "</div></div>",
@@ -85,7 +86,7 @@ function buildSectionCellHtml(section, hideLabels) {
   if (!section) return '<div class="fc-section fc-section--empty"></div>';
   return (
     `<div class="fc-section${section.customClass ? ` ${esc(section.customClass)}` : ''}">` +
-    (!hideLabels && section.label ? '<span class="fc-section__label"' + (section.labelSize ? ` style="font-size:${section.labelSize}px"` : '') + '>• ' + esc(section.label) + ': </span>' : '') +
+    (!hideLabels && section.label ? '<span class="fc-section__label"' + (section.labelSize ? ` style="font-size:${section.labelSize}px"` : '') + '>• ' + mdParseInline(section.label) + ': </span>' : '') +
     '<div class="fc-section__content"' + ((section.fontSize || section.textAlign) ? ` style="${section.fontSize ? `font-size:${section.fontSize}px;` : ''}${section.textAlign ? `text-align:${section.textAlign};` : ''}"` : '') + '>' +
     mdParse(section.content) +
     "</div></div>"
@@ -122,24 +123,28 @@ function buildCompoundCellStyle(baseStyle, options = {}) {
   );
 }
 
-function buildCompoundImageSlots(card, imgStyle, cellOptions) {
+function buildCompoundImageSlots(card, imgStyle, cellOptions, sections) {
   const slotCount = LAYOUT_SLOTS[card.layout] || 0;
   return Array.from({ length: slotCount }, (_, i) => {
     const img = card.images.find((im) => im.slot === i);
-    const slotStyle = buildCompoundCellStyle("", { ...cellOptions, overflow: "hidden" });
-    const content = img && img.url
-      ? '<div class="fc-compound-cell-inner" style="width:100%;height:100%;overflow:hidden;"><div class="img-bg" style="background-image:url(\'' +
-      esc(img.url) + "\');" +
-      resolveImgStyle(img, imgStyle) +
+    const section = sections ? sections[i] : null;
+    const label = section && !card.hideSectionLabels && section.label ? section.label : null;
+    const slotStyle = buildCompoundCellStyle(
+      label ? "display:flex;flex-direction:column;" : "",
+      { ...cellOptions, overflow: "hidden" }
+    );
+    const imgContent = img && img.url
+      ? '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;overflow:hidden;"><div class="img-bg" style="background-image:url(\'' +
+      esc(img.url) + "\');" + resolveImgStyle(img, imgStyle) +
       'background-repeat:no-repeat;width:100%;height:100%;"></div></div>'
-      : '<div class="fc-compound-cell-inner" style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden;"><span class="empty-placeholder">📷</span></div>';
+      : '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden;"><span class="empty-placeholder">📷</span></div>';
+    const labelHtml = label
+      ? '<div class="fc-img-label"' + (section.labelSize ? ' style="font-size:' + section.labelSize + 'px"' : '') + '>' + mdParseInline(label) + '</div>'
+      : '';
     return (
-      '<div class="fc-image-slot fc-image-slot-' +
-      i +
-      '" style="' +
-      slotStyle +
-      '">' +
-      content +
+      '<div class="fc-image-slot fc-image-slot-' + i + '" style="' + slotStyle + '">' +
+      imgContent +
+      labelHtml +
       "</div>"
     );
   }).join("");
@@ -165,6 +170,10 @@ const COMPOUND_TRACK_STRATEGIES = {
   "3img-3txt": (sp, gap) => ({
     columns: `calc((100% - ${gap * 2}px)/3) calc((100% - ${gap * 2}px)/3) calc((100% - ${gap * 2}px)/3)`,
     rows: `calc((100% - ${gap}px) * ${sp.row} / 100) calc((100% - ${gap}px) * ${100 - sp.row} / 100)`
+  }),
+  "img3-txt3": (sp, gap) => ({
+    columns: `calc((100% - ${gap}px) * ${sp.col} / 100) calc((100% - ${gap}px) * ${100 - sp.col} / 100)`,
+    rows: `repeat(3, calc((100% - ${gap * 2}px) / 3))`
   }),
   "2img-4txt": (sp, gap) => {
     const rTop = ((100 - sp.row) * sp.inner) / 100;
@@ -290,7 +299,10 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
     `${_cs} .fc-section__content h1{margin:0;padding:0;${titleStyle}}` +
     `${_cs} .fc-section__content h2{margin:0;padding:0;${titleStyle}font-size:${Math.round((titleF.size||14)*0.85)}px;}` +
     `${_cs} .fc-section__content h3{margin:0;padding:0;${titleStyle}font-size:${Math.round((titleF.size||14)*0.75)}px;}`;
-  const cardStyleTag = '<style>' + _h1Rule + (card.customCss ? _scopeCardCss(card.customCss, card.id) : '') + '</style>';
+  const _labelSizeRule = card.labelSize
+    ? `${_cs} .fc-section__label{font-size:${card.labelSize}px}${_cs} .fc-img-label{font-size:${card.labelSize}px}`
+    : '';
+  const cardStyleTag = '<style>' + _h1Rule + _labelSizeRule + (card.customCss ? _scopeCardCss(card.customCss, card.id) : '') + '</style>';
   const showTitle = !!card.title && !card.hideTitle;
   const borderCss = s.border.style + " " + s.border.color;
   const compoundCellOptions = {
@@ -366,10 +378,10 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   }
 
   if (card.layout === "3img-3txt") {
-    const sectionA = buildSectionCellHtml(card.sections[0], hideLabels);
-    const sectionB = buildSectionCellHtml(card.sections[1], hideLabels);
-    const sectionC = buildSectionCellHtml(card.sections[2], hideLabels);
-    const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions);
+    const sectionA = buildSectionCellHtml(card.sections[0], true);
+    const sectionB = buildSectionCellHtml(card.sections[1], true);
+    const sectionC = buildSectionCellHtml(card.sections[2], true);
+    const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions, card.sections);
     return (
       cardStyleTag +
       '<div class="' +
@@ -395,6 +407,39 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
       '<div class="fc-sections" style="' + buildCompoundCellStyle(compoundTextBase + contentStyle, compoundCellOptions) + '">' + sectionC + '</div>' +
       handles +
       "</div></div>"
+    );
+  }
+
+  if (card.layout === "img3-txt3") {
+    // Interleaved DOM order (img0,txt0,img1,txt1,img2,txt2) so 2-col grid auto-places images left, text right
+    const rowBorders = card.imageGridSplit?.rowBorders;
+    const r = s.border.radius;
+    const cells = Array.from({ length: 3 }, (_, i) => {
+      const sec = card.sections[i] || { id: '', label: '', content: '' };
+      const img = card.images.find(im => im.slot === i);
+      const imgContent = img && img.url
+        ? '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;overflow:hidden;"><div class="img-bg" style="background-image:url(\'' + esc(img.url) + '\');' + resolveImgStyle(img, imgStyle) + 'background-repeat:no-repeat;width:100%;height:100%;"></div></div>'
+        : '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden;"><span class="empty-placeholder">📷</span></div>';
+      const label = sec && !card.hideSectionLabels && sec.label ? sec.label : null;
+      const labelHtml = label ? '<div class="fc-img-label"' + (sec.labelSize ? ' style="font-size:' + sec.labelSize + 'px"' : '') + '>' + mdParseInline(label) + '</div>' : '';
+      // rowBorders mode: merge img+txt into one visual row — remove the shared border edge and set directional radius
+      const imgExtra = rowBorders ? 'border-right:0;border-radius:' + r + 'px 0 0 ' + r + 'px;' : '';
+      const txtExtra = rowBorders ? 'border-left:0;border-radius:0 ' + r + 'px ' + r + 'px 0;' : '';
+      const imgCellStyle = buildCompoundCellStyle(label ? 'display:flex;flex-direction:column;' : '', imgCompoundCellOptions) + imgExtra;
+      const imgCell = '<div class="fc-image-slot fc-image-slot-' + i + '" style="' + imgCellStyle + '">' + imgContent + labelHtml + '</div>';
+      const txtCell = '<div class="fc-sections" style="' + buildCompoundCellStyle(compoundTextBase + contentStyle, compoundCellOptions) + txtExtra + '">' + buildSectionCellHtml(sec, true) + '</div>';
+      return imgCell + txtCell;
+    }).join('');
+    const gapStyle = rowBorders
+      ? 'row-gap:' + marginPx + 'px;column-gap:0;'
+      : 'gap:' + marginPx + 'px;';
+    return (
+      cardStyleTag +
+      '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id + '" style="' + compoundWrapperStyle + '">' +
+      (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + '</div>' : '') +
+      '<div class="fc-image-area" style="flex:1;position:relative;display:grid;overflow:hidden;' + gapStyle + compoundGridStyle + '">' +
+      cells + handles +
+      '</div></div>'
     );
   }
 
