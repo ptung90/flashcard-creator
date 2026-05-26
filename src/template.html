@@ -1295,6 +1295,20 @@
             </div>
           </div>
 
+          <!-- Style Export/Import -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Style</div>
+            <div class="cfg-row">
+              <label>Export style<br /><small style="color:#9ca3af">Save current style settings to a file</small></label>
+              <button class="btn btn-secondary btn-sm" onclick="exportStyle()">Export</button>
+            </div>
+            <div class="cfg-row">
+              <label>Import style<br /><small style="color:#9ca3af">Apply style from a previously exported file</small></label>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('style-import-input').click()">Import</button>
+            </div>
+            <input type="file" id="style-import-input" accept=".json" style="display:none" onchange="importStyle(this)" />
+          </div>
+
           <!-- Maintenance -->
           <div class="cfg-section">
             <div class="cfg-section-title">Maintenance</div>

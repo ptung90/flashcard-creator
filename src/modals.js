@@ -208,6 +208,42 @@ async function migrateImages(btn) {
   setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
 }
 
+function exportStyle() {
+  const payload = JSON.stringify({ fc_style_version: "1.0", settings: state.settings }, null, 2);
+  const slug = (state.projectName || "style").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "style";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([payload], { type: "application/json" }));
+  a.download = `${slug}.style.json`;
+  a.click();
+}
+
+function importStyle(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = "";
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const src = data.fc_style_version ? data.settings : data;
+      if (!src || typeof src !== "object") throw new Error("Invalid style file");
+      const defaultTF = { family: "sans-serif", size: 14, color: "#1a1a1a", lineHeight: 1.0, textAlign: "left" };
+      const defaultCF = { family: "sans-serif", size: 12, color: "#1a1a1a", lineHeight: 1.1, textAlign: "left" };
+      state.settings = { ...state.settings, ...src };
+      state.settings.titleFont = { ...defaultTF, ...(src.titleFont || {}) };
+      state.settings.contentFont = { ...defaultCF, ...(src.contentFont || {}) };
+      if (!state.settings.googleFonts) state.settings.googleFonts = [];
+      applyGoogleFonts();
+      applySettingsToUI();
+      document.getElementById("fc-custom-css").textContent = state.settings.customCss || "";
+      renderPreview();
+      setDirty();
+      showToast("Style imported");
+    } catch (err) { alert("Cannot import style: " + err.message); }
+  };
+  reader.readAsText(file);
+}
+
 function resetUserConfig() {
   if (!confirm("Reset all settings to built-in defaults and reload?")) return;
   localStorage.removeItem("fc_user_config");
