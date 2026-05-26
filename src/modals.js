@@ -73,6 +73,7 @@ function openSettingsModal() {
   set("cfg-cfont-lh", cf.lineHeight ?? 1.1);
 
   document.getElementById("settings-modal").style.display = "flex";
+  document.querySelectorAll('.cfg-section-chk').forEach(cb => toggleCfgSection(cb));
 }
 
 function closeSettingsModal() {
