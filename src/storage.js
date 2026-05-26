@@ -405,6 +405,9 @@ function _buildDataObj() {
 
 async function _silentBackup() {
   if (!workDirHandle || !currentFileName) return;
+  // Skip if current file is itself a backup (name ends with -YYYY-MM-DD_HHmm.json)
+  if (/\-\d{4}-\d{2}-\d{2}_\d{4}\.json$/i.test(currentFileName)) return;
+  if (currentSubfolder === '_backups') return;
   try {
     const activeDir = await _getActiveDirHandle();
     const backupDir = await activeDir.getDirectoryHandle('_backups', { create: true });
