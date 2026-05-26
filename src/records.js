@@ -910,12 +910,75 @@ function packAll() {
 // ── Schema Editor ─────────────────────────────────────────────────────────────
 let _editingSchema = null;
 
+async function saveSchemaToLibrary() {
+  if (!workDirHandle) { alert('Set a work folder first.'); return; }
+  const name = prompt('Save schema as:');
+  if (!name?.trim()) return;
+  const schema = _editingSchema || state.schema;
+  if (!schema) { alert('No schema to save.'); return; }
+  try {
+    await saveToLibrary('schemas', name.trim(), schema);
+    const sel = document.getElementById('schema-library-select');
+    if (sel && !Array.from(sel.options).find(o => o.value === name.trim())) {
+      sel.innerHTML += `<option value="${esc(name.trim())}">${esc(name.trim())}</option>`;
+    }
+    showToast(`Schema "${name.trim()}" saved to library`);
+  } catch (err) { alert('Save failed: ' + err.message); }
+}
+
+async function applySchemaFromLibrary() {
+  const sel = document.getElementById('schema-library-select');
+  const name = sel?.value;
+  if (!name) return;
+  try {
+    const schema = await loadFromLibrary('schemas', name);
+    if (!schema?.fields) throw new Error('Invalid schema file');
+    const hasRecords = state.records?.length > 0;
+    let templatesOnly = false;
+    if (hasRecords) {
+      const choice = confirm(
+        `Project has ${state.records.length} existing record(s).\n\n` +
+        `OK → Load full schema (fields + templates) — records may lose mapping\n` +
+        `Cancel → Load templates only — keeps current fields`
+      );
+      if (choice === null) return;
+      templatesOnly = !choice;
+    }
+    if (templatesOnly) {
+      _editingSchema.cardTemplates = schema.cardTemplates || [];
+    } else {
+      _editingSchema = schema;
+    }
+    _renderSchemaEditor();
+    showToast(`Schema "${name}" loaded${templatesOnly ? ' (templates only)' : ''}`);
+  } catch (err) { alert('Load failed: ' + err.message); }
+}
+
+async function deleteSchemaFromLibrary() {
+  const sel = document.getElementById('schema-library-select');
+  const name = sel?.value;
+  if (!name) return;
+  if (!confirm(`Delete schema "${name}" from library?`)) return;
+  try {
+    await deleteFromLibrary('schemas', name);
+    sel.remove(sel.selectedIndex);
+    sel.value = '';
+    showToast(`Schema "${name}" deleted`);
+  } catch (err) { alert('Delete failed: ' + err.message); }
+}
+
 function openSchemaEditor() {
   _editingSchema = state.schema
     ? JSON.parse(JSON.stringify(state.schema))
     : { fields: [], cardTemplates: [] };
   _renderSchemaEditor();
   document.getElementById('schema-editor-modal').showModal();
+  listLibrary('schemas').then(names => {
+    const sel = document.getElementById('schema-library-select');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— library —</option>' +
+      names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  });
 }
 
 const _COMPOUND_LAYOUTS = ['2img-2txt', '3img-3txt', 'img3-txt3', '6cell', '8img-8txt', 'txtgrid'];

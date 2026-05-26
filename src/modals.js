@@ -74,6 +74,12 @@ function openSettingsModal() {
 
   document.getElementById("settings-modal").style.display = "flex";
   document.querySelectorAll('.cfg-section-chk').forEach(cb => toggleCfgSection(cb));
+  listLibrary('styles').then(names => {
+    const sel = document.getElementById('style-library-select');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— select —</option>' +
+      names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  });
 }
 
 function closeSettingsModal() {
@@ -207,6 +213,54 @@ async function migrateImages(btn) {
   dispatch('STATE_MUTATED');
   btn.textContent = `Done (${count} image${count !== 1 ? "s" : ""})`;
   setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+}
+
+async function saveStyleToLibrary() {
+  if (!workDirHandle) { alert('Set a work folder first.'); return; }
+  const name = prompt('Save style as:');
+  if (!name?.trim()) return;
+  try {
+    await saveToLibrary('styles', name.trim(), { fc_style_version: '1.0', settings: state.settings });
+    const sel = document.getElementById('style-library-select');
+    if (sel && !Array.from(sel.options).find(o => o.value === name.trim())) {
+      sel.innerHTML += `<option value="${esc(name.trim())}">${esc(name.trim())}</option>`;
+    }
+    showToast(`Style "${name.trim()}" saved to library`);
+  } catch (err) { alert('Save failed: ' + err.message); }
+}
+
+async function applyStyleFromLibrary() {
+  const sel = document.getElementById('style-library-select');
+  const name = sel?.value;
+  if (!name) return;
+  try {
+    const data = await loadFromLibrary('styles', name);
+    const src = data.fc_style_version ? data.settings : data;
+    if (!src) throw new Error('Invalid style file');
+    const defaultTF = { family: 'sans-serif', size: 14, color: '#1a1a1a', lineHeight: 1.0, textAlign: 'left' };
+    const defaultCF = { family: 'sans-serif', size: 12, color: '#1a1a1a', lineHeight: 1.1, textAlign: 'left' };
+    state.settings = { ...state.settings, ...src };
+    state.settings.titleFont = { ...defaultTF, ...(src.titleFont || {}) };
+    state.settings.contentFont = { ...defaultCF, ...(src.contentFont || {}) };
+    if (!state.settings.googleFonts) state.settings.googleFonts = [];
+    applyGoogleFonts(); applySettingsToUI();
+    document.getElementById('fc-custom-css').textContent = state.settings.customCss || '';
+    renderPreview(); setDirty();
+    showToast(`Style "${name}" applied`);
+  } catch (err) { alert('Apply failed: ' + err.message); }
+}
+
+async function deleteStyleFromLibrary() {
+  const sel = document.getElementById('style-library-select');
+  const name = sel?.value;
+  if (!name) return;
+  if (!confirm(`Delete style "${name}" from library?`)) return;
+  try {
+    await deleteFromLibrary('styles', name);
+    sel.remove(sel.selectedIndex);
+    sel.value = '';
+    showToast(`Style "${name}" deleted`);
+  } catch (err) { alert('Delete failed: ' + err.message); }
 }
 
 function exportStyle() {

@@ -166,7 +166,7 @@ async function _renderFolderSection() {
       // ── Root view: all subfolders expanded inline ─────────────────
       const subfolders = [], rootFiles = [];
       for await (const [name, handle] of workDirHandle.entries()) {
-        if (handle.kind === "directory" && name !== "_backups") subfolders.push({ name, handle });
+        if (handle.kind === "directory" && name !== "_backups" && name !== "_library") subfolders.push({ name, handle });
         else if (handle.kind === "file" && name.endsWith(".json") && name !== "user-config.json") {
           const file = await handle.getFile();
           let projectName = name, projectIcon = "🗂️";
@@ -401,6 +401,45 @@ function _fallbackDownload(json, name) {
 
 function _buildDataObj() {
   return { version: "1.0", project_name: state.projectName, project_icon: state.projectIcon, ...state };
+}
+
+// ── Library (shared styles & schemas) ──────────────────────────────
+async function _getLibraryDir(type) {
+  const lib = await workDirHandle.getDirectoryHandle('_library', { create: true });
+  return await lib.getDirectoryHandle(type, { create: true });
+}
+
+async function listLibrary(type) {
+  if (!workDirHandle) return [];
+  try {
+    const dir = await _getLibraryDir(type);
+    const names = [];
+    for await (const [name] of dir.entries()) {
+      if (name.endsWith('.json')) names.push(name.replace(/\.json$/i, ''));
+    }
+    return names.sort();
+  } catch (_) { return []; }
+}
+
+async function saveToLibrary(type, name, data) {
+  const dir = await _getLibraryDir(type);
+  const json = JSON.stringify(data, null, 2);
+  const fh = await dir.getFileHandle(`${name}.json`, { create: true });
+  const w = await fh.createWritable();
+  await w.write(json);
+  await w.truncate(new TextEncoder().encode(json).byteLength);
+  await w.close();
+}
+
+async function loadFromLibrary(type, name) {
+  const dir = await _getLibraryDir(type);
+  const fh = await dir.getFileHandle(`${name}.json`);
+  return JSON.parse(await (await fh.getFile()).text());
+}
+
+async function deleteFromLibrary(type, name) {
+  const dir = await _getLibraryDir(type);
+  await dir.removeEntry(`${name}.json`);
 }
 
 async function _silentBackup() {

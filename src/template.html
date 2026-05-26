@@ -1299,7 +1299,16 @@
           <div class="cfg-section">
             <div class="cfg-section-title">Style</div>
             <div class="cfg-row">
-              <label>Export style<br /><small style="color:#9ca3af">Save current style settings to a file</small></label>
+              <label>Style library<br /><small style="color:#9ca3af">Save and reuse styles across projects</small></label>
+              <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+                <select id="style-library-select" style="width:130px;height:26px;font-size:12px"><option value="">— select —</option></select>
+                <button class="btn btn-secondary btn-sm" onclick="applyStyleFromLibrary()">Apply</button>
+                <button class="btn btn-secondary btn-sm" onclick="saveStyleToLibrary()">Save</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteStyleFromLibrary()">Delete</button>
+              </div>
+            </div>
+            <div class="cfg-row">
+              <label>Export style<br /><small style="color:#9ca3af">Download style settings as a file</small></label>
               <button class="btn btn-secondary btn-sm" onclick="exportStyle()">Export</button>
             </div>
             <div class="cfg-row">
@@ -1355,6 +1364,12 @@
       </div>
       <div class="dialog-body" id="schema-editor-content"></div>
       <div class="dialog-footer">
+        <div style="display:flex;gap:4px;align-items:center;margin-right:auto">
+          <select id="schema-library-select" style="width:130px;height:26px;font-size:12px"><option value="">— library —</option></select>
+          <button class="btn btn-sm btn-secondary" onclick="applySchemaFromLibrary()">Load</button>
+          <button class="btn btn-sm btn-secondary" onclick="saveSchemaToLibrary()">Save</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteSchemaFromLibrary()">Delete</button>
+        </div>
         <button class="btn btn-sm btn-primary" onclick="saveSchema()">Save</button>
         <button class="btn btn-sm btn-secondary" onclick="closeSchemaEditor()">Cancel</button>
       </div>
