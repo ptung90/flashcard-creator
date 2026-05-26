@@ -281,7 +281,7 @@ function newCard() {
   };
 }
 
-const HIDE_TITLE_LAYOUTS = new Set(['2img-2txt', '8img-8txt', 'img3-txt3', 'txtgrid', 'fullimage', 'fulltext']);
+const HIDE_TITLE_LAYOUTS = new Set(['2img-2txt', '8img-8txt', 'img3-txt3', '6cell', 'txtgrid', 'fullimage', 'fulltext']);
 
 function addCard() {
   pushUndo();

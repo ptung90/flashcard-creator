@@ -159,7 +159,7 @@ function renderEditor() {
   const hiddenImgs = card.images.filter((im) => im.slot >= slotCount);
   const hiddenSlots = hiddenImgs.map((im) => slotRow(im.slot, true)).join("");
   const slots = activeSlots + hiddenSlots;
-  const isImgPairedLayout = ["2img-2txt", "3img-3txt", "8img-8txt", "img3-txt3"].includes(card.layout);
+  const isImgPairedLayout = ["2img-2txt", "3img-3txt", "8img-8txt", "img3-txt3", "6cell"].includes(card.layout);
   const sectionRows = card.layout === "fulltext" ? 6 : 4;
 
   const sections = card.sections
@@ -728,6 +728,11 @@ function layoutIcon(layout, selected) {
           </div>
   `,
 
+    "6cell": (() => {
+      const cell = '<div style="display:flex;flex-direction:column;gap:1px"><div class="lo-block" style="flex:2"></div><div style="height:3px;background:#d4e2de;border-radius:1px"></div><div class="lo-text"></div></div>';
+      return '<div style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:2px">' + cell.repeat(6) + '</div>';
+    })(),
+
     "8img-8txt": (() => {
       const pair = '<div style="display:flex;flex-direction:column;gap:1px"><div class="lo-block" style="flex:2"></div><div class="lo-text"></div></div>';
       return '<div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);gap:2px">' + pair.repeat(8) + '</div>';
@@ -757,6 +762,8 @@ function setLayout(layout) {
     while (card.sections.length < 8) card.sections.push({ id: uid(), label: "", content: "" });
   } else if (layout === "3img-3txt" || layout === "img3-txt3") {
     while (card.sections.length < 3) card.sections.push({ id: uid(), label: "Section", content: "" });
+  } else if (layout === "6cell") {
+    while (card.sections.length < 6) card.sections.push({ id: uid(), label: "", content: "" });
   } else if (layout === "txtgrid") {
     if (!card.textCols) card.textCols = 3;
     if (!card.textRows) card.textRows = 1;
@@ -1032,7 +1039,7 @@ function openSectionMenu(id, btn) {
   const canPasteWithImg = !!(_sectionClipboard?.image);
   const minSections = LAYOUT_SLOTS[card.layout] || 0;
   const canDelete = card.sections.length > minSections;
-  const isPaired = card.layout === "2img-2txt" || card.layout === "8img-8txt";
+  const isPaired = ["2img-2txt", "8img-8txt", "6cell"].includes(card.layout);
   const menu = document.createElement('div');
   menu.id = 'section-menu';
   menu.className = 'section-menu';
