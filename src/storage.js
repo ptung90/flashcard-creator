@@ -421,6 +421,14 @@ async function _silentBackup() {
     await w.write(json);
     await w.truncate(new TextEncoder().encode(json).byteLength);
     await w.close();
+    // Prune: keep only the 10 most recent backups for this project
+    const prefix = base + '-';
+    const old = [];
+    for await (const [name] of backupDir.entries()) {
+      if (name.startsWith(prefix) && name.endsWith('.json')) old.push(name);
+    }
+    old.sort();
+    for (const name of old.slice(0, -10)) await backupDir.removeEntry(name).catch(() => {});
   } catch (_) { }
 }
 
