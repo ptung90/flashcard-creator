@@ -889,6 +889,8 @@ function packAll() {
   const templates = state.schema?.cardTemplates?.filter(t => t.templateType === 'compound') || [];
   if (!templates.length) { showToast(t('rec.toast.noTemplates')); return; }
   if (!state.records.length) { showToast(t('rec.toast.noRecords')); return; }
+  // Clear all packed cards before re-packing from scratch
+  state.cards = state.cards.filter(c => !c.packedRecordIds?.length);
   let cardCount = 0;
   templates.forEach(template => {
     const before = state.cards.length;

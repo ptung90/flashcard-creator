@@ -166,7 +166,7 @@ async function _renderFolderSection() {
       // ── Root view: all subfolders expanded inline ─────────────────
       const subfolders = [], rootFiles = [];
       for await (const [name, handle] of workDirHandle.entries()) {
-        if (handle.kind === "directory") subfolders.push({ name, handle });
+        if (handle.kind === "directory" && name !== "_backups") subfolders.push({ name, handle });
         else if (handle.kind === "file" && name.endsWith(".json") && name !== "user-config.json") {
           const file = await handle.getFile();
           let projectName = name, projectIcon = "🗂️";
@@ -319,6 +319,8 @@ function setDirty() {
 }
 function clearDirty() {
   dirty = false;
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = null;
   _updateLabels();
 }
 
@@ -399,6 +401,27 @@ function _fallbackDownload(json, name) {
 
 function _buildDataObj() {
   return { version: "1.0", project_name: state.projectName, project_icon: state.projectIcon, ...state };
+}
+
+async function _silentBackup() {
+  if (!workDirHandle || !currentFileName) return;
+  try {
+    const activeDir = await _getActiveDirHandle();
+    const backupDir = await activeDir.getDirectoryHandle('_backups', { create: true });
+    const d = new Date();
+    const ts = d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0') + '_' +
+      String(d.getHours()).padStart(2, '0') +
+      String(d.getMinutes()).padStart(2, '0');
+    const base = currentFileName.replace(/\.json$/i, '');
+    const fh = await backupDir.getFileHandle(`${base}-${ts}.json`, { create: true });
+    const json = JSON.stringify(_buildDataObj(), null, 2);
+    const w = await fh.createWritable();
+    await w.write(json);
+    await w.truncate(new TextEncoder().encode(json).byteLength);
+    await w.close();
+  } catch (_) { }
 }
 
 function _defaultFileName() {
@@ -529,6 +552,7 @@ async function loadFromFolder(fileName, subfolder) {
     const fh = await dir.getFileHandle(fileName);
     const file = await fh.getFile();
     const data = JSON.parse(await file.text());
+    await _silentBackup();
     currentSubfolder = sf;
     currentFileName = fileName;
     _updateLabels();
