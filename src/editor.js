@@ -488,7 +488,7 @@ function _initTipTapInstances(card) {
       pushUndo();
       setTimeout(() => {
         const anyFocused = Object.values(_tiptapInstances).some(ed => ed.isFocused);
-        const toolbarHasFocus = document.getElementById('editor-toolbar-format')?.contains(document.activeElement);
+        const toolbarHasFocus = document.getElementById('editor-toolbar')?.contains(document.activeElement);
         const labelInputFocused = document.activeElement?.classList.contains('section-label-input');
         if (anyFocused || toolbarHasFocus || labelInputFocused) return;
         _activeEditor = null;
@@ -535,7 +535,7 @@ function _initTipTapInstances(card) {
       labelEditor.on('blur', () => {
         setTimeout(() => {
           const anyFocused = Object.values(_tiptapInstances).some(ed => ed.isFocused);
-          const toolbarHasFocus = document.getElementById('editor-toolbar-format')?.contains(document.activeElement);
+          const toolbarHasFocus = document.getElementById('editor-toolbar')?.contains(document.activeElement);
           if (anyFocused || toolbarHasFocus) return;
           _activeEditor = null;
           _activeSectionId = null;
@@ -730,7 +730,7 @@ function layoutIcon(layout, selected) {
 
     "6cell": (() => {
       const cell = '<div style="display:flex;flex-direction:column;gap:1px"><div class="lo-block" style="flex:2"></div><div style="height:3px;background:#d4e2de;border-radius:1px"></div><div class="lo-text"></div></div>';
-      return '<div style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:2px">' + cell.repeat(6) + '</div>';
+      return '<div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr 1fr;gap:2px">' + cell.repeat(6) + '</div>';
     })(),
 
     "8img-8txt": (() => {

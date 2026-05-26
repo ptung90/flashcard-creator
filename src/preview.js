@@ -1,3 +1,29 @@
+// Waits for fonts + 1 rAF before html2canvas to prevent missing-font spacing artifacts
+async function _waitForRender() {
+  await document.fonts.ready;
+  await new Promise(r => requestAnimationFrame(r));
+}
+
+// html2canvas wrapper: normalizes letter-spacing/word-spacing in the clone
+// to prevent browser-specific spacing divergence
+function _capture(el) {
+  return html2canvas(el, {
+    useCORS: true,
+    allowTaint: false,
+    scale: 2,
+    backgroundColor: "#ffffff",
+    onclone(_, clonedEl) {
+      clonedEl.querySelectorAll("*").forEach(node => {
+        const s = node.style;
+        if (s) {
+          s.letterSpacing = "0px";
+          s.wordSpacing   = "0px";
+        }
+      });
+    },
+  });
+}
+
 // ── Preview ────────────────────────────────────────────────────────
 function renderPreview() {
   const wrap = document.getElementById("preview-card-wrap");
@@ -251,13 +277,8 @@ async function exportOnePDF() {
   wrap.style.cssText = "width:auto;min-width:0;display:block;";
   wrap.innerHTML = buildCaptureHTML(card, s);
   const el = wrap.firstElementChild;
-  await new Promise((r) => setTimeout(r, 80));
-  const canvas = await html2canvas(el, {
-    useCORS: true,
-    allowTaint: false,
-    scale: 2,
-    backgroundColor: "#ffffff",
-  });
+  await _waitForRender();
+  const canvas = await _capture(el);
   pdf.addImage(
     canvas.toDataURL("image/jpeg", 0.92),
     "JPEG",
@@ -297,14 +318,8 @@ async function exportPDF() {
     const { w: pw, h: ph } = getPaperMm(card.paperSize || s.paperSize, orientation);
     wrap.innerHTML = buildCaptureHTML(card, s);
     const el = wrap.firstElementChild;
-
-    await new Promise((r) => setTimeout(r, 80));
-    const canvas = await html2canvas(el, {
-      useCORS: true,
-      allowTaint: false,
-      scale: 2,
-      backgroundColor: "#ffffff",
-    });
+    await _waitForRender();
+    const canvas = await _capture(el);
     const imgData = canvas.toDataURL("image/jpeg", 0.92);
     if (i > 0)
       pdf.addPage([pw, ph], orientation === "landscape" ? "l" : "p");
