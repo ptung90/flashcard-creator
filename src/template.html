@@ -93,8 +93,9 @@
     </svg>
 
     <div class="fc-app">
-      <!-- Settings Bar -->
+      <!-- Settings Bar (all page setup in one panel) -->
       <div class="fc-settings-bar">
+        <!-- Row 1: Page · Spacing · Border · Image -->
         <div class="setting-group">
           <label data-i18n="set.paper">Paper</label>
           <select id="set-paper">
@@ -104,251 +105,36 @@
             <option value="Letter">Letter</option>
           </select>
           <div class="btn-group" id="set-orient-group">
-            <button class="btn btn-secondary btn-sm orient-btn" data-val="portrait" onclick="setGlobalOrient('portrait')" data-i18n="orient.portrait">Portrait</button>
-            <button class="btn btn-secondary btn-sm orient-btn" data-val="landscape" onclick="setGlobalOrient('landscape')" data-i18n="orient.landscape">Landscape</button>
+            <button class="btn btn-secondary btn-sm orient-btn" data-val="portrait" onclick="setGlobalOrient('portrait')" data-i18n="orient.portrait">P</button>
+            <button class="btn btn-secondary btn-sm orient-btn" data-val="landscape" onclick="setGlobalOrient('landscape')" data-i18n="orient.landscape">L</button>
           </div>
         </div>
         <div class="setting-group">
-          <label data-i18n="set.margin">Margin</label>
-          <input
-            type="number"
-            id="set-margin"
-            value="15"
-            min="0"
-            max="40"
-            title="mm"
-          />
-          <label data-i18n="set.mm">mm</label>
-          <label style="margin-left: 6px" data-i18n="set.textPad"
-            >Text Pad</label
-          >
-          <input
-            type="number"
-            id="set-padding"
-            value="12"
-            min="0"
-            max="40"
-            title="mm"
-          />
-          <label data-i18n="set.mm">mm</label>
-          <label style="margin-left: 6px" data-i18n="set.imgPad">Img Pad</label>
-          <input
-            type="number"
-            id="set-img-padding"
-            value="0"
-            min="0"
-            max="20"
-            title="mm"
-          />
-          <label data-i18n="set.mm">mm</label>
-        </div>
-        <button class="btn-border-toggle" id="btn-border-toggle" onclick="toggleBorderPanel()" data-i18n-title="set.bd.title" title="Border settings">
-          <span id="bd-swatch" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#3e9684;flex-shrink:0;"></span><svg class="icon" style="margin-left:2px"><use href="#i-border"/></svg><span class="btn-label">Bd</span><svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg>
-        </button>
-        <button class="btn-border-toggle" id="btn-img-toggle" onclick="toggleImgPanel()" data-i18n-title="set.img.title" title="Image settings"><svg class="icon"><use href="#i-image"/></svg><span class="btn-label">Img</span><svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></button>
-        <button class="btn-font-toggle" id="btn-font-toggle" onclick="toggleFontPanel()" data-i18n-title="set.font.title" title="Font settings"><svg class="icon"><use href="#i-type"/></svg><span class="btn-label">Aa</span><svg class="icon" style="width:12px;height:12px"><use href="#i-chevron-down"/></svg></button>
-      </div>
-
-      <!-- Font Settings Panel (collapsible) -->
-      <div id="font-settings-panel" class="font-settings-panel">
-        <div class="setting-group">
-          <label data-i18n="font.title">Title</label>
-          <select id="set-font-family">
-            <option
-              value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif"
-            >
-              Modern Sans
-            </option>
-            <option value="sans-serif">Sans-serif</option>
-            <option value="serif">Serif</option>
-            <option value="'Georgia',serif">Georgia</option>
-            <option value="'Times New Roman',serif">Times</option>
-            <option value="'Courier New',monospace">Mono</option>
-            <option value="'Be Vietnam Pro','Noto Sans','Segoe UI',sans-serif">
-              Vietnamese Sans
-            </option>
-            <option value="'Inter','Segoe UI',Roboto,Arial,sans-serif">
-              Inter
-            </option>
-            <option
-              value="'SF Pro Display','SF Pro Text','Helvetica Neue',Arial,sans-serif"
-            >
-              SF Pro
-            </option>
-            <option value="'Segoe UI',Tahoma,Geneva,Verdana,sans-serif">
-              Windows UI
-            </option>
-            <option value="Roboto,'Helvetica Neue',Arial,sans-serif">
-              Roboto
-            </option>
-            <option value="'Helvetica Neue',Helvetica,Arial,sans-serif">
-              Helvetica
-            </option>
-            <option value="'Trebuchet MS',sans-serif">Trebuchet</option>
-            <option value="Verdana,Geneva,sans-serif">Verdana</option>
-            <option value="Tahoma,Geneva,sans-serif">Tahoma</option>
-            <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">
-              Palatino
-            </option>
-            <option value="'Lucida Console','Courier New',monospace">
-              Lucida Console
-            </option>
-          </select>
-          <input
-            type="number"
-            id="set-font-size"
-            min="8"
-            max="72"
-            style="width: 46px"
-            title="Size (px)"
-          />
-          <label>px</label>
-          <input type="color" id="set-font-color" title="Text color" />
-          <label data-i18n="font.lh">LH</label>
-          <input
-            type="number"
-            id="set-font-lh"
-            min="1"
-            max="3"
-            step="0.1"
-            style="width: 46px"
-            title="Line height"
-          />
-          <label>W</label>
-          <select id="set-font-fw" title="Font weight" style="width:80px">
-            <option value="300">Light</option>
-            <option value="400">Normal</option>
-            <option value="500">Medium</option>
-            <option value="600">SemiBold</option>
-            <option value="700">Bold</option>
-            <option value="900">Black</option>
-          </select>
-          <div class="align-btn-group">
-            <button class="align-btn" data-key="titleFont" data-align="left" onclick="setFontAlign('titleFont', 'left')" title="Left"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-left"/></svg></button>
-            <button class="align-btn" data-key="titleFont" data-align="center" onclick="setFontAlign('titleFont', 'center')" title="Center"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-center"/></svg></button>
-            <button class="align-btn" data-key="titleFont" data-align="right" onclick="setFontAlign('titleFont', 'right')" title="Right"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-right"/></svg></button>
-            <button class="align-btn" data-key="titleFont" data-align="justify" onclick="setFontAlign('titleFont', 'justify')" title="Justify"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-justify"/></svg></button>
-          </div>
+          <label data-i18n="set.margin">Mg</label>
+          <input type="number" id="set-margin" value="15" min="0" max="40" title="Margin (mm)" style="width:38px"/>
+          <label data-i18n="set.textPad">Pd</label>
+          <input type="number" id="set-padding" value="12" min="0" max="40" title="Text Pad (mm)" style="width:38px"/>
+          <label data-i18n="set.imgPad">Ip</label>
+          <input type="number" id="set-img-padding" value="0" min="0" max="20" title="Img Pad (mm)" style="width:38px"/>
+          <label style="color:#9ca3af;font-size:10px">mm</label>
         </div>
         <div class="setting-group">
-          <label data-i18n="font.content">Content</label>
-          <select id="set-cfont-family">
-            <option
-              value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif"
-            >
-              Modern Sans
-            </option>
-            <option value="sans-serif">Sans-serif</option>
-            <option value="serif">Serif</option>
-            <option value="'Georgia',serif">Georgia</option>
-            <option value="'Times New Roman',serif">Times</option>
-            <option value="'Courier New',monospace">Mono</option>
-            <option value="'Be Vietnam Pro','Noto Sans','Segoe UI',sans-serif">
-              Vietnamese Sans
-            </option>
-            <option value="'Inter','Segoe UI',Roboto,Arial,sans-serif">
-              Inter
-            </option>
-            <option
-              value="'SF Pro Display','SF Pro Text','Helvetica Neue',Arial,sans-serif"
-            >
-              SF Pro
-            </option>
-            <option value="'Segoe UI',Tahoma,Geneva,Verdana,sans-serif">
-              Windows UI
-            </option>
-            <option value="Roboto,'Helvetica Neue',Arial,sans-serif">
-              Roboto
-            </option>
-            <option value="'Helvetica Neue',Helvetica,Arial,sans-serif">
-              Helvetica
-            </option>
-            <option value="'Trebuchet MS',sans-serif">Trebuchet</option>
-            <option value="Verdana,Geneva,sans-serif">Verdana</option>
-            <option value="Tahoma,Geneva,sans-serif">Tahoma</option>
-            <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">
-              Palatino
-            </option>
-            <option value="'Lucida Console','Courier New',monospace">
-              Lucida Console
-            </option>
+          <label data-i18n="bd.width">Bd</label>
+          <input type="number" id="set-bw" value="2" min="0" max="10" title="Border width (px)" style="width:44px"/>
+          <select id="set-bs" style="width:68px">
+            <option value="dashed" selected>Dashed</option>
+            <option value="solid">Solid</option>
+            <option value="dotted">Dotted</option>
+            <option value="double">Double</option>
+            <option value="none">None</option>
           </select>
-          <input
-            type="number"
-            id="set-cfont-size"
-            min="8"
-            max="72"
-            style="width: 46px"
-            title="Size (px)"
-          />
-          <label>px</label>
-          <input type="color" id="set-cfont-color" title="Text color" />
-          <label data-i18n="font.lh">LH</label>
-          <input
-            type="number"
-            id="set-cfont-lh"
-            min="1"
-            max="3"
-            step="0.1"
-            style="width: 46px"
-            title="Line height"
-          />
-          <label>W</label>
-          <select id="set-cfont-fw" title="Font weight" style="width:80px">
-            <option value="300">Light</option>
-            <option value="400">Normal</option>
-            <option value="500">Medium</option>
-            <option value="600">SemiBold</option>
-            <option value="700">Bold</option>
-            <option value="900">Black</option>
-          </select>
-          <div class="align-btn-group">
-            <button class="align-btn" data-key="contentFont" data-align="left" onclick="setFontAlign('contentFont', 'left')" title="Left"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-left"/></svg></button>
-            <button class="align-btn" data-key="contentFont" data-align="center" onclick="setFontAlign('contentFont', 'center')" title="Center"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-center"/></svg></button>
-            <button class="align-btn" data-key="contentFont" data-align="right" onclick="setFontAlign('contentFont', 'right')" title="Right"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-right"/></svg></button>
-            <button class="align-btn" data-key="contentFont" data-align="justify" onclick="setFontAlign('contentFont', 'justify')" title="Justify"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-justify"/></svg></button>
-          </div>
+          <input type="color" id="set-bc" value="#6B21A8" title="Border color"/>
+          <label data-i18n="bd.radius">R</label>
+          <input type="number" id="set-br" value="0" min="0" max="40" title="Border radius (px)" style="width:44px"/>
         </div>
         <div class="setting-group">
-          <label>V-Align</label>
-          <div class="align-btn-group">
-            <button class="valign-btn align-btn" data-valign="top" onclick="setTextVAlign('top')" title="Top"><svg class="icon" style="width:13px;height:13px"><use href="#i-valign-top"/></svg></button>
-            <button class="valign-btn align-btn" data-valign="middle" onclick="setTextVAlign('middle')" title="Middle"><svg class="icon" style="width:13px;height:13px"><use href="#i-valign-middle"/></svg></button>
-            <button class="valign-btn align-btn" data-valign="bottom" onclick="setTextVAlign('bottom')" title="Bottom"><svg class="icon" style="width:13px;height:13px"><use href="#i-valign-bottom"/></svg></button>
-          </div>
-        </div>
-        <div class="setting-group setting-group--full">
-          <label>Load Font</label>
-          <input
-            type="text"
-            id="gfont-input"
-            placeholder="Nunito, Pacifico…"
-            style="flex: 1; min-width: 100px"
-            onkeydown="if (event.key === 'Enter') addGoogleFont('google');"
-          />
-          <button
-            class="btn btn-secondary btn-sm"
-            onclick="addGoogleFont('google')"
-            title="Load from Google Fonts CDN"
-          >
-            Google
-          </button>
-          <button
-            class="btn btn-secondary btn-sm"
-            onclick="addGoogleFont('custom')"
-            title="Add name only (font defined in Custom CSS)"
-          >
-            Custom
-          </button>
-        </div>
-        <div id="gfont-tags" class="gfont-tags"></div>
-      </div>
-
-      <!-- Image Settings Panel (collapsible) -->
-      <div id="img-settings-panel" class="border-settings-panel">
-        <div class="setting-group">
-          <label data-i18n="img.fit">Fit</label>
-          <select id="set-imgsize">
+          <label data-i18n="img.fit">Img</label>
+          <select id="set-imgsize" style="width:72px">
             <option value="cover">Cover</option>
             <option value="contain">Contain</option>
             <option value="auto">Auto</option>
@@ -358,66 +144,104 @@
             <option value="50%">50%</option>
             <option value="75%">75%</option>
           </select>
+          <input type="text" id="set-imgpos" value="center" style="width:60px" title="CSS background-position"/>
         </div>
-        <div class="setting-group">
-          <label data-i18n="img.pos">Position</label>
-          <input
-            type="text"
-            id="set-imgpos"
-            value="center"
-            style="width: 80px"
-            title="CSS background-position"
-          />
-        </div>
-      </div>
-
-      <!-- Border Settings Panel (collapsible) -->
-      <div id="border-settings-panel" class="border-settings-panel">
-        <div class="setting-group">
-          <label data-i18n="bd.width">Width</label>
-          <input
-            type="number"
-            id="set-bw"
-            value="2"
-            min="0"
-            max="10"
-            title="px"
-            style="width: 40px"
-          />
-          <label>px</label>
-        </div>
-        <div class="setting-group">
-          <label data-i18n="bd.style">Style</label>
-          <select id="set-bs">
-            <option value="dashed" selected>Dashed</option>
-            <option value="solid">Solid</option>
-            <option value="dotted">Dotted</option>
-            <option value="double">Double</option>
-            <option value="none">None</option>
+        <!-- Row 2: Title font · Content font · V-Align · Load Font -->
+        <div class="setting-group set-row-break">
+          <label data-i18n="font.title">Title</label>
+          <select id="set-font-family" style="width:100px">
+            <option value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif">Modern Sans</option>
+            <option value="sans-serif">Sans-serif</option>
+            <option value="serif">Serif</option>
+            <option value="'Georgia',serif">Georgia</option>
+            <option value="'Times New Roman',serif">Times</option>
+            <option value="'Courier New',monospace">Mono</option>
+            <option value="'Be Vietnam Pro','Noto Sans','Segoe UI',sans-serif">Vietnamese Sans</option>
+            <option value="'Inter','Segoe UI',Roboto,Arial,sans-serif">Inter</option>
+            <option value="'SF Pro Display','SF Pro Text','Helvetica Neue',Arial,sans-serif">SF Pro</option>
+            <option value="'Segoe UI',Tahoma,Geneva,Verdana,sans-serif">Windows UI</option>
+            <option value="Roboto,'Helvetica Neue',Arial,sans-serif">Roboto</option>
+            <option value="'Helvetica Neue',Helvetica,Arial,sans-serif">Helvetica</option>
+            <option value="'Trebuchet MS',sans-serif">Trebuchet</option>
+            <option value="Verdana,Geneva,sans-serif">Verdana</option>
+            <option value="Tahoma,Geneva,sans-serif">Tahoma</option>
+            <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">Palatino</option>
+            <option value="'Lucida Console','Courier New',monospace">Lucida Console</option>
           </select>
+          <input type="number" id="set-font-size" min="8" max="72" style="width:40px" title="Size (px)"/>
+          <input type="color" id="set-font-color" title="Text color"/>
+          <label data-i18n="font.lh">LH</label>
+          <input type="number" id="set-font-lh" min="1" max="3" step="0.1" style="width:40px" title="Line height"/>
+          <select id="set-font-fw" title="Font weight" style="width:72px">
+            <option value="300">Light</option>
+            <option value="400">Normal</option>
+            <option value="500">Medium</option>
+            <option value="600">SemiBold</option>
+            <option value="700">Bold</option>
+            <option value="900">Black</option>
+          </select>
+          <div class="align-btn-group">
+            <button class="align-btn" data-key="titleFont" data-align="left" onclick="setFontAlign('titleFont','left')" title="Left"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-left"/></svg></button>
+            <button class="align-btn" data-key="titleFont" data-align="center" onclick="setFontAlign('titleFont','center')" title="Center"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-center"/></svg></button>
+            <button class="align-btn" data-key="titleFont" data-align="right" onclick="setFontAlign('titleFont','right')" title="Right"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-right"/></svg></button>
+            <button class="align-btn" data-key="titleFont" data-align="justify" onclick="setFontAlign('titleFont','justify')" title="Justify"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-justify"/></svg></button>
+          </div>
         </div>
         <div class="setting-group">
-          <label data-i18n="bd.color">Color</label>
-          <input
-            type="color"
-            id="set-bc"
-            value="#6B21A8"
-            title="Border color"
-          />
+          <label data-i18n="font.content">Content</label>
+          <select id="set-cfont-family" style="width:100px">
+            <option value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif">Modern Sans</option>
+            <option value="sans-serif">Sans-serif</option>
+            <option value="serif">Serif</option>
+            <option value="'Georgia',serif">Georgia</option>
+            <option value="'Times New Roman',serif">Times</option>
+            <option value="'Courier New',monospace">Mono</option>
+            <option value="'Be Vietnam Pro','Noto Sans','Segoe UI',sans-serif">Vietnamese Sans</option>
+            <option value="'Inter','Segoe UI',Roboto,Arial,sans-serif">Inter</option>
+            <option value="'SF Pro Display','SF Pro Text','Helvetica Neue',Arial,sans-serif">SF Pro</option>
+            <option value="'Segoe UI',Tahoma,Geneva,Verdana,sans-serif">Windows UI</option>
+            <option value="Roboto,'Helvetica Neue',Arial,sans-serif">Roboto</option>
+            <option value="'Helvetica Neue',Helvetica,Arial,sans-serif">Helvetica</option>
+            <option value="'Trebuchet MS',sans-serif">Trebuchet</option>
+            <option value="Verdana,Geneva,sans-serif">Verdana</option>
+            <option value="Tahoma,Geneva,sans-serif">Tahoma</option>
+            <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">Palatino</option>
+            <option value="'Lucida Console','Courier New',monospace">Lucida Console</option>
+          </select>
+          <input type="number" id="set-cfont-size" min="8" max="72" style="width:40px" title="Size (px)"/>
+          <input type="color" id="set-cfont-color" title="Text color"/>
+          <label data-i18n="font.lh">LH</label>
+          <input type="number" id="set-cfont-lh" min="1" max="3" step="0.1" style="width:40px" title="Line height"/>
+          <select id="set-cfont-fw" title="Font weight" style="width:72px">
+            <option value="300">Light</option>
+            <option value="400">Normal</option>
+            <option value="500">Medium</option>
+            <option value="600">SemiBold</option>
+            <option value="700">Bold</option>
+            <option value="900">Black</option>
+          </select>
+          <div class="align-btn-group">
+            <button class="align-btn" data-key="contentFont" data-align="left" onclick="setFontAlign('contentFont','left')" title="Left"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-left"/></svg></button>
+            <button class="align-btn" data-key="contentFont" data-align="center" onclick="setFontAlign('contentFont','center')" title="Center"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-center"/></svg></button>
+            <button class="align-btn" data-key="contentFont" data-align="right" onclick="setFontAlign('contentFont','right')" title="Right"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-right"/></svg></button>
+            <button class="align-btn" data-key="contentFont" data-align="justify" onclick="setFontAlign('contentFont','justify')" title="Justify"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-justify"/></svg></button>
+          </div>
         </div>
         <div class="setting-group">
-          <label data-i18n="bd.radius">Radius</label>
-          <input
-            type="number"
-            id="set-br"
-            value="0"
-            min="0"
-            max="40"
-            title="radius px"
-            style="width: 40px"
-          />
-          <label data-i18n="font.px">px</label>
+          <label>VA</label>
+          <div class="align-btn-group">
+            <button class="valign-btn align-btn" data-valign="top" onclick="setTextVAlign('top')" title="Top"><svg class="icon" style="width:13px;height:13px"><use href="#i-valign-top"/></svg></button>
+            <button class="valign-btn align-btn" data-valign="middle" onclick="setTextVAlign('middle')" title="Middle"><svg class="icon" style="width:13px;height:13px"><use href="#i-valign-middle"/></svg></button>
+            <button class="valign-btn align-btn" data-valign="bottom" onclick="setTextVAlign('bottom')" title="Bottom"><svg class="icon" style="width:13px;height:13px"><use href="#i-valign-bottom"/></svg></button>
+          </div>
         </div>
+        <div class="setting-group">
+          <label>Font+</label>
+          <input type="text" id="gfont-input" placeholder="Nunito, Pacifico…" style="width:110px" onkeydown="if(event.key==='Enter')addGoogleFont('google');"/>
+          <button class="btn btn-secondary btn-sm" onclick="addGoogleFont('google')" title="Load from Google Fonts CDN">Google</button>
+          <button class="btn btn-secondary btn-sm" onclick="addGoogleFont('custom')" title="Add name only (font defined in Custom CSS)">Custom</button>
+        </div>
+        <div id="gfont-tags" class="gfont-tags"></div>
       </div>
 
       <!-- Restore banner (shown when permission not yet granted) -->

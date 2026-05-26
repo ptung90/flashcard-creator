@@ -386,6 +386,7 @@ async function _writeToDir(fileName, json) {
   const fh = await dir.getFileHandle(fileName, { create: true });
   const w = await fh.createWritable();
   await w.write(json);
+  await w.truncate(new TextEncoder().encode(json).byteLength);
   await w.close();
 }
 
@@ -712,6 +713,7 @@ function applyLoadedData(data) {
         templateId:      c.templateId      ?? null,
         paperSize:       c.paperSize       ?? null,
         packedRecordIds: c.packedRecordIds ?? null,
+        cssClass:        c.cssClass        ?? '',
       };
     });
   }

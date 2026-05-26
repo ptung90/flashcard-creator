@@ -164,6 +164,8 @@ function openRecordDetail(id) {
 
   const fields = state.schema.fields;
   const singleTemplates = state.schema.cardTemplates.filter(t => t.templateType === 'single');
+  const cf = state.settings.contentFont || {};
+  const contentFontStyle = cf.family ? `font-family:${cf.family};` : '';
 
   const fieldInputs = fields.map(f => {
     const val = record.fields[f.key] ?? '';
@@ -184,8 +186,8 @@ function openRecordDetail(id) {
     } else {
       const longCls = f.type === 'text-long' ? ' rec-tiptap--long' : '';
       input = window.tiptapReady === true
-        ? `<div class="section-tiptap-editor${longCls}" id="rec-tiptap-${f.key}"></div>`
-        : `<textarea rows="${f.type === 'text-long' ? 4 : 1}"
+        ? `<div class="section-tiptap-editor${longCls}" id="rec-tiptap-${f.key}" style="${contentFontStyle}"></div>`
+        : `<textarea rows="${f.type === 'text-long' ? 4 : 1}" style="${contentFontStyle}"
             onchange="_setRecordField('${record.id}','${f.key}',this.value)"
             >${esc(val)}</textarea>`;
     }

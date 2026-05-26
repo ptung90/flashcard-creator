@@ -252,7 +252,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
     (forPrint ? "print" : "preview") +
     " fc-layout-" +
     card.layout +
-    "";
+    (card.cssClass ? " " + card.cssClass.trim() : "");
   const borderStyle =
     "border:" +
     s.border.width +
@@ -302,7 +302,8 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   const _labelSizeRule = card.labelSize
     ? `${_cs} .fc-section__label{font-size:${card.labelSize}px}${_cs} .fc-img-label{font-size:${card.labelSize}px}`
     : '';
-  const cardStyleTag = '<style>' + _h1Rule + _labelSizeRule + (card.customCss ? _scopeCardCss(card.customCss, card.id) : '') + '</style>';
+  const _imgLabelFontRule = contentStyle ? `${_cs} .fc-img-label{${contentStyle}}` : '';
+  const cardStyleTag = '<style>' + _h1Rule + _labelSizeRule + _imgLabelFontRule + (card.customCss ? _scopeCardCss(card.customCss, card.id) : '') + '</style>';
   const showTitle = !!card.title && !card.hideTitle;
   const borderCss = s.border.style + " " + s.border.color;
   const compoundCellOptions = {

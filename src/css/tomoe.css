@@ -68,14 +68,12 @@ body { background: var(--paper); color: var(--ink-900); }
   transition: max-height .22s ease, padding .22s ease;
 }
 .fc-settings-bar.open {
-  max-height: 240px;
+  max-height: 220px;
   padding-top: 7px; padding-bottom: 7px;
 }
 
 /* Group separators */
-.fc-settings-bar .setting-group,
-.font-settings-panel .setting-group,
-.border-settings-panel .setting-group {
+.fc-settings-bar .setting-group {
   border-right: 1px solid var(--line-strong);
   padding-right: 12px;
 }
@@ -151,29 +149,6 @@ body { background: var(--paper); color: var(--ink-900); }
 }
 #project-icon-btn:hover { background: var(--mint-50); border-color: var(--mint-300); }
 
-/* Border / Img / Font toggle buttons */
-.btn-border-toggle, .btn-font-toggle {
-  background: #fff;
-  border: 1px solid var(--line-strong);
-  border-radius: 5px;
-  height: 26px;
-  padding: 0 8px;
-  font-size: 11.5px;
-  color: var(--ink-700);
-  gap: 4px;
-  display: inline-flex; align-items: center;
-}
-.btn-border-toggle:hover, .btn-font-toggle:hover {
-  background: var(--mint-50); border-color: var(--mint-300); color: var(--mint-600);
-}
-.btn-border-toggle.open, .btn-font-toggle.open {
-  background: var(--mint-50); border-color: var(--mint-400); color: var(--mint-600);
-}
-.btn-border-toggle .icon, .btn-font-toggle .icon { width: 14px; height: 14px; }
-.btn-border-toggle.open svg:last-child,
-.btn-font-toggle.open svg:last-child { transform: rotate(180deg); transition: transform .15s; }
-.btn-border-toggle svg:last-child,
-.btn-font-toggle svg:last-child { transition: transform .15s; }
 
 /* Sidebar */
 .fc-sidebar { background: var(--paper); border-right: 1px solid var(--line); }
@@ -352,29 +327,6 @@ input[type="range"] { accent-color: var(--mint-600); }
 .card-css-on { color: var(--mint-600); font-size: 9px; margin-left: 2px; }
 .fc-editor input[type="checkbox"] { accent-color: var(--mint-600); }
 
-/* Font/border settings panels */
-.font-settings-panel,
-.border-settings-panel {
-  background: var(--mint-50);
-  border-bottom: 1px solid var(--line);
-  padding: 0 12px;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height .25s ease, padding .25s ease;
-}
-.font-settings-panel.open { max-height: 220px; padding: 8px 12px; }
-.border-settings-panel.open { max-height: 80px; padding: 8px 12px; }
-
-.font-settings-panel .setting-group,
-.border-settings-panel .setting-group {
-  border-right: 1px solid var(--line);
-  padding-right: 14px;
-}
-.font-settings-panel .setting-group:last-child,
-.border-settings-panel .setting-group:last-child { border-right: none; }
-
-.font-settings-panel label,
-.border-settings-panel label,
 .fc-settings-bar label {
   font-size: 10.5px;
   font-weight: 500;
@@ -382,12 +334,6 @@ input[type="range"] { accent-color: var(--mint-600); }
   letter-spacing: 0.02em;
 }
 
-.font-settings-panel select,
-.font-settings-panel input[type="number"],
-.font-settings-panel input[type="text"],
-.border-settings-panel select,
-.border-settings-panel input[type="number"],
-.border-settings-panel input[type="text"],
 .fc-settings-bar select,
 .fc-settings-bar input[type="number"],
 .fc-settings-bar input[type="text"] {
@@ -398,8 +344,6 @@ input[type="range"] { accent-color: var(--mint-600); }
   border-radius: 5px;
   padding: 0 7px;
 }
-.font-settings-panel input[type="color"],
-.border-settings-panel input[type="color"],
 .fc-settings-bar input[type="color"] {
   width: 26px; height: 26px;
   border: 1px solid var(--line-strong);
@@ -407,6 +351,11 @@ input[type="range"] { accent-color: var(--mint-600); }
   padding: 2px;
   background: #fff;
   cursor: pointer;
+}
+
+.set-row-break {
+  border-top: 1px solid var(--line);
+  padding-top: 6px;
 }
 
 /* btn-group active state — override base.css hardcoded colors */
@@ -549,8 +498,6 @@ input[type="range"] { accent-color: var(--mint-600); }
 
 /* ── Settings / font / border panels spacing ── */
 .fc-settings-bar.open { padding-top: 10px; padding-bottom: 10px; gap: 6px 14px; }
-.font-settings-panel.open { padding: 10px 14px; }
-.border-settings-panel.open { padding: 10px 14px; }
 
 /* ── Records UI ── */
 #records-btn.active { background: var(--mint-50); border-color: var(--mint-400); color: var(--mint-700); }

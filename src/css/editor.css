@@ -433,6 +433,23 @@
   margin-top: 2px;
 }
 
+.card-class-input {
+  flex: 1;
+  padding: 3px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: monospace;
+  background: #fff;
+  color: #1f2937;
+  min-width: 0;
+}
+
+.card-class-input:focus {
+  outline: 1px solid #3e9684;
+  border-color: #3e9684;
+}
+
 .pair-size-group {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

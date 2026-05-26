@@ -117,6 +117,12 @@ function renderEditor() {
   content.style.display = "";
   _destroyTipTapInstances();
 
+  const s = state.settings;
+  const titleF = { ...s.titleFont, ...(card.titleFont || {}) };
+  const contentF = { ...s.contentFont, ...(card.contentFont || {}) };
+  const titleFontStyle = titleF.family ? `font-family:${titleF.family};` : '';
+  const contentFontStyle = contentF.family ? `font-family:${contentF.family};` : '';
+
   const slotCount = LAYOUT_SLOTS[card.layout] ?? 3;
   const slotRow = (i, hidden) => {
     const img = card.images.find((im) => im.slot === i);
@@ -198,8 +204,8 @@ function renderEditor() {
                       <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
                 </div>
                 ${window.tiptapReady === true
-            ? `<div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}"></div>`
-            : `<textarea class="section-content-input" rows="4" placeholder="${t('editor.pairedPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>`
+            ? `<div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}" style="${contentFontStyle}"></div>`
+            : `<textarea class="section-content-input" rows="4" placeholder="${t('editor.pairedPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)" style="${contentFontStyle}">${esc(s.content)}</textarea>`
           }
               </div>
             </div>`;
@@ -211,8 +217,8 @@ function renderEditor() {
               <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
             </div>
             ${window.tiptapReady === true
-          ? `<div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}"></div>`
-          : `<textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)">${esc(s.content)}</textarea>`
+          ? `<div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}" style="${contentFontStyle}"></div>`
+          : `<textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)" style="${contentFontStyle}">${esc(s.content)}</textarea>`
         }
           </div>`;
     })
@@ -288,7 +294,7 @@ function renderEditor() {
       </div>
       <input class="title-input" type="text" value="${esc(card.title)}" placeholder="${t('editor.titlePh')}"
         onfocus="pushUndo()" oninput="updateCardProp('title',this.value)"
-        style="${card.hideTitle ? 'background:#f1f2ef;color:#9aa19e' : ''}">
+        style="${titleFontStyle}${card.hideTitle ? 'background:#f1f2ef;color:#9aa19e' : ''}">
     </div>
 
     <div class="editor-section">
@@ -360,6 +366,12 @@ function renderEditor() {
         <button class="btn btn-secondary btn-sm" onclick="toggleDataArea()">${t('editor.data')}</button>
       </div>
       <div id="card-css-area" style="display:${card.customCss ? '' : 'none'};margin-top:8px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <label style="font-size:11px;color:#9aa19e;white-space:nowrap;flex-shrink:0">Class:</label>
+          <input type="text" class="card-class-input" placeholder="vd: bird-card"
+            value="${esc(card.cssClass || '')}"
+            oninput="updateCardProp('cssClass', this.value)">
+        </div>
         <div style="font-size:10px;color:#9aa19e;margin-bottom:4px">${t('editor.cssHint')}</div>
         <textarea id="card-css-input" class="section-content-input" rows="5"
           placeholder=".fc-title { font-size: 20px; color: #3e9684; }&#10;.fc-section__content { line-height: 1.8; }"
@@ -933,33 +945,10 @@ function updateGridSplitProp(key, val) {
 }
 
 
-function toggleFontPanel() {
-  const panel = document.getElementById("font-settings-panel");
-  const btn = document.getElementById("btn-font-toggle");
-  const open = panel.classList.toggle("open");
-  btn.classList.toggle("open", open);
-}
-
 function _syncBdSwatch() {
   const swatch = document.getElementById("bd-swatch");
   const color = document.getElementById("set-bc")?.value;
   if (swatch && color) swatch.style.background = color;
-}
-
-function toggleBorderPanel() {
-  const panel = document.getElementById("border-settings-panel");
-  const btn = document.getElementById("btn-border-toggle");
-  const open = panel.classList.toggle("open");
-  btn.classList.toggle("open", open);
-  const arrow = document.getElementById("bd-arrow");
-  if (arrow) arrow.textContent = open ? "▴" : "▾";
-}
-
-function toggleImgPanel() {
-  const panel = document.getElementById("img-settings-panel");
-  const btn = document.getElementById("btn-img-toggle");
-  const open = panel.classList.toggle("open");
-  btn.classList.toggle("open", open);
 }
 
 function setSlotSize(slot, val) {

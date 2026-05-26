@@ -160,7 +160,14 @@ function addGoogleFont(src) {
   state.settings.googleFonts = fonts;
   input.value = "";
   renderGFontTags();
+  // Auto-select the new font in both dropdowns and apply to state
+  const value = `'${name}',sans-serif`;
+  const titleSel = document.getElementById("set-font-family");
+  const contentSel = document.getElementById("set-cfont-family");
+  if (titleSel) { titleSel.value = value; state.settings.titleFont.family = value; }
+  if (contentSel) { contentSel.value = value; state.settings.contentFont.family = value; }
   setDirty();
+  renderPreview();
 }
 
 function removeGoogleFont(name) {
@@ -265,6 +272,7 @@ function newCard() {
     contentFont:       null,
     orientation:       null,
     customCss:         '',
+    cssClass:          '',
     sections:          [],
     recordId:          null,
     templateId:        null,
@@ -295,6 +303,75 @@ function addCard() {
   activeCardId = card.id;
   showCardPanel();
   dispatch('CARD_LIST_CHANGED');
+}
+
+let _cardStyleClipboard = null;
+
+function copyCardStyle(id) {
+  const card = state.cards.find(c => c.id === id);
+  if (!card) return;
+  _cardStyleClipboard = {
+    layout:             card.layout,
+    imageHeightPercent: card.imageHeightPercent,
+    imageGridSplit:     JSON.parse(JSON.stringify(card.imageGridSplit || {})),
+    hideTitle:          card.hideTitle,
+    hideSectionLabels:  card.hideSectionLabels,
+    titleFont:          card.titleFont ? { ...card.titleFont } : null,
+    contentFont:        card.contentFont ? { ...card.contentFont } : null,
+    orientation:        card.orientation,
+    customCss:          card.customCss,
+    bgColor:            card.bgColor ?? null,
+  };
+  showToast(t('misc.styleCopied'));
+}
+
+function pasteCardStyle(id) {
+  if (!_cardStyleClipboard) return;
+  const card = state.cards.find(c => c.id === id);
+  if (!card || card.layout !== _cardStyleClipboard.layout) return;
+  pushUndo();
+  const style = (({ layout, ...rest }) => rest)(_cardStyleClipboard);
+  Object.assign(card, JSON.parse(JSON.stringify(style)));
+  setDirty();
+  renderEditor();
+  renderPreview();
+  showToast(t('misc.stylePasted'));
+}
+
+function openCardMenu(id, btn) {
+  closeCardMenu();
+  const card = state.cards.find(c => c.id === id);
+  if (!card) return;
+  const canPaste = _cardStyleClipboard && _cardStyleClipboard.layout === card.layout;
+  const menu = document.createElement('div');
+  menu.id = 'card-more-menu';
+  menu.className = 'card-more-menu';
+  menu.innerHTML = `
+    <button class="card-more-item" onclick="cloneCard('${id}');closeCardMenu()">
+      <svg class="icon" style="width:13px;height:13px"><use href="#i-clone"/></svg>${t('misc.clone')}
+    </button>
+    <div class="card-more-sep"></div>
+    <button class="card-more-item" onclick="copyCardStyle('${id}');closeCardMenu()">
+      <svg class="icon" style="width:13px;height:13px"><use href="#i-copy"/></svg>${t('misc.copyStyle')}
+    </button>
+    <button class="card-more-item${canPaste ? '' : ' card-more-item--disabled'}" onclick="${canPaste ? `pasteCardStyle('${id}');closeCardMenu()` : ''}">
+      <svg class="icon" style="width:13px;height:13px"><use href="#i-clipboard"/></svg>${t('misc.pasteStyle')}
+    </button>
+    <div class="card-more-sep"></div>
+    <button class="card-more-item card-more-item--danger" onclick="if(confirm(t('confirm.deleteCard'))){deleteCard('${id}');}closeCardMenu()">
+      <svg class="icon" style="width:13px;height:13px"><use href="#i-trash"/></svg>${t('misc.delete')}
+    </button>`;
+  menu.addEventListener('click', e => e.stopPropagation());
+  document.body.appendChild(menu);
+  const rect = btn.getBoundingClientRect();
+  const menuW = 160;
+  const left = Math.min(rect.left, window.innerWidth - menuW - 8);
+  menu.style.cssText = `position:fixed;left:${left}px;top:${rect.bottom + 4}px`;
+  setTimeout(() => document.addEventListener('click', closeCardMenu, { once: true }), 0);
+}
+
+function closeCardMenu() {
+  document.getElementById('card-more-menu')?.remove();
 }
 
 function cloneCard(id) {
@@ -361,8 +438,7 @@ function _renderListSidebar() {
       <span class="card-num">${i + 1}</span>
       <span class="card-title">${esc(c.title || t('card.untitled'))}</span>
       <span class="card-actions">
-        <button class="icon-btn" title="${t('misc.clone')}" onclick="event.stopPropagation();cloneCard('${c.id}')"><svg class="icon" style="width:14px;height:14px"><use href="#i-clone"/></svg></button>
-        <button class="icon-btn" title="${t('misc.delete')}" onclick="event.stopPropagation();if(confirm(t('confirm.deleteCard')))deleteCard('${c.id}')"><svg class="icon" style="width:14px;height:14px"><use href="#i-trash"/></svg></button>
+        <button class="icon-btn card-more-btn" title="More" onclick="event.stopPropagation();openCardMenu('${c.id}',this)"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
       </span>
     </div>
   `,
@@ -404,8 +480,7 @@ function _renderGridSidebar() {
       <span class="card-thumb-num">#${i + 1}</span>
       <div class="card-thumb-title">${esc(c.title || t('card.untitled'))}</div>
       <div class="card-thumb-actions">
-        <button class="icon-btn" title="${t('misc.clone')}" onclick="event.stopPropagation();cloneCard('${c.id}')"><svg class="icon" style="width:14px;height:14px"><use href="#i-clone"/></svg></button>
-        <button class="icon-btn" title="${t('misc.delete')}" onclick="event.stopPropagation();if(confirm(t('confirm.deleteCard')))deleteCard('${c.id}')"><svg class="icon" style="width:14px;height:14px"><use href="#i-trash"/></svg></button>
+        <button class="icon-btn card-more-btn" title="More" onclick="event.stopPropagation();openCardMenu('${c.id}',this)"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
       </div>
     </div>
   `).join("") + '</div>';
@@ -694,13 +769,6 @@ function toggleSettingsBar() {
   if (!bar) return;
   const open = bar.classList.toggle('open');
   if (btn) btn.setAttribute('aria-pressed', open ? 'true' : 'false');
-  if (open) return;
-  document.getElementById('font-settings-panel')?.classList.remove('open');
-  document.getElementById('btn-font-toggle')?.classList.remove('open');
-  document.getElementById('border-settings-panel')?.classList.remove('open');
-  document.getElementById('btn-border-toggle')?.classList.remove('open');
-  document.getElementById('img-settings-panel')?.classList.remove('open');
-  document.getElementById('btn-img-toggle')?.classList.remove('open');
 }
 
 function toggleEmojiPicker(event) {
