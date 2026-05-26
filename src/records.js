@@ -621,6 +621,7 @@ function confirmPack() {
   const selectedRecords = state.records.filter(r => checkedIds.includes(r.id));
 
   packRecords(template, selectedRecords);
+  _consolidateSameLayout(template.layout);
   dispatch('CARD_LIST_CHANGED');
   closePackDialog();
 
@@ -836,6 +837,54 @@ function syncAllPacked() {
   showToast(parts.length ? parts.join(' · ') : t('rec.toast.noPackedCards'));
 }
 
+function _consolidateSameLayout(layout) {
+  const fixedSlots = LAYOUT_SLOTS[layout];
+  if (!fixedSlots) return;
+
+  // packRecords pads sections to fixedSlots, so use packedRecordIds.length
+  // to detect "partial" cards (fewer actual records than slots)
+  const partial = state.cards.filter(c =>
+    c.layout === layout &&
+    c.packedRecordIds?.length > 0 &&
+    c.packedRecordIds.length < fixedSlots
+  );
+  if (partial.length <= 1) return;
+
+  // Collect only real cells (ignore padded empty sections)
+  const cells = [];
+  partial.forEach(card => {
+    const realCount = card.packedRecordIds.length;
+    card.sections.slice(0, realCount).forEach((sec, i) => {
+      const img = card.images?.find(im => im.slot === i);
+      cells.push({ section: sec, image: img ? { ...img } : null, recordId: card.packedRecordIds[i] });
+    });
+  });
+
+  // Remove the partial cards
+  const partialIds = new Set(partial.map(c => c.id));
+  state.cards = state.cards.filter(c => !partialIds.has(c.id));
+
+  // Re-chunk into full cards, using first partial card as style reference
+  const ref = partial[0];
+  for (let i = 0; i < cells.length; i += fixedSlots) {
+    const chunk = cells.slice(i, i + fixedSlots);
+    const card = newCard();
+    card.layout = layout;
+    card.orientation = ref.orientation;
+    card.paperSize = ref.paperSize || null;
+    card.imageGridSplit = ref.imageGridSplit ? { ...ref.imageGridSplit } : { ...(LAYOUT_SPLIT_DEFAULTS[layout] || {}) };
+    card.imageHeightPercent = ref.imageHeightPercent;
+    card.hideTitle = ref.hideTitle ?? true;
+    card.templateId = null; // mixed — won't be auto-synced
+    card.packedRecordIds = chunk.map(cell => cell.recordId).filter(Boolean);
+    card.sections = chunk.map(cell => ({ ...cell.section, id: uid() }));
+    card.images = chunk
+      .map((cell, slot) => cell.image ? { ...cell.image, slot } : null)
+      .filter(Boolean);
+    state.cards.push(card);
+  }
+}
+
 function packAll() {
   const templates = state.schema?.cardTemplates?.filter(t => t.templateType === 'compound') || [];
   if (!templates.length) { showToast(t('rec.toast.noTemplates')); return; }
@@ -846,6 +895,9 @@ function packAll() {
     packRecords(template, state.records);
     cardCount += state.cards.length - before + 1;
   });
+  // Merge partial cards of the same layout to reduce wasted slots
+  const layouts = new Set(templates.map(t => t.layout));
+  layouts.forEach(l => _consolidateSameLayout(l));
   state.records.forEach(r => { r.fieldsHash = _hashStr(JSON.stringify(r.fields)); });
   setDirty();
   dispatch('CARD_LIST_CHANGED');
@@ -864,7 +916,7 @@ function openSchemaEditor() {
   document.getElementById('schema-editor-modal').showModal();
 }
 
-const _COMPOUND_LAYOUTS = ['2img-2txt', '3img-3txt', 'img3-txt3', '8img-8txt', 'txtgrid'];
+const _COMPOUND_LAYOUTS = ['2img-2txt', '3img-3txt', 'img3-txt3', '6cell', '8img-8txt', 'txtgrid'];
 const _SINGLE_SIZES = ['A4', 'A5', 'A6', 'Letter'];
 
 function _renderSchemaEditor() {

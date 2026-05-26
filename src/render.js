@@ -448,20 +448,28 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   if (card.layout === "6cell") {
     const effectiveOrientation = card.orientation || s.orientation;
     const isLandscape = effectiveOrientation === "landscape";
-    const cols = isLandscape ? 2 : 3;
-    const rows = isLandscape ? 3 : 2;
+    const cols = isLandscape ? 3 : 2;
+    const rows = isLandscape ? 2 : 3;
     const imgFlex = card.imageHeightPercent || 55;
     const txtFlex = 100 - imgFlex;
     const cells = Array.from({ length: 6 }, (_, i) => {
       const img = card.images.find(im => im.slot === i);
       const section = card.sections[i] || { id: '', label: '', content: '' };
-      const imgContent = img && img.url
-        ? '<div style="width:100%;height:100%;overflow:hidden;"><div class="img-bg" style="background-image:url(\'' +
-          esc(img.url) + '\');' + resolveImgStyle(img, imgStyle) + 'background-repeat:no-repeat;width:100%;height:100%;"></div></div>'
-        : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;"><span class="empty-placeholder">📷</span></div>';
-      const hasTitle = section.label && !hideLabels;
+      const hasImg = !!(img && img.url);
+      const hasTitle = !!(section.label && !hideLabels);
+      const hasContent = !!section.content;
+      const imgAreaHtml = hasImg
+        ? '<div style="flex:' + imgFlex + ';min-height:0;overflow:hidden;box-sizing:border-box;padding:' + imgPaddingPx + 'px;">' +
+          '<div class="img-bg" style="background-image:url(\'' + esc(img.url) + '\');' + resolveImgStyle(img, imgStyle) + 'background-repeat:no-repeat;width:100%;height:100%;"></div>' +
+          '</div>'
+        : '';
       const cellTitleHtml = hasTitle
         ? '<div class="fc-6cell-title" style="' + titleStyle + '">' + mdParseInline(section.label) + '</div>'
+        : '';
+      const textHtml = hasContent
+        ? '<div class="fc-sections" style="flex:' + txtFlex + ';min-height:0;overflow:auto;padding:' + paddingPx + 'px;' + compoundTextBase + contentStyle + '">' +
+          buildSectionCellHtml(section, true) +
+          '</div>'
         : '';
       const cellStyle = buildCompoundCellStyle('display:flex;flex-direction:column;', {
         paddingPx: 0,
@@ -472,11 +480,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
       });
       return (
         '<div class="fc-image-slot-' + i + '" style="' + cellStyle + '">' +
-        '<div style="flex:' + imgFlex + ';min-height:0;overflow:hidden;">' + imgContent + '</div>' +
-        cellTitleHtml +
-        '<div class="fc-sections" style="flex:' + txtFlex + ';min-height:0;overflow:auto;padding:' + paddingPx + 'px;' + contentStyle + '">' +
-        buildSectionCellHtml(section, true) +
-        '</div>' +
+        imgAreaHtml + cellTitleHtml + textHtml +
         '</div>'
       );
     }).join('');
