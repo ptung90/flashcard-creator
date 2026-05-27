@@ -229,24 +229,28 @@ async function saveStyleToLibrary() {
   } catch (err) { alert('Save failed: ' + err.message); }
 }
 
+function _applyStyleData(data, name) {
+  const src = data.fc_style_version ? data.settings : data;
+  if (!src) throw new Error('Invalid style file');
+  const defaultTF = { family: 'sans-serif', size: 14, color: '#1a1a1a', lineHeight: 1.0, textAlign: 'left' };
+  const defaultCF = { family: 'sans-serif', size: 12, color: '#1a1a1a', lineHeight: 1.1, textAlign: 'left' };
+  state.settings = { ...state.settings, ...src };
+  state.settings.titleFont = { ...defaultTF, ...(src.titleFont || {}) };
+  state.settings.contentFont = { ...defaultCF, ...(src.contentFont || {}) };
+  if (!state.settings.googleFonts) state.settings.googleFonts = [];
+  applyGoogleFonts(); applySettingsToUI();
+  document.getElementById('fc-custom-css').textContent = state.settings.customCss || '';
+  renderPreview(); setDirty();
+  if (name) showToast(`Style "${name}" applied`);
+}
+
 async function applyStyleFromLibrary() {
   const sel = document.getElementById('style-library-select');
   const name = sel?.value;
   if (!name) return;
   try {
     const data = await loadFromLibrary('styles', name);
-    const src = data.fc_style_version ? data.settings : data;
-    if (!src) throw new Error('Invalid style file');
-    const defaultTF = { family: 'sans-serif', size: 14, color: '#1a1a1a', lineHeight: 1.0, textAlign: 'left' };
-    const defaultCF = { family: 'sans-serif', size: 12, color: '#1a1a1a', lineHeight: 1.1, textAlign: 'left' };
-    state.settings = { ...state.settings, ...src };
-    state.settings.titleFont = { ...defaultTF, ...(src.titleFont || {}) };
-    state.settings.contentFont = { ...defaultCF, ...(src.contentFont || {}) };
-    if (!state.settings.googleFonts) state.settings.googleFonts = [];
-    applyGoogleFonts(); applySettingsToUI();
-    document.getElementById('fc-custom-css').textContent = state.settings.customCss || '';
-    renderPreview(); setDirty();
-    showToast(`Style "${name}" applied`);
+    _applyStyleData(data, name);
   } catch (err) { alert('Apply failed: ' + err.message); }
 }
 

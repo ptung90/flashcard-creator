@@ -34,7 +34,7 @@ const LAYOUT_SPLIT_DEFAULTS = {
   "1top-1bot": { row: 50, col: 50, inner: 50 },
   "2img-2txt": { row: 50, col: 50, inner: 50 },
   "3img-3txt": { row: 50, col: 33, inner: 33 },
-  "img3-txt3": { row: 50, col: 50, inner: 50, rowBorders: false },
+  "img3-txt3": { row: 50, col: 50, inner: 50, rowBorders: true },
   "6cell": { row: 55, col: 33, inner: 50 },
   "txtgrid": { row: 50, col: 33, inner: 33 },
   "2img-4txt": { row: 33, col: 50, inner: 50 },

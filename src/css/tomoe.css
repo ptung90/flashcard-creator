@@ -809,7 +809,7 @@ input[type="range"].mint-fill::-webkit-slider-runnable-track {
   white-space: nowrap;
 }
 .editor-toolbar-size {
-  width: 56px;
+  width: 64px;
   font-size: 11px;
   border: 1px solid #d1d5db;
   border-radius: 4px;

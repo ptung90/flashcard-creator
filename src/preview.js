@@ -279,14 +279,7 @@ async function exportOnePDF() {
   const el = wrap.firstElementChild;
   await _waitForRender();
   const canvas = await _capture(el);
-  pdf.addImage(
-    canvas.toDataURL("image/jpeg", 0.92),
-    "JPEG",
-    0,
-    0,
-    pw,
-    ph,
-  );
+  pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, pw, ph);
   pdf.save(_pdfName(card.title || state.projectName));
   wrap.innerHTML = origHTML;
   wrap.style.cssText = origStyle;
@@ -320,10 +313,9 @@ async function exportPDF() {
     const el = wrap.firstElementChild;
     await _waitForRender();
     const canvas = await _capture(el);
-    const imgData = canvas.toDataURL("image/jpeg", 0.92);
     if (i > 0)
       pdf.addPage([pw, ph], orientation === "landscape" ? "l" : "p");
-    pdf.addImage(imgData, "JPEG", 0, 0, pw, ph);
+    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, pw, ph);
   }
 
   pdf.save(_pdfName(state.projectName));

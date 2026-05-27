@@ -70,17 +70,24 @@ function buildSlots(card, slotCount, imgStyle) {
   }).join("");
 }
 
-function buildSectionsHtml(sections, hideLabels) {
+function buildSectionsHtml(sections, hideLabels, inlineSections) {
   return sections
     .map(
       (sec) =>
         `<div class="fc-section${sec.customClass ? ` ${esc(sec.customClass)}` : ''}">` +
         (!hideLabels && sec.label ? '<span class="fc-section__label"' + (sec.labelSize ? ` style="font-size:${sec.labelSize}px"` : '') + '>• ' + mdParseInline(sec.label) + ': </span>' : '') +
-        '<div class="fc-section__content"' + ((sec.fontSize || sec.textAlign) ? ` style="${sec.fontSize ? `font-size:${sec.fontSize}px;` : ''}${sec.textAlign ? `text-align:${sec.textAlign};` : ''}"` : '') + '>' +
-        mdParse(sec.content) +
+        '<div class="fc-section__content"' + buildSectionContentStyle(sec, inlineSections) + '>' +
+        (inlineSections ? mdParseInline(sec.content) : mdParse(sec.content)) +
         "</div></div>",
     )
     .join("");
+}
+
+function buildSectionContentStyle(sec, inline) {
+  let s = inline ? 'display:inline;' : '';
+  if (sec.fontSize) s += `font-size:${sec.fontSize}px;`;
+  if (sec.textAlign) s += `text-align:${sec.textAlign};`;
+  return s ? ` style="${s}"` : '';
 }
 
 function buildSectionCellHtml(section, hideLabels) {
@@ -246,7 +253,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   const slots = buildSlots(card, slotCount, imgStyle);
   const handles = forPrint ? "" : buildHandles(card.layout, split);
   const hideLabels = !!card.hideSectionLabels;
-  const sectionsHtml = buildSectionsHtml(card.sections, hideLabels);
+  const sectionsHtml = buildSectionsHtml(card.sections, hideLabels, !!card.inlineSections);
 
   const cls =
     "fc-card fc-card--" +
@@ -303,8 +310,11 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   const _labelSizeRule = card.labelSize
     ? `${_cs} .fc-section__label{font-size:${card.labelSize}px}${_cs} .fc-img-label{font-size:${card.labelSize}px}`
     : '';
+  const _contentSizeRule = card.contentSize
+    ? `${_cs} .fc-section__content{font-size:${card.contentSize}px}`
+    : '';
   const _imgLabelFontRule = contentStyle ? `${_cs} .fc-img-label{${contentStyle}}` : '';
-  const cardStyleTag = '<style>' + _h1Rule + _labelSizeRule + _imgLabelFontRule + (card.customCss ? _scopeCardCss(card.customCss, card.id) : '') + '</style>';
+  const cardStyleTag = '<style>' + _h1Rule + _labelSizeRule + _contentSizeRule + _imgLabelFontRule + (card.customCss ? _scopeCardCss(card.customCss, card.id) : '') + '</style>';
   const showTitle = !!card.title && !card.hideTitle;
   const borderCss = s.border.style + " " + s.border.color;
   const compoundCellOptions = {

@@ -503,6 +503,7 @@ function generateRecord(record, { skipDispatch = false } = {}) {
   const singleTemplates = state.schema.cardTemplates.filter(t => t.templateType === 'single');
   for (const template of singleTemplates) {
     let card = state.cards.find(c => c.recordId === record.id && c.templateId === template.id);
+    const isNewCard = !card;
     if (!card) {
       card = newCard();
       card.recordId = record.id;
@@ -510,8 +511,10 @@ function generateRecord(record, { skipDispatch = false } = {}) {
       state.cards.push(card);
     }
     card.layout = template.layout;
+    if (isNewCard) card.hideTitle = HIDE_TITLE_LAYOUTS.has(template.layout);
     card.orientation = 'portrait';
     card.paperSize = template.size || null;
+    card.cssClass = template.cardClass || null;
     card.images = (template.mapping.imageSlots || [])
       .map((fid, slot) => ({ slot, url: fid ? _fieldVal(record, fid) : '' }))
       .filter(img => img.url);
@@ -543,6 +546,7 @@ function syncRecord(recordId) {
     const fixedSlots = LAYOUT_SLOTS[template.layout] ?? 0;
     const records = card.packedRecordIds.map(id => state.records.find(r => r.id === id)).filter(Boolean);
     if (!records.length) return;
+    card.cssClass = template.cardClass || null;
     const slotCount = isTxtGrid ? records.length : fixedSlots;
     if (!isTxtGrid) {
       card.images = records.map((rec, slot) => ({
@@ -681,11 +685,13 @@ function packRecords(template, selectedRecords) {
       card.paperSize = template.size || null;
       card.imageGridSplit = { ...(LAYOUT_SPLIT_DEFAULTS[layout] || LAYOUT_SPLIT_DEFAULTS['1full']) };
       card.title = `${layout} · ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
+      card.hideTitle = HIDE_TITLE_LAYOUTS.has(layout);
       state.cards.push(card);
     }
 
     card.templateId = template.id;
     card.packedRecordIds = recordIds;
+    card.cssClass = template.cardClass || null;
 
     if (!isTxtGrid) {
       card.images = records.map((rec, slot) => ({
@@ -923,6 +929,10 @@ async function saveSchemaToLibrary() {
       sel.innerHTML += `<option value="${esc(name.trim())}">${esc(name.trim())}</option>`;
     }
     showToast(`Schema "${name.trim()}" saved to library`);
+    if (confirm(`Also save current style as "${name.trim()}"?`)) {
+      await saveToLibrary('styles', name.trim(), { fc_style_version: '1.0', settings: state.settings });
+      showToast(`Style "${name.trim()}" saved to library`);
+    }
   } catch (err) { alert('Save failed: ' + err.message); }
 }
 
@@ -951,6 +961,12 @@ async function applySchemaFromLibrary() {
     }
     _renderSchemaEditor();
     showToast(`Schema "${name}" loaded${templatesOnly ? ' (templates only)' : ''}`);
+    try {
+      const styleData = await loadFromLibrary('styles', name);
+      if (styleData && confirm(`Matching style "${name}" found. Also load it?`)) {
+        _applyStyleData(styleData, name);
+      }
+    } catch (_) {}
   } catch (err) { alert('Load failed: ' + err.message); }
 }
 
@@ -1035,9 +1051,21 @@ function _renderSchemaEditor() {
           </select>
           <button class="btn btn-sm" onclick="_removeSchemaTemplate(${i})">✕</button>
         </div>
+        <div style="margin-bottom:8px;font-size:12px;display:flex;align-items:center;gap:6px;">
+          <label style="white-space:nowrap;color:#6b7280;">CSS class:</label>
+          <input type="text" placeholder="e.g. card-verb" value="${esc(tmpl.cardClass || '')}"
+            style="flex:1;font-family:monospace;font-size:11px;"
+            oninput="_schemaTemplateChange(${i},'cardClass',this.value)">
+        </div>
         <div style="display:flex;gap:12px;font-size:12px;flex-wrap:wrap;">
           ${tmpl.layout === 'txtgrid' ? `
-          <label>Field:
+          <label>Title:
+            <select onchange="_schemaTemplateChange(${i},'labelSlot',this.value)">
+              <option value="">—</option>${txtFields.map(f =>
+                `<option value="${f.id}" ${tmpl.mapping.labelSlot === f.id ? 'selected' : ''}>${esc(f.label)}</option>`).join('')}
+            </select>
+          </label>
+          <label>Content:
             <select onchange="_schemaTemplateChange(${i},'textSlot',this.value)">
               <option value="">—</option>${txtOpts}
             </select>
@@ -1087,6 +1115,12 @@ function _renderSchemaEditor() {
           `<option value="${sz}" ${(tmpl.size || 'A6') === sz ? 'selected' : ''}>${sz}</option>`).join('')}
           </select>
           <button class="btn btn-sm" onclick="_removeSchemaTemplate(${i})">✕</button>
+        </div>
+        <div style="margin-bottom:8px;font-size:12px;display:flex;align-items:center;gap:6px;">
+          <label style="white-space:nowrap;color:#6b7280;">CSS class:</label>
+          <input type="text" placeholder="e.g. card-noun" value="${esc(tmpl.cardClass || '')}"
+            style="flex:1;font-family:monospace;font-size:11px;"
+            oninput="_schemaTemplateChange(${i},'cardClass',this.value)">
         </div>
         <div style="font-size:12px;">
           <div>Image slots: ${imgSlotSelects}</div>
@@ -1173,6 +1207,9 @@ function _schemaTemplateChange(i, prop, value) {
     t.size = value;
   } else if (prop === 'orientation') {
     t.orientation = value;
+  } else if (prop === 'cardClass') {
+    t.cardClass = value;
+    return;
   }
   _renderSchemaEditor();
 }

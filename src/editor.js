@@ -305,6 +305,11 @@ function renderEditor() {
             <input type="checkbox" ${card.hideSectionLabels ? "checked" : ""} onchange="updateCardProp('hideSectionLabels',this.checked)">
             ${t('editor.hideLabels')}
           </label>
+          ${card.layout === 'fulltext' ? `
+          <label style="font-size:12px;color:#1f2a28;display:flex;align-items:center;gap:6px">
+            <input type="checkbox" ${card.inlineSections ? "checked" : ""} onchange="updateCardProp('inlineSections',this.checked)">
+            Inline
+          </label>` : ''}
         </div>
       </div>
       <div id="editor-toolbar" class="editor-toolbar">
@@ -312,6 +317,8 @@ function renderEditor() {
         <div class="editor-toolbar-group">
           <label class="editor-toolbar-label">${t('toolbar.labelSizeAll')}</label>
           <input type="number" id="toolbar-card-label-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" value="${card.labelSize ?? ''}" oninput="updateCardProp('labelSize',this.value===''?null:+this.value)">
+          <label class="editor-toolbar-label">${t('toolbar.contentSizeAll')}</label>
+          <input type="number" id="toolbar-card-content-size" class="editor-toolbar-size" min="6" max="72" step="1" placeholder="–" value="${card.contentSize ?? ''}" oninput="updateCardProp('contentSize',this.value===''?null:+this.value)">
         </div>
         <div class="editor-toolbar-divider"></div>
         ` : ''}
