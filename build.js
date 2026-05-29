@@ -6,15 +6,27 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 
-const ROOT = __dirname;
-const HTML = path.join(ROOT, "src", "html");
-const JS   = path.join(ROOT, "src", "js");
-const CSS  = path.join(ROOT, "src", "css");
+const ROOT   = __dirname;
+const HTML   = path.join(ROOT, "src", "html");
+const JS     = path.join(ROOT, "src", "js");
+const CSS    = path.join(ROOT, "src", "css");
+const VENDOR = path.join(ROOT, "src", "vendor");
 
 function readJs(name) {
   const p = path.join(JS, name);
   return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
 }
+
+// ── Vendor libs (inlined for offline use) ─────────────────────────
+function readVendor(name) {
+  const p = path.join(VENDOR, name);
+  return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
+}
+const vendorJs = ["marked.min.js", "turndown.min.js"]
+  .map(f => readVendor(f))
+  .filter(Boolean)
+  .join("\n");
+const vendorBlock = vendorJs ? `    <script>\n${vendorJs}\n    </script>` : "";
 
 // ── HTML fragments ─────────────────────────────────────────────────
 const template   = fs.readFileSync(path.join(HTML, "template.html"), "utf8");
@@ -83,6 +95,7 @@ const allJs = [
 const output = template
   .replace("    <!-- BUILD:CONFIG -->", `    <script>\n${config}\n    </script>`)
   .replace("    <!-- BUILD:CSS -->",    `    <style>\n${css}\n    </style>`)
+  .replace("    <!-- BUILD:VENDOR -->", vendorBlock)
   .replace("    <!-- BUILD:SVG -->",    svgHtml)
   .replace("    <!-- BUILD:MODALS -->", modalsHtml)
   .replace("    <!-- BUILD:JS -->",     `    <script>\n${allJs}\n    </script>`);
