@@ -11,13 +11,31 @@ Vanilla JS + CSS, libraries loaded from CDN.
 
 ```
 src/
-├── template.html   — HTML shell + all body HTML
-│                     Config slot: <!-- BUILD:CONFIG -->
-│                     CSS slot:    <!-- BUILD:CSS -->
-│                     JS slot:     <!-- BUILD:JS -->
-├── config.js       — window.FC_VERSION + window.FC_CONFIG
-├── style.css       — all CSS
-└── app.js          — all JS
+├── html/
+│   ├── template.html  — HTML shell + app layout (BUILD:CONFIG, BUILD:CSS, BUILD:SVG, BUILD:MODALS, BUILD:JS)
+│   ├── svg.html       — SVG icon sprite (<symbol> definitions)
+│   └── modals.html    — all modals (backdrop-style) + dialogs (native <dialog>) + toast
+├── js/
+│   ├── config.js      — window.FC_VERSION + window.FC_CONFIG
+│   ├── state.js       — state shape, LAYOUTS, uiState, getActiveCard()
+│   ├── utils.js       — uid, mdParse, esc, _show/_hide, _compressImage, _hashStr
+│   ├── storage.js     — File System Access API, IndexedDB, autosave, backup, read-only
+│   ├── api.js         — image search (Wikimedia, iNaturalist, Pixabay, Unsplash), AI generate
+│   ├── i18n.js        — translation strings + t() helper
+│   ├── render.js      — buildCardHTML, getGridTemplateStyle, buildHandles
+│   ├── editor.js      — card editor UI, TipTap instances, section controls
+│   ├── preview.js     — live preview rendering, PDF/print export
+│   ├── modals.js      — image search modal logic, settings modal logic
+│   ├── undo.js        — undo/redo stack
+│   ├── records.js     — schema editor, records panel, pack/sync, AI export/import
+│   └── app.js         — init, dispatch, sidebar, toolbar, event wiring
+└── css/
+    ├── base.css       — reset, variables, typography
+    ├── sidebar.css    — card list sidebar
+    ├── editor.css     — editor panel
+    ├── preview.css    — preview panel
+    ├── modal.css      — shared modal styles
+    └── tomoe.css      — records, schema, dialogs, misc feature styles
 build.js            — assembles src/ → index.html, copies to FlashCardApp2/
 watch.js            — watches src/ and auto-runs build.js (150ms debounce)
 index.html          — GENERATED — do not edit directly
@@ -27,11 +45,13 @@ FlashCardApp2/
 
 **IMPORTANT:** Always edit `src/` files, never edit `index.html` directly. Run `node build.js` before sharing or testing. `watch.js` handles auto-rebuild during development.
 
-### Build markers (in `src/template.html`)
+### Build markers (in `src/html/template.html`)
 
-- `<!-- BUILD:CONFIG -->` — replaced with `<script>src/config.js</script>` contents
-- `<!-- BUILD:CSS -->` — replaced with `<style>src/style.css</style>` contents
-- `<!-- BUILD:JS -->` — replaced with `<script>src/app.js</script>` contents
+- `<!-- BUILD:CONFIG -->` — replaced with `<script>src/js/config.js</script>` contents
+- `<!-- BUILD:CSS -->` — replaced with `<style>` + all `src/css/*.css` concatenated
+- `<!-- BUILD:SVG -->` — replaced with `src/html/svg.html` contents
+- `<!-- BUILD:MODALS -->` — replaced with `src/html/modals.html` contents
+- `<!-- BUILD:JS -->` — replaced with `<script>` + all `src/js/*.js` concatenated in order
 
 **IMPORTANT:** The CONFIG marker must not appear inside any HTML comment. Stray `<!--` above it will swallow the entire config block, making `FC_VERSION` undefined.
 
@@ -44,18 +64,25 @@ FlashCardApp2/
 ## Architecture
 
 ```
-src/template.html
+src/html/template.html
 ├── <head>
-│   ├── <!-- BUILD:CONFIG --> → config.js inlined
+│   ├── <!-- BUILD:CONFIG --> → js/config.js inlined
 │   ├── CDN scripts: marked.js, html2canvas, jsPDF
-│   └── <!-- BUILD:CSS --> → style.css inlined
+│   └── <!-- BUILD:CSS --> → css/*.css concatenated
 └── <body>
-    ├── .fc-toolbar — project name input, Settings, New Card, ↻ Thumbs, Save/Load buttons
-    ├── .fc-sidebar — card list with reorder/clone/delete
-    ├── .fc-editor — layout picker, image slots, title, sections, font controls
-    ├── .fc-preview — live preview + zoom controls + Print/Export PDF header
-    ├── Modals: image search, custom CSS, load/recent, settings
-    └── <!-- BUILD:JS --> → app.js inlined
+    ├── <!-- BUILD:SVG --> → html/svg.html (icon sprite)
+    ├── .fc-app
+    │   ├── .fc-settings-bar — global paper/font/border settings
+    │   ├── .fc-toolbar — project name, card actions, view toggles
+    │   └── .fc-main — 3-panel layout
+    │       ├── .fc-sidebar — card list with reorder/clone/delete
+    │       ├── .fc-editor — layout picker, image slots, title, sections
+    │       └── .fc-preview-panel — live preview + zoom controls
+    ├── <!-- BUILD:MODALS --> → html/modals.html
+    │   ├── Backdrop modals: img-modal, css-modal, json-modal, json-preview-modal,
+    │   │                    load-modal, save-as-modal, settings-modal
+    │   └── Native dialogs: schema-editor-modal, pack-dialog, backup-modal, records-ai-modal
+    └── <!-- BUILD:JS --> → js/*.js concatenated in order
 ```
 
 ## Layouts
@@ -177,9 +204,19 @@ const titleF = { ...s.titleFont, ...(card.titleFont || {}) };
 - `scheduleThumbRefresh(cardId)` — still exists for targeted refresh; `_pendingThumbCardId` tracks specific vs all.
 - Existing `<img>` thumbs are updated silently (no `thumb-loading` flash) if already rendered.
 
+## UI State
+
+All transient UI state lives in `uiState` object (defined in `state.js`):
+
+```js
+uiState = { activeCardId, imgModalSlot, activeTab, sidebarView, previewZoom }
+```
+
+Never use bare `activeCardId` etc. — always `uiState.activeCardId`.
+
 ## Preview Zoom
 
-- `let previewZoom = 1.0` — multiplier on fit scale (fit = panel width / card width).
+- `uiState.previewZoom = 1.0` — multiplier on fit scale (fit = panel width / card width).
 - `changePreviewZoom(delta)` — steps of 0.25, clamped to 0.25–3.0. `delta=0` resets to 1.0.
 - Buttons `−` / `[100%]` / `+` in preview header. Click the `%` label to reset.
 - `#preview-zoom-label` is updated on each `renderPreview()` call.
@@ -238,33 +275,17 @@ _autoSaveToFile(); // writes to work folder, updates fc_last_file, calls clearDi
 - `<!-- BUILD:CONFIG -->` must not be preceded by unclosed `<!--` — would swallow the entire config block.
 - Compound layout (`2img-2txt`, `8img-8txt`) row track sizes use `fr` units so proportions are maintained without gap arithmetic.
 - `2img-4txt` is commented out in the `LAYOUTS` array (disabled from picker) but all rendering/drag code remains intact.
-- Backdrop-click auto-close is disabled for all modals (commented out in `init()`).
-- `setWorkDir()` non-AbortError failures now show `alert()` so the user sees the error instead of silent console log.
+- Backdrop-click auto-close is disabled for all modals — intentional, do not re-enable without testing scroll lock.
+- Native `<dialog>` elements: use `showModal()` / `close()`, not `_show()`/`_hide()`. `window.confirm()` is blocked when a `<dialog>` is open — use inline two-click confirmation instead.
+- `onclick` attributes in innerHTML strings: always use single-quote outer (`onclick='fn(...)'`) when the argument is a `JSON.stringify`-ed string — double quotes inside will break the HTML attribute.
+- `_autoSaveToFile`: snapshot `currentFileName`/`currentSubfolder` into locals before any `await` — globals can change mid-save if user opens another file.
 
-## Session Notes (2026-05-10)
+## Session Notes (2026-05-29) - Refactoring
 
-- Added `8img-8txt` layout: 8 image+text pairs, orientation-aware grid (see Layouts section).
-- Editor for `2img-2txt` / `8img-8txt`: paired section rows show image thumbnail next to inputs (`isImgPairedLayout`). Label input restored after brief removal.
-- "Add Section" and "Paste block" buttons hidden for `isImgPairedLayout`.
-- `2img-4txt` disabled (commented out in `LAYOUTS`).
-- `setLayout()` now calls `refreshAllThumbs()` after switching layout.
-- Sidebar width reduced: 200px → 160px, min-width 160px → 120px.
-- Preview zoom: `−`/`+`/reset controls added to preview header.
-- Backdrop-click auto-close disabled for all modals.
-- `setWorkDir()` improved error handling (alert on failure).
-- `marked.use({ breaks: true })` — single newline → `<br>` in markdown content.
-- Section label rendering conditional: empty/null label skips the `• label: ` span entirely (both `buildSectionsHtml` and `buildSectionCellHtml`).
-- Per-card font override already implemented (stale "planned" note removed).
-- Distribution folder renamed `FlashCardApp` → `FlashCardApp2`.
-
-## Session Notes (2026-05-13) - Refactoring & Modularization
-
-- **Modularization (Steps 1-3):** Split the monolithic `app.js` into specialized modules:
-  - `state.js`: Data structures, configuration, and app state.
-  - `utils.js`: Pure helper functions (`uid`, `mdParse`, image compression).
-  - `storage.js`: File System Access API, IndexedDB, and LocalStorage logic.
-  - `api.js`: Image search services (Wikimedia, iNaturalist, Pixabay).
-- **Pattern Strategy (Step 4):** Eliminated giant `if/else` chains for layouts in favor of `GRID_STRATEGIES`, `HANDLE_STRATEGIES`, and `COMPOUND_TRACK_STRATEGIES` dictionary maps.
-- **View Extraction (Step 5):** Moved all HTML rendering logic (e.g., `buildCardHTML`, `getGridTemplateStyle`) into a new `render.js` file.
-- **Build System:** Updated `build.js` to concatenate `state.js`, `utils.js`, `storage.js`, `api.js`, `render.js`, and `app.js` in strict order.
-- **Result:** `app.js` size reduced from ~2400 lines to < 1000 lines, isolating UI/Event logic from business/render logic.
+- **src/ reorganized** into `html/`, `js/`, `css/` subfolders. Build markers added: `BUILD:SVG`, `BUILD:MODALS`.
+- **uiState object**: `activeCardId`, `imgModalSlot`, `activeTab`, `sidebarView`, `previewZoom` moved from loose globals into `const uiState = {}` in `state.js`.
+- **`_show(id)` / `_hide(id)` helpers** added to `utils.js`; replace `document.getElementById(id).style.display` patterns.
+- **API helpers**: `_fetchJson(url)` (checks `r.ok`), `_searchImages()`, `_imgItem()` unify Wikimedia/iNaturalist/Pixabay/Unsplash search boilerplate.
+- **Records AI flow**: `copyRecordsForAI()` dialog, `exportRecordsJson()`, `pasteRecordsJson()`, `appendRecordsJson()`, `importRecordsJsonFile()` — all in `records.js`.
+- **Read-only folder mode**: `fc_edit_folders` localStorage key (CSV). `_computeReadOnly()` called after every file load/move/save-as/new-project.
+- **Backup modal**: native `<dialog>`, restore uses two-click confirm pattern (avoids `window.confirm` inside dialog). Backup files stored in `_backups/` subfolder.
