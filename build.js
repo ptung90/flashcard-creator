@@ -16,37 +16,69 @@ function readJs(name) {
   return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
 }
 
+// ── HTML fragments ─────────────────────────────────────────────────
 const template   = fs.readFileSync(path.join(HTML, "template.html"), "utf8");
 const svgHtml    = fs.existsSync(path.join(HTML, "svg.html"))    ? fs.readFileSync(path.join(HTML, "svg.html"),    "utf8") : "";
 const modalsHtml = fs.existsSync(path.join(HTML, "modals.html")) ? fs.readFileSync(path.join(HTML, "modals.html"), "utf8") : "";
 
-const config  = readJs("config.js");
-const state   = readJs("state.js");
-const utils   = readJs("utils.js");
-const storage = readJs("storage.js");
-const api     = readJs("api.js");
-const i18n    = readJs("i18n.js");
-const render  = readJs("render.js");
-const editor          = readJs("editor.js");
-const editorControls  = readJs("editor-controls.js");
-const editorSections  = readJs("editor-sections.js");
-const preview = readJs("preview.js");
-const modals  = readJs("modals.js");
-const undo    = readJs("undo.js");
-const records       = readJs("records.js");
-const recordsPack   = readJs("records-pack.js");
-const schemaEditor  = readJs("schema-editor.js");
-const recordsAi     = readJs("records-ai.js");
-const app           = readJs("app.js");
+// ── JS load order ──────────────────────────────────────────────────
+// Each file may only call functions defined in files loaded BEFORE it.
+//
+// LAYER 0 — pure config, no dependencies
+const config  = readJs("config.js");    // window.FC_CONFIG, FC_VERSION — no deps
 
+// LAYER 1 — data + pure helpers, no DOM
+const state   = readJs("state.js");     // LAYOUTS, PAPER_MM, HIDE_TITLE_LAYOUTS, uiState, state{}
+const utils   = readJs("utils.js");     // uid, esc, _show/_hide, mdParse, _compressImage  ← state
+
+// LAYER 2 — services (no rendering)
+const storage = readJs("storage.js");   // File System API, IDB, autosave, backup           ← state, utils
+const api     = readJs("api.js");       // image search (Wikimedia, iNat, Pixabay, Unsplash) ← utils
+const i18n    = readJs("i18n.js");      // t() translation helper                            ← (standalone)
+
+// LAYER 3 — rendering / card building
+const render  = readJs("render.js");    // buildCardHTML, getGridTemplateStyle, buildHandles  ← state, utils
+
+// LAYER 4 — editor (depends on render + state)
+const editor          = readJs("editor.js");          // TipTap instances, renderEditor()    ← state, utils, render
+const editorControls  = readJs("editor-controls.js"); // layout picker, card font/img props  ← state, utils, editor
+const editorSections  = readJs("editor-sections.js"); // sections, paste block, drag & drop  ← state, utils, editor
+
+// LAYER 5 — preview + modals (depends on render + storage)
+const preview = readJs("preview.js");   // live preview, PDF/print export                    ← state, utils, render, storage
+const modals  = readJs("modals.js");    // img-search modal, settings modal, style library   ← state, utils, storage, api
+
+// LAYER 6 — undo (depends on state + dispatch from app, called at runtime only)
+const undo    = readJs("undo.js");      // undo/redo stack                                   ← state
+
+// LAYER 7 — records system
+const records       = readJs("records.js");       // records panel UI, record detail          ← state, utils, storage, i18n
+const recordsPack   = readJs("records-pack.js");  // generate, sync, pack, consolidate        ← state, utils, records
+const schemaEditor  = readJs("schema-editor.js"); // schema editor modal, library             ← state, utils, storage, i18n, records
+const recordsAi     = readJs("records-ai.js");    // export/import/AI copy for records        ← state, utils, storage, records
+
+// LAYER 8 — app shell (wires everything together, must load last)
+const app     = readJs("app.js");       // init, dispatch, sidebar, toolbar, event wiring    ← all layers
+
+// ── CSS load order ─────────────────────────────────────────────────
+// base.css first (variables + reset), tomoe.css last (feature overrides)
 const cssFiles = ["base.css", "sidebar.css", "editor.css", "preview.css", "modal.css", "tomoe.css"];
 const css = cssFiles
   .filter(f => fs.existsSync(path.join(CSS, f)))
   .map(f => fs.readFileSync(path.join(CSS, f), "utf8"))
   .join("\n\n");
 
-const allJs = [state, utils, storage, api, i18n, render, editor, editorControls, editorSections, preview, modals, undo, records, recordsPack, schemaEditor, recordsAi, app]
-  .filter(Boolean).join("\n\n");
+// ── Assemble ───────────────────────────────────────────────────────
+const allJs = [
+  state, utils,
+  storage, api, i18n,
+  render,
+  editor, editorControls, editorSections,
+  preview, modals,
+  undo,
+  records, recordsPack, schemaEditor, recordsAi,
+  app,
+].filter(Boolean).join("\n\n");
 
 const output = template
   .replace("    <!-- BUILD:CONFIG -->", `    <script>\n${config}\n    </script>`)
