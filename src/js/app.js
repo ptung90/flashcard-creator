@@ -204,7 +204,9 @@ function bindSettings() {
     "set-img-padding": (v) => (state.settings.imgPadding = +v),
   };
   for (const [id, fn] of Object.entries(ids)) {
-    document.getElementById(id).addEventListener("input", (e) => {
+    const el = document.getElementById(id);
+    el.addEventListener("focus", () => pushUndo());
+    el.addEventListener("input", (e) => {
       fn(e.target.value);
       setDirty();
       renderPreview();
