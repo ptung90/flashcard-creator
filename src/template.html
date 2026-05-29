@@ -92,6 +92,23 @@
       </defs>
     </svg>
 
+    <!--
+      APP LAYOUT
+      ├── .fc-settings-bar       — global paper/font/border settings (collapsible)
+      ├── #fc-restore-banner     — permission restore prompt
+      ├── .fc-toolbar            — project name, card actions, view toggles
+      └── .fc-main               — 3-panel layout
+          ├── .fc-sidebar        — card list + reorder/clone/delete
+          ├── .fc-editor         — layout picker, image slots, title, sections
+          └── .fc-preview-panel  — live preview + records panel (tab-data)
+
+      MODALS (backdrop divs, line ~459)
+        img-modal, css-modal, json-modal, json-preview-modal,
+        load-modal, save-as-modal, settings-modal
+
+      DIALOGS (native <dialog>, line ~1337)
+        schema-editor-modal, pack-dialog, backup-modal, records-ai-modal
+    -->
     <div class="fc-app">
       <!-- Settings Bar (all page setup in one panel) -->
       <div class="fc-settings-bar">
@@ -455,6 +472,10 @@
         <div id="records-panel" style="display:none;flex:1;flex-direction:column;overflow:auto;padding:16px;min-width:0;"></div>
       </div>
     </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         MODALS — backdrop-style (display:flex/none via _show/_hide)
+         ══════════════════════════════════════════════════════════════ -->
 
     <!-- Image Search Modal -->
     <div class="modal-backdrop" id="img-modal" style="display: none">
@@ -1334,6 +1355,10 @@
       </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════════════════════
+         DIALOGS — native <dialog> (showModal / close)
+         ══════════════════════════════════════════════════════════════ -->
+
     <!-- Schema Editor Modal -->
     <dialog id="schema-editor-modal">
       <div class="dialog-header">
@@ -1368,6 +1393,7 @@
       </div>
     </dialog>
 
+    <!-- Backup Modal -->
     <dialog id="backup-modal">
       <div class="dialog-header">
         <span class="dialog-title" id="backup-modal-title">Backups</span>
@@ -1380,6 +1406,7 @@
       </div>
     </dialog>
 
+    <!-- Records AI (Copy for AI) Modal -->
     <dialog id="records-ai-modal">
       <div class="dialog-header">
         <span class="dialog-title">✦ Copy Records for AI</span>
