@@ -1,4 +1,20 @@
 ﻿// ── Sections ───────────────────────────────────────────────────────
+function mergeSections() {
+  const card = getActiveCard();
+  if (!card || card.sections.length < 2) return;
+  pushUndo();
+  const merged = card.sections
+    .map(s => {
+      const label = s.label?.trim();
+      const content = s.content?.trim() || '';
+      return label ? `**${label}**\n${content}` : content;
+    })
+    .filter(Boolean)
+    .join('\n\n');
+  card.sections = [{ id: uid(), label: '', content: merged }];
+  dispatch('CARD_UI_CHANGED');
+}
+
 function addSection() {
   pushUndo();
   const card = getActiveCard();

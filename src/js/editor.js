@@ -369,6 +369,7 @@ function renderEditor() {
       <div style="margin-top:8px;display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap">
         ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="addSection()"><svg class="icon" style="width:14px;height:14px"><use href="#i-plus"/></svg><span>${t('editor.addSection')}</span></button>` : ''}
         ${!isImgPairedLayout ? `<button class="btn btn-secondary btn-sm" onclick="togglePasteBlock()"><svg class="icon" style="width:14px;height:14px"><use href="#i-clipboard"/></svg><span>${t('editor.pasteBlock')}</span></button>` : ''}
+        ${!isImgPairedLayout && card.sections.length >= 2 ? `<button class="btn btn-secondary btn-sm" onclick="mergeSections()" title="Merge all sections into one"><svg class="icon" style="width:14px;height:14px"><use href="#i-arrow-tb"/></svg><span>Merge</span></button>` : ''}
         <button class="btn btn-secondary btn-sm" onclick="toggleCardCssEditor()" id="card-css-btn"><svg class="icon" style="width:14px;height:14px"><use href="#i-braces"/></svg><span>${t('editor.css')}</span>${card.customCss ? '<span class="card-css-on">●</span>' : ''}</button>
         <button class="btn btn-secondary btn-sm" onclick="toggleDataArea()">${t('editor.data')}</button>
       </div>
