@@ -717,10 +717,10 @@ function initUploadDropZone() {
 
 // ── JSON Export Modal ───────────────────────────────────────────────
 function openJsonModal() {
-  _show("json-modal");
+  document.getElementById("json-modal").showModal();
 }
 function closeJsonModal() {
-  _hide("json-modal");
+  document.getElementById("json-modal").close();
 }
 
 function _fullSnapshot() {
@@ -897,11 +897,11 @@ function openJsonPreview(text) {
   document.getElementById("json-preview-textarea").value = text;
   document.getElementById("json-preview-status").textContent = "";
   _syncJsonLineNums();
-  _show("json-preview-modal");
+  document.getElementById("json-preview-modal").showModal();
 }
 
 function closeJsonPreview() {
-  _hide("json-preview-modal");
+  document.getElementById("json-preview-modal").close();
 }
 
 function _jumpToJsonError(msg) {

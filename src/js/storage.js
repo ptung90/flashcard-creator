@@ -101,7 +101,7 @@ function _pathLeaf(path) { return path ? path.split('/').pop() : (workDirHandle?
 // ── Load modal ─────────────────────────────────────────────────────
 async function openLoadModal() {
   _modalSubfolder = currentSubfolder;
-  _show("load-modal");
+  document.getElementById("load-modal").showModal();
   await _renderFolderSection();
   _renderRecentList();
 }
@@ -267,7 +267,7 @@ async function createSubfolder() {
   } catch (e) { alert("Cannot create folder: " + e.message); }
 }
 function closeLoadModal() {
-  _hide("load-modal");
+  document.getElementById("load-modal").close();
 }
 async function newProject() {
   if (dirty) {
@@ -722,12 +722,12 @@ async function openSaveAsModal() {
   if (currentSubfolder) folderSelect.value = currentSubfolder;
 
   nameInput.value = _timestampedFileName();
-  _show("save-as-modal");
+  document.getElementById("save-as-modal").showModal();
   setTimeout(() => nameInput.select(), 50);
 }
 
 function closeSaveAsModal() {
-  _hide("save-as-modal");
+  document.getElementById("save-as-modal").close();
 }
 
 async function executeSaveAs() {

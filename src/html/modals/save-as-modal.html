@@ -1,6 +1,5 @@
 ﻿    <!-- Save As Modal -->
-    <div class="modal-backdrop" id="save-as-modal" style="display:none">
-      <div class="modal" style="max-width:340px;width:90%">
+    <dialog id="save-as-modal" style="max-width:340px;width:90%">
         <div class="modal-header">
           <span>Save As</span>
           <button class="modal-close" onclick="closeSaveAsModal()">×</button>
@@ -19,5 +18,4 @@
           <button class="btn btn-secondary btn-sm" onclick="closeSaveAsModal()">Cancel</button>
           <button class="btn btn-primary btn-sm" onclick="executeSaveAs()">Save</button>
         </div>
-      </div>
-    </div>
+      </dialog>

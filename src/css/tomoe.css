@@ -626,18 +626,9 @@ input[type="range"] { accent-color: var(--mint-600); }
 .record-preview-thumb { display: inline-block; margin-right: 8px; vertical-align: top; margin-bottom: 8px; }
 .record-preview-thumb-label { font-size: 10px; color: var(--ink-300); margin-bottom: 3px; }
 
-/* ── Native <dialog> modals ── */
+/* ── Dialog size overrides (base styles in modal.css dialog rule) ── */
 #schema-editor-modal { width: 620px; max-width: 95vw; max-height: 90vh; }
-#schema-editor-modal[open] { display: flex; flex-direction: column; }
 #pack-dialog { width: 400px; max-width: 95vw; }
-#schema-editor-modal,
-#pack-dialog {
-  padding: 0; margin: auto;
-  border: 1px solid var(--line-strong); border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.14), 0 2px 8px rgba(0,0,0,.08);
-}
-#schema-editor-modal::backdrop,
-#pack-dialog::backdrop { background: rgba(0,0,0,.46); backdrop-filter: blur(2px); }
 
 .dialog-header {
   display: flex; justify-content: space-between; align-items: center;
@@ -721,24 +712,10 @@ input[type="range"] { accent-color: var(--mint-600); }
 #save-btn:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
 
 /* ── Records AI Modal ── */
-#records-ai-modal {
-  width: 460px; max-width: 95vw;
-  padding: 0; margin: auto;
-  border: 1px solid var(--line-strong); border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.14), 0 2px 8px rgba(0,0,0,.08);
-}
-#records-ai-modal[open] { display: flex; flex-direction: column; }
-#records-ai-modal::backdrop { background: rgba(0,0,0,.46); backdrop-filter: blur(2px); }
+#records-ai-modal { width: 460px; max-width: 95vw; }
 
 /* ── Backup Modal ── */
-#backup-modal {
-  width: 420px; max-width: 95vw;
-  padding: 0; margin: auto;
-  border: 1px solid var(--line-strong); border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.14), 0 2px 8px rgba(0,0,0,.08);
-}
-#backup-modal[open] { display: flex; flex-direction: column; }
-#backup-modal::backdrop { background: rgba(0,0,0,.46); backdrop-filter: blur(2px); }
+#backup-modal { width: 420px; max-width: 95vw; }
 #backup-modal .dialog-title { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 340px; }
 
 #backup-list { overflow-y: auto; max-height: 380px; }

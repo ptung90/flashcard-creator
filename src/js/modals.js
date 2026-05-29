@@ -2,10 +2,10 @@
 function openCssModal() {
   document.getElementById("custom-css-input").value =
     state.settings.customCss || "";
-  _show("css-modal");
+  document.getElementById("css-modal").showModal();
 }
 function closeCssModal() {
-  _hide("css-modal");
+  document.getElementById("css-modal").close();
 }
 function applyCustomCss() {
   const css = document.getElementById("custom-css-input").value;
@@ -72,7 +72,7 @@ function openSettingsModal() {
   set("cfg-cfont-color-hex", cf.color || "#1a1a1a");
   set("cfg-cfont-lh", cf.lineHeight ?? 1.1);
 
-  _show("settings-modal");
+  document.getElementById("settings-modal").showModal();
   document.querySelectorAll('.cfg-section-chk').forEach(cb => toggleCfgSection(cb));
   listLibrary('styles').then(names => {
     const sel = document.getElementById('style-library-select');
@@ -83,7 +83,7 @@ function openSettingsModal() {
 }
 
 function closeSettingsModal() {
-  _hide("settings-modal");
+  document.getElementById("settings-modal").close();
 }
 
 function toggleCfgSection(cb) {
@@ -319,7 +319,7 @@ function resetUserConfig() {
 function openImgModal(slot) {
   uiState.imgModalSlot = slot;
   document.getElementById("modal-slot-num").textContent = slot;
-  _show("img-modal");
+  document.getElementById("img-modal").showModal();
   document.getElementById("pixabay-key").value =
     localStorage.getItem("pixabay-key") || "";
   document.getElementById("unsplash-key").value =
@@ -332,7 +332,7 @@ function openImgModal(slot) {
   if (gModel) gModel.value = localStorage.getItem("gemini-model") || "gemini-2.0-flash";
 }
 function closeImgModal() {
-  _hide("img-modal");
+  document.getElementById("img-modal").close();
 }
 
 function switchTab(el) {

@@ -1,25 +1,17 @@
-/* ── Modal ── */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal {
+/* ── Modal (native <dialog>) ── */
+dialog {
+  padding: 0;
+  margin: auto;
   background: #ffffff;
   border: 1px solid #d1d5db;
   border-radius: 10px;
   width: 700px;
   max-width: 95vw;
   max-height: 85vh;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
 }
+dialog[open] { display: flex; flex-direction: column; }
+dialog::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(2px); }
 
 .modal-header {
   padding: 12px 16px;
@@ -181,11 +173,9 @@
 }
 
 /* Custom CSS Modal */
-.css-modal .modal {
-  width: 600px;
-}
+#css-modal { width: 600px; }
 
-.css-modal textarea {
+#css-modal textarea {
   width: 100%;
   flex: 1;
   background: #f9fafb;
@@ -199,7 +189,7 @@
   min-height: 300px;
 }
 
-.css-modal textarea:focus {
+#css-modal textarea:focus {
   outline: 1px solid #3e9684;
 }
 
@@ -286,10 +276,7 @@
 }
 
 /* Settings Modal */
-.settings-modal .modal {
-  width: 580px;
-  max-width: 96vw;
-}
+#settings-modal { width: 580px; max-width: 96vw; }
 
 .cfg-section {
   margin-bottom: 14px;
@@ -378,7 +365,7 @@
 }
 
 /* Load modal — 2-panel explorer */
-.load-modal-wide { width: 700px; max-width: 95vw; }
+#load-modal { width: 700px; max-width: 95vw; }
 
 .load-modal-body {
   display: flex;
