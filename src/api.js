@@ -17,11 +17,17 @@ async function _searchImages(inputId, resultId, fetchFn) {
   }
 }
 
+async function _fetchJson(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return r.json();
+}
+
 // Wikimedia Commons
 async function searchWikimedia() {
   _searchImages("search-wikimedia", "results-wikimedia", async (q) => {
     const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=20&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=300&format=json&origin=*`;
-    const data = await fetch(url).then(r => r.json());
+    const data = await _fetchJson(url);
     return Object.values(data.query?.pages || {})
       .map(p => { const info = p.imageinfo?.[0]; return info ? _imgItem(info.url, info.thumburl || info.url) : ""; })
       .join("");
@@ -32,7 +38,7 @@ async function searchWikimedia() {
 async function searchINaturalist() {
   _searchImages("search-inaturalist", "results-inaturalist", async (q) => {
     const url = `https://api.inaturalist.org/v1/observations?q=${encodeURIComponent(q)}&per_page=24&photos=true&order_by=votes`;
-    const data = await fetch(url).then(r => r.json());
+    const data = await _fetchJson(url);
     const imgs = (data.results || []).flatMap(obs =>
       (obs.photos || []).map(p => ({ thumb: p.url?.replace("square","medium"), full: p.url?.replace("square","large") }))
         .filter(p => p.thumb && p.full)
@@ -123,6 +129,7 @@ ${JSON.stringify(snapshot, null, 2)}`;
 async function _wikimediaFirstResult(query) {
   const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(query)}&gsrlimit=5&prop=imageinfo&iiprop=url&iiurlwidth=900&format=json&origin=*`;
   const r = await fetch(url);
+  if (!r.ok) return null;
   const data = await r.json();
   const pages = Object.values(data.query?.pages || {});
   for (const p of pages) {
@@ -228,38 +235,12 @@ function savePixabayKey() {
 }
 
 async function searchPixabay() {
-  const key =
-    document.getElementById("pixabay-key").value.trim() ||
-    localStorage.getItem("pixabay-key") ||
-    "";
-  if (!key) {
-    alert("Please enter your Pixabay API key first.");
-    return;
-  }
-  const q = document.getElementById("search-pixabay").value.trim();
-  if (!q) return;
-  const res = document.getElementById("results-pixabay");
-  res.innerHTML = '<div class="search-status">Searching...</div>';
-  try {
+  const key = document.getElementById("pixabay-key").value.trim() || localStorage.getItem("pixabay-key") || "";
+  if (!key) { alert("Please enter your Pixabay API key first."); return; }
+  _searchImages("search-pixabay", "results-pixabay", async (q) => {
     const url = `https://pixabay.com/api/?key=${encodeURIComponent(key)}&q=${encodeURIComponent(q)}&per_page=20&safesearch=true`;
-    const r = await fetch(url);
-    const data = await r.json();
-    if (data.error) {
-      res.innerHTML = `<div class="search-status">Error: ${data.error}</div>`;
-      return;
-    }
-    const hits = data.hits || [];
-    if (!hits.length) {
-      res.innerHTML = '<div class="search-status">No results</div>';
-      return;
-    }
-    res.innerHTML = hits
-      .map(
-        (h) =>
-          `<div class="search-result-item" onclick="insertImageUrl('${esc(h.largeImageURL)}')"><img src="${esc(h.previewURL)}" loading="lazy"></div>`,
-      )
-      .join("");
-  } catch (e) {
-    res.innerHTML = `<div class="search-status">Error: ${e.message}</div>`;
-  }
+    const data = await _fetchJson(url);
+    if (data.error) return `<div class="search-status">Error: ${data.error}</div>`;
+    return (data.hits || []).map(h => _imgItem(h.largeImageURL, h.previewURL)).join("");
+  });
 }
