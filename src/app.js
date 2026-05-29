@@ -54,16 +54,16 @@ function dispatch(action) {
 }
 function changePreviewZoom(delta) {
   if (delta === 0) {
-    previewZoom = 1.0; // reset to fit
+    uiState.previewZoom = 1.0; // reset to fit
   } else {
     const card = getActiveCard();
     const { w } = card
       ? getPaperPx(state.settings.paperSize, card.orientation || state.settings.orientation)
       : { w: 559 };
     const panelW = (document.getElementById("fc-preview-panel")?.clientWidth || 350) - 32;
-    const currentPhysical = (panelW / w) * previewZoom;
+    const currentPhysical = (panelW / w) * uiState.previewZoom;
     const newPhysical = Math.round(Math.max(0.1, Math.min(3.0, currentPhysical + delta)) * 100) / 100;
-    previewZoom = newPhysical / (panelW / w);
+    uiState.previewZoom = newPhysical / (panelW / w);
   }
   renderPreview();
 }
@@ -73,7 +73,7 @@ function setPhysicalZoom() {
   if (!card) return;
   const { w } = getPaperPx(state.settings.paperSize, card.orientation || state.settings.orientation);
   const panelW = (document.getElementById("fc-preview-panel")?.clientWidth || 350) - 32;
-  previewZoom = w / panelW;
+  uiState.previewZoom = w / panelW;
   renderPreview();
 }
 
@@ -302,7 +302,7 @@ function addCard() {
     ]).map((s) => ({ id: uid(), ...s })),
   };
   state.cards.push(card);
-  activeCardId = card.id;
+  uiState.activeCardId = card.id;
   showCardPanel();
   dispatch('CARD_LIST_CHANGED');
 }
@@ -389,15 +389,15 @@ function cloneCard(id) {
   clone.sections = clone.sections.map((s) => ({ ...s, id: uid() }));
   const idx = state.cards.findIndex((c) => c.id === id);
   state.cards.splice(idx + 1, 0, clone);
-  activeCardId = clone.id;
+  uiState.activeCardId = clone.id;
   dispatch('CARD_LIST_CHANGED');
 }
 
 function deleteCard(id) {
   pushUndo();
   state.cards = state.cards.filter((c) => c.id !== id);
-  if (activeCardId === id) {
-    activeCardId = state.cards.length
+  if (uiState.activeCardId === id) {
+    uiState.activeCardId = state.cards.length
       ? state.cards[state.cards.length - 1].id
       : null;
   }
@@ -414,7 +414,7 @@ function moveCard(id, dir) {
 
 function setActive(id) {
   showCardPanel();
-  activeCardId = id;
+  uiState.activeCardId = id;
   dispatch('ACTIVE_CARD_CHANGED');
 }
 
@@ -435,7 +435,7 @@ function setTwoUpRatio(id, value) {
 
 // ── Sidebar ────────────────────────────────────────────────────────
 function setViewMode(mode) {
-  sidebarView = mode;
+  uiState.sidebarView = mode;
   document.getElementById('view-list-btn').classList.toggle('active', mode === 'list');
   document.getElementById('view-grid-btn').classList.toggle('active', mode === 'grid');
   dispatch('VIEW_MODE_CHANGED');
@@ -443,7 +443,7 @@ function setViewMode(mode) {
 
 function renderSidebar() {
   document.getElementById("card-count").textContent = state.cards.length;
-  if (sidebarView === 'grid') {
+  if (uiState.sidebarView === 'grid') {
     _renderGridSidebar();
   } else {
     _renderListSidebar();
@@ -455,7 +455,7 @@ function _renderListSidebar() {
   list.innerHTML = state.cards
     .map(
       (c, i) => `
-    <div class="fc-card-item ${c.id === activeCardId ? "active" : ""}${c.twoUp ? ' card-item--twoUp' : ''}" draggable="true" onclick="setActive('${c.id}')" data-id="${c.id}" style="${c.twoUp ? `--twoUp-ratio:${c.twoUpRatio||50}%` : ''}">
+    <div class="fc-card-item ${c.id === uiState.activeCardId ? "active" : ""}${c.twoUp ? ' card-item--twoUp' : ''}" draggable="true" onclick="setActive('${c.id}')" data-id="${c.id}" style="${c.twoUp ? `--twoUp-ratio:${c.twoUpRatio||50}%` : ''}">
       <span class="card-num">${i + 1}</span>
       <span class="card-title">${esc(c.title || t('card.untitled'))}</span>
       <span class="card-actions">
@@ -478,7 +478,7 @@ function _renderGridSidebar() {
   if (sameCards) {
     // Lightweight update: only sync active class and titles
     items.forEach((el, i) => {
-      el.classList.toggle('active', state.cards[i].id === activeCardId);
+      el.classList.toggle('active', state.cards[i].id === uiState.activeCardId);
       el.classList.toggle('fc-card-thumb-item--landscape', getCardOrientation(state.cards[i]) === 'landscape');
       el.classList.toggle('fc-card-thumb-item--portrait', getCardOrientation(state.cards[i]) !== 'landscape');
       const titleEl = el.querySelector('.card-thumb-title');
@@ -503,7 +503,7 @@ function _renderGridSidebar() {
   // Full rebuild needed (cards added/removed/reordered)
   const genId = ++_thumbGenId;
   list.innerHTML = '<div class="fc-card-grid">' + state.cards.map((c, i) => `
-    <div class="fc-card-thumb-item ${c.id === activeCardId ? "active" : ""} ${getCardOrientation(c) === "landscape" ? "fc-card-thumb-item--landscape" : "fc-card-thumb-item--portrait"}${c.twoUp ? ' fc-card-thumb-item--twoUp' : ''}" style="${c.twoUp ? `--twoUp-ratio:${c.twoUpRatio||50}%` : ''}"
+    <div class="fc-card-thumb-item ${c.id === uiState.activeCardId ? "active" : ""} ${getCardOrientation(c) === "landscape" ? "fc-card-thumb-item--landscape" : "fc-card-thumb-item--portrait"}${c.twoUp ? ' fc-card-thumb-item--twoUp' : ''}" style="${c.twoUp ? `--twoUp-ratio:${c.twoUpRatio||50}%` : ''}"
          draggable="true" onclick="setActive('${c.id}')" data-id="${c.id}">
       <div class="card-thumb-img thumb-loading"></div>
       <span class="card-thumb-num">#${i + 1}</span>
@@ -617,7 +617,7 @@ async function _generateThumbs(genId, targetItems = null) {
 }
 
 function refreshAllThumbs() {
-  if (sidebarView !== 'grid') setViewMode('grid');
+  if (uiState.sidebarView !== 'grid') setViewMode('grid');
   const items = [...document.querySelectorAll('.fc-card-thumb-item')];
   if (items.length) _requestThumbGeneration(items);
 }
@@ -630,10 +630,10 @@ function scheduleThumbRefresh(cardId = null) {
   } else {
     _pendingThumbCardId = cardId;
   }
-  if (sidebarView !== 'grid') return;
+  if (uiState.sidebarView !== 'grid') return;
   clearTimeout(_thumbRefreshTimer);
   _thumbRefreshTimer = setTimeout(() => {
-    if (sidebarView !== 'grid') return;
+    if (uiState.sidebarView !== 'grid') return;
     const allItems = [...document.querySelectorAll('.fc-card-thumb-item')];
     if (!allItems.length) { renderSidebar(); return; }
     const targetId = _pendingThumbCardId;
@@ -767,7 +767,7 @@ function showRecordsPanel() {
   document.querySelector('.fc-preview-panel').style.display = 'none';
   document.getElementById('records-panel').style.display = 'flex';
   document.getElementById('records-btn')?.classList.add('active');
-  activeCardId = null;
+  uiState.activeCardId = null;
   renderRecordsPanel();
 }
 
@@ -1033,12 +1033,12 @@ async function init() {
       if (pendingPasteSlot === null) {
         const slotCount = LAYOUT_SLOTS[card.layout] ?? 3;
         const usedSlots = new Set(card.images.map((i) => i.slot));
-        imgModalSlot =
+        uiState.imgModalSlot =
           Array.from({ length: slotCount }, (_, i) => i).find(
             (i) => !usedSlots.has(i),
           ) ?? 0;
       } else {
-        imgModalSlot = pendingPasteSlot;
+        uiState.imgModalSlot = pendingPasteSlot;
         pendingPasteSlot = null;
         document
           .querySelectorAll(".image-slot-row")

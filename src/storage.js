@@ -280,7 +280,7 @@ async function newProject() {
   state.schema  = null;
   state.records = [];
   state.projectName = "Untitled";
-  activeCardId = null;
+  uiState.activeCardId = null;
   currentFileName = null;
   const _editFolders = _getEditFolders().filter(f => f);
   currentSubfolder = _editFolders.length ? _editFolders[0] : null;
@@ -1000,7 +1000,7 @@ function applyLoadedData(data) {
     fieldsHash: r.fieldsHash ?? '',
     fields:     r.fields ?? {}
   }));
-  activeCardId = state.cards.length ? state.cards[0].id : null;
+  uiState.activeCardId = state.cards.length ? state.cards[0].id : null;
   if (!state.settings.googleFonts) state.settings.googleFonts = [];
   applyGoogleFonts(); applySettingsToUI();
   document.getElementById("fc-custom-css").textContent = state.settings.customCss || "";

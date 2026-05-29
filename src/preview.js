@@ -1,4 +1,4 @@
-const _PAIRED_LAYOUTS = new Set(['2img-2txt', '3img-3txt', 'img3-txt3', '6cell', '8img-8txt', 'txtgrid']);
+﻿const _PAIRED_LAYOUTS = new Set(['2img-2txt', '3img-3txt', 'img3-txt3', '6cell', '8img-8txt', 'txtgrid']);
 
 function _cardForExport(card) {
   if (_PAIRED_LAYOUTS.has(card.layout)) return card;
@@ -48,7 +48,7 @@ function renderPreview() {
     card.orientation || state.settings.orientation,
   );
   const panelW = document.getElementById("fc-preview-panel").clientWidth - 32;
-  const scale = (panelW / w) * previewZoom;
+  const scale = (panelW / w) * uiState.previewZoom;
   const zl = document.getElementById("preview-zoom-label");
   if (zl) zl.textContent = `${Math.round(scale * 100)}%`;
   const scaledW = Math.round(w * scale);

@@ -1,4 +1,4 @@
-// ── State ──────────────────────────────────────────────────────────
+﻿// ── State ──────────────────────────────────────────────────────────
 const LAYOUTS = [
   "2top-1bot",
   "1top-2bot",
@@ -112,11 +112,13 @@ let state = {
   records: [],
 };
 
-let activeCardId = null;
-let imgModalSlot = 0;
-let activeTab = "wikimedia";
-let sidebarView = 'grid';
-let previewZoom = 1.0;
+const uiState = {
+  activeCardId: null,
+  imgModalSlot: 0,
+  activeTab: "wikimedia",
+  sidebarView: 'grid',
+  previewZoom: 1.0,
+};
 
 let _thumbGenId = 0;
 let _thumbRefreshTimer = null;
@@ -124,5 +126,5 @@ let _thumbDirtyVersion = 0;
 let _thumbRenderedVersion = 0;
 let _pendingThumbCardId = undefined; // undefined=idle, null=all, string=specific card
 
-function getActiveCard() { return state.cards.find((c) => c.id === activeCardId); }
+function getActiveCard() { return state.cards.find((c) => c.id === uiState.activeCardId); }
 function getCardOrientation(card) { return card?.orientation || state.settings.orientation; }

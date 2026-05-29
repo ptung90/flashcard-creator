@@ -317,7 +317,7 @@ function resetUserConfig() {
 
 // ── Image Search Modal ─────────────────────────────────────────────
 function openImgModal(slot) {
-  imgModalSlot = slot;
+  uiState.imgModalSlot = slot;
   document.getElementById("modal-slot-num").textContent = slot;
   _show("img-modal");
   document.getElementById("pixabay-key").value =
@@ -336,7 +336,7 @@ function closeImgModal() {
 }
 
 function switchTab(el) {
-  activeTab = el.dataset.tab;
+  uiState.activeTab = el.dataset.tab;
   document
     .querySelectorAll(".search-tab")
     .forEach((t) => t.classList.remove("active"));
@@ -344,7 +344,7 @@ function switchTab(el) {
   ["wikimedia", "inaturalist", "pixabay", "upload", "url"].forEach(
     (t) => {
       document.getElementById("tab-" + t).style.display =
-        t === activeTab ? "" : "none";
+        t === uiState.activeTab ? "" : "none";
     },
   );
 }
@@ -353,9 +353,9 @@ function insertImageUrl(url) {
   const card = getActiveCard();
   if (!card) return;
   pushUndo();
-  const existing = card.images.find((i) => i.slot === imgModalSlot);
+  const existing = card.images.find((i) => i.slot === uiState.imgModalSlot);
   if (existing) { existing.url = url; delete existing.attribution; }
-  else card.images.push({ slot: imgModalSlot, url });
+  else card.images.push({ slot: uiState.imgModalSlot, url });
   closeImgModal();
   dispatch('CARD_UI_CHANGED');
 }
@@ -364,9 +364,9 @@ function insertUnsplashImage(url, attribution) {
   const card = getActiveCard();
   if (!card) return;
   pushUndo();
-  const existing = card.images.find((i) => i.slot === imgModalSlot);
+  const existing = card.images.find((i) => i.slot === uiState.imgModalSlot);
   if (existing) { existing.url = url; existing.attribution = attribution; }
-  else card.images.push({ slot: imgModalSlot, url, attribution });
+  else card.images.push({ slot: uiState.imgModalSlot, url, attribution });
   closeImgModal();
   dispatch('CARD_UI_CHANGED');
 }
@@ -416,7 +416,7 @@ function _pasteFromImgClipboard(slot) {
 }
 
 async function pasteToSlot(slot) {
-  imgModalSlot = slot;
+  uiState.imgModalSlot = slot;
   try {
     const items = await navigator.clipboard.read();
     for (const item of items) {

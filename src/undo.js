@@ -55,8 +55,8 @@ function _restoreState(snap) {
   state.cards       = snap.cards;
   state.settings    = snap.settings;
   state.projectName = snap.projectName;
-  if (!state.cards.find(c => c.id === activeCardId))
-    activeCardId = state.cards.length ? state.cards[state.cards.length - 1].id : null;
+  if (!state.cards.find(c => c.id === uiState.activeCardId))
+    uiState.activeCardId = state.cards.length ? state.cards[state.cards.length - 1].id : null;
 }
 
 function undo() {

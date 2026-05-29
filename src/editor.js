@@ -1,4 +1,4 @@
-// ── Editor ─────────────────────────────────────────────────────────
+﻿// ── Editor ─────────────────────────────────────────────────────────
 
 let _tiptapInstances = {}; // sectionId → TipTap Editor instance
 let _activeEditor = null;  // currently focused TipTap instance
@@ -1327,7 +1327,7 @@ function attachSlotDragHandlers() {
       const reader = new FileReader();
       reader.onload = async (ev) => {
         const compressed = await _compressImage(ev.target.result);
-        imgModalSlot = slot;
+        uiState.imgModalSlot = slot;
         insertImageUrl(compressed);
         if (!uploadedImages.some((u) => u.name === files[0].name))
           uploadedImages.push({ name: files[0].name, dataURL: compressed });
