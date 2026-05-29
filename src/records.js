@@ -24,7 +24,7 @@ function _linkedCardChips(recordId) {
     const isCompound = !isSingle && c.packedRecordIds?.includes(recordId);
     if (!isSingle && !isCompound) return;
     const cls = isCompound ? 'rec-card-chip rec-card-chip--compound' : 'rec-card-chip';
-    chips.push(`<span class="${cls}" onclick="event.stopPropagation();setActive('${c.id}')" title="${esc(c.title || 'Card ' + (i + 1))}">#${i + 1}</span>`);
+    chips.push(`<span class="${cls}" onclick="event.stopPropagation();setActive('${c.id}')" title="${esc(c.title || 'Thẻ ' + (i + 1))}">#${i + 1}</span>`);
   });
   return chips.join('');
 }
@@ -75,6 +75,12 @@ function renderRecordsPanel() {
         <div id="col-menu" style="display:none">${colMenuItems}</div>
       </div>
       <button class="btn btn-sm btn-secondary" onclick="openSchemaEditor()">${t('rec.schema')}</button>
+      <button class="btn btn-sm btn-secondary" onclick="exportRecordsJson()" title="Export records as JSON file">Export JSON</button>
+      <button class="btn btn-sm btn-secondary" onclick="copyRecordsForAI()" title="Copy records as AI prompt">✦ Copy for AI</button>
+      <button class="btn btn-sm btn-secondary" onclick="importRecordsJsonClick()" title="Import records from JSON file">Import JSON</button>
+      <button class="btn btn-sm btn-secondary" onclick="pasteRecordsJson()" title="Paste JSON — update existing records by ID">Paste JSON</button>
+      <button class="btn btn-sm btn-secondary" onclick="pasteRecordsJson(true)" title="Paste JSON — append all as new records">Append JSON</button>
+      <input type="file" id="records-import-input" accept=".json" style="display:none" onchange="importRecordsJsonFile(this)">
     </div>`;
 
   const visibleTextFields = textFields.filter(f => !_hiddenRecCols.has('field:' + f.key));
@@ -177,10 +183,10 @@ function openRecordDetail(id) {
       input = `<div class="record-field-img" onpaste="_pasteRecordImage('${record.id}','${f.key}',event)">
         ${thumb}
         <div class="image-slot-btns">
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="_pasteToRecordImage('${record.id}','${f.key}')" title="Paste from clipboard"><svg class="icon" style="width:13px;height:13px"><use href="#i-clipboard"/></svg></button>
-          ${val ? `<button class="btn btn-secondary btn-sm btn-icon" onclick="_copyRecordImage('${record.id}','${f.key}')" title="Copy image"><svg class="icon" style="width:13px;height:13px"><use href="#i-copy"/></svg></button>` : ''}
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="_pickRecordImage('${record.id}','${f.key}')" title="Choose file"><svg class="icon" style="width:13px;height:13px"><use href="#i-search"/></svg></button>
-          ${val ? `<button class="btn btn-danger btn-sm btn-icon" onclick="_clearRecordImage('${record.id}','${f.key}')" title="Clear"><svg class="icon" style="width:13px;height:13px"><use href="#i-x"/></svg></button>` : ''}
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="_pasteToRecordImage('${record.id}','${f.key}')" title="${t('rec.img.paste')}"><svg class="icon" style="width:13px;height:13px"><use href="#i-clipboard"/></svg></button>
+          ${val ? `<button class="btn btn-secondary btn-sm btn-icon" onclick="_copyRecordImage('${record.id}','${f.key}')" title="${t('rec.img.copy')}"><svg class="icon" style="width:13px;height:13px"><use href="#i-copy"/></svg></button>` : ''}
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="_pickRecordImage('${record.id}','${f.key}')" title="${t('rec.img.choose')}"><svg class="icon" style="width:13px;height:13px"><use href="#i-search"/></svg></button>
+          ${val ? `<button class="btn btn-danger btn-sm btn-icon" onclick="_clearRecordImage('${record.id}','${f.key}')" title="${t('rec.img.clear')}"><svg class="icon" style="width:13px;height:13px"><use href="#i-x"/></svg></button>` : ''}
         </div>
       </div>`;
     } else {
@@ -227,7 +233,7 @@ function openRecordDetail(id) {
 
   const previewSection = singleTemplates.length
     ? `<div class="record-preview-strip">
-        <div class="record-field-label" style="margin-bottom:6px;">Preview</div>
+        <div class="record-field-label" style="margin-bottom:6px;">${t('rec.preview')}</div>
         ${previews}
        </div>`
     : '';
@@ -252,7 +258,7 @@ function openRecordDetail(id) {
       </div>
       <div class="editor-toolbar-divider"></div>
       <div class="editor-toolbar-group">
-        <button class="editor-toolbar-btn" data-cmd="clearFormat" onclick="_recToolbarCmd('clearFormat')" title="Clear formatting"><svg class="icon" style="width:13px;height:13px"><use href="#i-clear-format"/></svg></button>
+        <button class="editor-toolbar-btn" data-cmd="clearFormat" onclick="_recToolbarCmd('clearFormat')" title="${t('rec.toolbar.clearFormat')}"><svg class="icon" style="width:13px;height:13px"><use href="#i-clear-format"/></svg></button>
       </div>
     </div>` : '';
 
@@ -263,7 +269,7 @@ function openRecordDetail(id) {
     <div class="record-detail-sticky">
       <div class="record-detail-header">
         <div class="record-detail-title-area">
-          <span class="record-detail-title">Edit Record</span>
+          <span class="record-detail-title">${t('rec.editRecord')}</span>
           ${linkedChips ? `<div class="record-detail-chips">${linkedChips}</div>` : ''}
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
@@ -417,7 +423,7 @@ function _initRecordTiptapInstances(record) {
     const val = record.fields[f.key] ?? '';
     const editor = new window.TipTapEditor({
       element: el,
-      ...(window._tiptapBaseConfig('Content...')),
+      ...(window._tiptapBaseConfig(t('rec.tiptapPh'))),
       content: mdParse(val),
     });
     editor.on('update', () => {
@@ -608,7 +614,7 @@ function openPackDialog(templateId) {
   }).join('');
 
   document.getElementById('pack-dialog-records').innerHTML =
-    checkboxes || '<em style="color:var(--ink-400);font-size:13px;">No records to pack</em>';
+    checkboxes || `<em style="color:var(--ink-400);font-size:13px;">${t('rec.toast.noRecords')}</em>`;
 
   const menu = document.getElementById('pack-menu');
   if (menu) menu.classList.remove('open');
@@ -631,7 +637,7 @@ function confirmPack() {
 
   const slots = LAYOUT_SLOTS[template.layout] ?? 0;
   const chunks = slots > 0 ? Math.ceil(selectedRecords.length / slots) : 1;
-  const msg = `Packed ${selectedRecords.length} record${selectedRecords.length !== 1 ? 's' : ''} into ${chunks} card${chunks !== 1 ? 's' : ''} (${template.layout})`;
+  const msg = t('rec.toast.packResult').replace('{r}', selectedRecords.length).replace('{n}', chunks).replace('{l}', template.layout);
   if (typeof showToast === 'function') showToast(msg);
   else {
     const t = document.createElement('div');
@@ -692,6 +698,7 @@ function packRecords(template, selectedRecords) {
     card.templateId = template.id;
     card.packedRecordIds = recordIds;
     card.cssClass = template.cardClass || null;
+    if (template.cardConfig) Object.assign(card, template.cardConfig);
 
     if (!isTxtGrid) {
       card.images = records.map((rec, slot) => ({
@@ -752,13 +759,14 @@ function syncAllPacked() {
         content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot) : ''
       }));
       while (card.sections.length < slotCount) card.sections.push({ id: uid(), label: '', content: '' });
+      if (template.cardConfig) Object.assign(card, template.cardConfig);
       records.forEach(r => { r.fieldsHash = _hashStr(JSON.stringify(r.fields)); });
       syncCount++;
     });
 
-    // ── Detect new records not yet in any chunk ──────────────────────
-    const packedIdSet = new Set(packedCards.flatMap(c => c.packedRecordIds));
-    const newRecords = state.records.filter(r => !packedIdSet.has(r.id));
+    // ── Detect new records not yet in any card (including consolidated templateId=null cards) ──
+    const allPackedIdSet = new Set(state.cards.flatMap(c => c.packedRecordIds || []));
+    const newRecords = state.records.filter(r => !allPackedIdSet.has(r.id));
     if (!newRecords.length) return;
 
     if (isTxtGrid) {
@@ -839,7 +847,7 @@ function syncAllPacked() {
 
   const parts = [];
   if (syncCount) parts.push(t('rec.toast.syncedN').replace('{n}', syncCount).replace('{s}', syncCount !== 1 ? 's' : ''));
-  if (newCardCount) parts.push(`${newCardCount} new card${newCardCount !== 1 ? 's' : ''} created`);
+  if (newCardCount) parts.push(t('rec.toast.newCards').replace('{n}', newCardCount));
   showToast(parts.length ? parts.join(' · ') : t('rec.toast.noPackedCards'));
 }
 
@@ -881,6 +889,7 @@ function _consolidateSameLayout(layout) {
     card.imageGridSplit = ref.imageGridSplit ? { ...ref.imageGridSplit } : { ...(LAYOUT_SPLIT_DEFAULTS[layout] || {}) };
     card.imageHeightPercent = ref.imageHeightPercent;
     card.hideTitle = ref.hideTitle ?? true;
+    card.title = ref.title || '';
     card.templateId = null; // mixed — won't be auto-synced
     card.packedRecordIds = chunk.map(cell => cell.recordId).filter(Boolean);
     card.sections = chunk.map(cell => ({ ...cell.section, id: uid() }));
@@ -915,25 +924,26 @@ function packAll() {
 
 // ── Schema Editor ─────────────────────────────────────────────────────────────
 let _editingSchema = null;
+let _loadedSchemaName = null;
 
 async function saveSchemaToLibrary() {
-  if (!workDirHandle) { alert('Set a work folder first.'); return; }
-  const name = prompt('Save schema as:');
+  if (!workDirHandle) { alert(t('rec.schema.setFolderAlert')); return; }
+  const name = prompt(t('rec.schema.savePrompt'), _loadedSchemaName || '');
   if (!name?.trim()) return;
   const schema = _editingSchema || state.schema;
-  if (!schema) { alert('No schema to save.'); return; }
+  if (!schema) { alert(t('rec.schema.noSchemaAlert')); return; }
   try {
     await saveToLibrary('schemas', name.trim(), schema);
     const sel = document.getElementById('schema-library-select');
     if (sel && !Array.from(sel.options).find(o => o.value === name.trim())) {
       sel.innerHTML += `<option value="${esc(name.trim())}">${esc(name.trim())}</option>`;
     }
-    showToast(`Schema "${name.trim()}" saved to library`);
-    if (confirm(`Also save current style as "${name.trim()}"?`)) {
+    showToast(t('rec.schema.savedToast').replace('{n}', name.trim()));
+    if (confirm(t('rec.schema.saveStyleConfirm').replace('{n}', name.trim()))) {
       await saveToLibrary('styles', name.trim(), { fc_style_version: '1.0', settings: state.settings });
-      showToast(`Style "${name.trim()}" saved to library`);
+      showToast(t('rec.schema.styleSavedToast').replace('{n}', name.trim()));
     }
-  } catch (err) { alert('Save failed: ' + err.message); }
+  } catch (err) { alert(t('rec.schema.saveFailAlert').replace('{e}', err.message)); }
 }
 
 async function applySchemaFromLibrary() {
@@ -942,15 +952,11 @@ async function applySchemaFromLibrary() {
   if (!name) return;
   try {
     const schema = await loadFromLibrary('schemas', name);
-    if (!schema?.fields) throw new Error('Invalid schema file');
+    if (!schema?.fields) throw new Error(t('rec.schema.invalidFile'));
     const hasRecords = state.records?.length > 0;
     let templatesOnly = false;
     if (hasRecords) {
-      const choice = confirm(
-        `Project has ${state.records.length} existing record(s).\n\n` +
-        `OK → Load full schema (fields + templates) — records may lose mapping\n` +
-        `Cancel → Load templates only — keeps current fields`
-      );
+      const choice = confirm(t('rec.schema.loadWithRecordsConfirm').replace('{n}', state.records.length));
       if (choice === null) return;
       templatesOnly = !choice;
     }
@@ -958,41 +964,45 @@ async function applySchemaFromLibrary() {
       _editingSchema.cardTemplates = schema.cardTemplates || [];
     } else {
       _editingSchema = schema;
+      _loadedSchemaName = name;
     }
     _renderSchemaEditor();
-    showToast(`Schema "${name}" loaded${templatesOnly ? ' (templates only)' : ''}`);
+    showToast(templatesOnly
+      ? t('rec.schema.loadedTemplatesOnlyToast').replace('{n}', name)
+      : t('rec.schema.loadedToast').replace('{n}', name));
     try {
       const styleData = await loadFromLibrary('styles', name);
-      if (styleData && confirm(`Matching style "${name}" found. Also load it?`)) {
+      if (styleData && confirm(t('rec.schema.matchingStyleConfirm').replace('{n}', name))) {
         _applyStyleData(styleData, name);
       }
     } catch (_) {}
-  } catch (err) { alert('Load failed: ' + err.message); }
+  } catch (err) { alert(t('rec.schema.loadFailAlert').replace('{e}', err.message)); }
 }
 
 async function deleteSchemaFromLibrary() {
   const sel = document.getElementById('schema-library-select');
   const name = sel?.value;
   if (!name) return;
-  if (!confirm(`Delete schema "${name}" from library?`)) return;
+  if (!confirm(t('rec.schema.deleteConfirm').replace('{n}', name))) return;
   try {
     await deleteFromLibrary('schemas', name);
     sel.remove(sel.selectedIndex);
     sel.value = '';
-    showToast(`Schema "${name}" deleted`);
-  } catch (err) { alert('Delete failed: ' + err.message); }
+    showToast(t('rec.schema.deletedToast').replace('{n}', name));
+  } catch (err) { alert(t('rec.schema.deleteFailAlert').replace('{e}', err.message)); }
 }
 
 function openSchemaEditor() {
   _editingSchema = state.schema
     ? JSON.parse(JSON.stringify(state.schema))
     : { fields: [], cardTemplates: [] };
+  _loadedSchemaName = null;
   _renderSchemaEditor();
   document.getElementById('schema-editor-modal').showModal();
   listLibrary('schemas').then(names => {
     const sel = document.getElementById('schema-library-select');
     if (!sel) return;
-    sel.innerHTML = '<option value="">— library —</option>' +
+    sel.innerHTML = `<option value="">${t('rec.schema.libraryPh')}</option>` +
       names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
   });
 }
@@ -1023,8 +1033,8 @@ function _renderSchemaEditor() {
     const isCompound = tmpl.templateType === 'compound';
     const typeToggle = `
       <select onchange="_schemaTemplateChange(${i},'templateType',this.value)" style="width:100px;">
-        <option value="single"   ${!isCompound ? 'selected' : ''}>Single</option>
-        <option value="compound" ${isCompound ? 'selected' : ''}>Compound</option>
+        <option value="single"   ${!isCompound ? 'selected' : ''}>${t('rec.schema.single')}</option>
+        <option value="compound" ${isCompound ? 'selected' : ''}>${t('rec.schema.compound')}</option>
       </select>`;
 
     if (isCompound) {
@@ -1046,8 +1056,8 @@ function _renderSchemaEditor() {
           `<option value="${sz}" ${(tmpl.size || 'A4') === sz ? 'selected' : ''}>${sz}</option>`).join('')}
           </select>
           <select onchange="_schemaTemplateChange(${i},'orientation',this.value)" style="width:86px;">
-            <option value="portrait"  ${(tmpl.orientation || 'portrait') === 'portrait' ? 'selected' : ''}>Portrait</option>
-            <option value="landscape" ${(tmpl.orientation || 'portrait') === 'landscape' ? 'selected' : ''}>Landscape</option>
+            <option value="portrait"  ${(tmpl.orientation || 'portrait') === 'portrait' ? 'selected' : ''}>${t('orient.portrait')}</option>
+            <option value="landscape" ${(tmpl.orientation || 'portrait') === 'landscape' ? 'selected' : ''}>${t('orient.landscape')}</option>
           </select>
           <button class="btn btn-sm" onclick="_removeSchemaTemplate(${i})">✕</button>
         </div>
@@ -1057,34 +1067,58 @@ function _renderSchemaEditor() {
             style="flex:1;font-family:monospace;font-size:11px;"
             oninput="_schemaTemplateChange(${i},'cardClass',this.value)">
         </div>
-        <div style="display:flex;gap:12px;font-size:12px;flex-wrap:wrap;">
+        <div class="schema-template-slots">
           ${tmpl.layout === 'txtgrid' ? `
-          <label>Title:
-            <select onchange="_schemaTemplateChange(${i},'labelSlot',this.value)">
-              <option value="">—</option>${txtFields.map(f =>
-                `<option value="${f.id}" ${tmpl.mapping.labelSlot === f.id ? 'selected' : ''}>${esc(f.label)}</option>`).join('')}
-            </select>
-          </label>
-          <label>Content:
-            <select onchange="_schemaTemplateChange(${i},'textSlot',this.value)">
-              <option value="">—</option>${txtOpts}
-            </select>
-          </label>` : `
-          <label>Image field:
-            <select onchange="_schemaTemplateChange(${i},'imageSlot',this.value)">
-              <option value="">—</option>${imgOpts}
-            </select>
-          </label>
-          <label>Label field:
-            <select onchange="_schemaTemplateChange(${i},'labelSlot',this.value)">
-              <option value="">—</option>${labelOpts}
-            </select>
-          </label>
-          <label>Text field:
-            <select onchange="_schemaTemplateChange(${i},'textSlot',this.value)">
-              <option value="">—</option>${txtOpts}
-            </select>
-          </label>`}
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+              <label>${t('rec.schema.titleField')}
+                <select onchange="_schemaTemplateChange(${i},'labelSlot',this.value)">
+                  <option value="">—</option>${txtFields.map(f =>
+                    `<option value="${f.id}" ${tmpl.mapping.labelSlot === f.id ? 'selected' : ''}>${esc(f.label)}</option>`).join('')}
+                </select>
+              </label>
+              <label>${t('rec.schema.contentField')}
+                <select onchange="_schemaTemplateChange(${i},'textSlot',this.value)">
+                  <option value="">—</option>${txtOpts}
+                </select>
+              </label>
+            </div>
+            <div class="schema-cardconfig-row">
+              <div class="schema-cardconfig-item">
+                <span>Cols</span>
+                <input type="number" min="1" max="10" value="${esc(String(tmpl.cardConfig?.textCols ?? ''))}" placeholder="—" oninput="_schemaCardConfig(${i},'textCols',this.value)">
+              </div>
+              <div class="schema-cardconfig-item">
+                <span>Rows</span>
+                <input type="number" min="1" max="50" value="${esc(String(tmpl.cardConfig?.textRows ?? ''))}" placeholder="—" oninput="_schemaCardConfig(${i},'textRows',this.value)">
+              </div>
+              <div class="schema-cardconfig-item">
+                <span>Cell h (px)</span>
+                <input type="number" min="20" max="500" value="${esc(String(tmpl.cardConfig?.textCardHeight ?? ''))}" placeholder="—" oninput="_schemaCardConfig(${i},'textCardHeight',this.value)">
+              </div>
+              <div class="schema-cardconfig-item">
+                <span>Img h (%)</span>
+                <input type="number" min="10" max="90" value="${esc(String(tmpl.cardConfig?.imageHeightPercent ?? ''))}" placeholder="—" oninput="_schemaCardConfig(${i},'imageHeightPercent',this.value)">
+              </div>
+            </div>
+          ` : `
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+              <label>${t('rec.schema.imageField')}
+                <select onchange="_schemaTemplateChange(${i},'imageSlot',this.value)">
+                  <option value="">—</option>${imgOpts}
+                </select>
+              </label>
+              <label>${t('rec.schema.labelField')}
+                <select onchange="_schemaTemplateChange(${i},'labelSlot',this.value)">
+                  <option value="">—</option>${labelOpts}
+                </select>
+              </label>
+              <label>${t('rec.schema.textField')}
+                <select onchange="_schemaTemplateChange(${i},'textSlot',this.value)">
+                  <option value="">—</option>${txtOpts}
+                </select>
+              </label>
+            </div>
+          `}
         </div>
       </div>`;
     } else {
@@ -1123,10 +1157,10 @@ function _renderSchemaEditor() {
             oninput="_schemaTemplateChange(${i},'cardClass',this.value)">
         </div>
         <div style="font-size:12px;">
-          <div>Image slots: ${imgSlotSelects}</div>
-          <div style="margin-top:4px;">Sections: ${secSelects}
+          <div>${t('rec.schema.imageSlots')} ${imgSlotSelects}</div>
+          <div style="margin-top:4px;">${t('rec.schema.sections')} ${secSelects}
             <button class="btn btn-sm" style="margin-left:4px;"
-              onclick="_addSchemaSection(${i})">+ section</button>
+              onclick="_addSchemaSection(${i})">${t('rec.schema.addSection')}</button>
           </div>
         </div>
       </div>`;
@@ -1135,14 +1169,14 @@ function _renderSchemaEditor() {
 
   document.getElementById('schema-editor-content').innerHTML = `
     <div>
-      <div class="dialog-section-title">Fields</div>
+      <div class="dialog-section-title">${t('rec.schema.fieldsTitle')}</div>
       ${fieldsHtml}
-      <button class="btn btn-sm btn-secondary" onclick="_addSchemaField()">+ Add Field</button>
+      <button class="btn btn-sm btn-secondary" onclick="_addSchemaField()">${t('rec.schema.addField')}</button>
     </div>
     <div style="margin-top:16px;">
-      <div class="dialog-section-title">Card Templates</div>
+      <div class="dialog-section-title">${t('rec.schema.templatesTitle')}</div>
       ${templatesHtml}
-      <button class="btn btn-sm btn-secondary" onclick="_addSchemaTemplate()">+ Add Template</button>
+      <button class="btn btn-sm btn-secondary" onclick="_addSchemaTemplate()">${t('rec.schema.addTemplate')}</button>
     </div>`;
 }
 
@@ -1214,6 +1248,15 @@ function _schemaTemplateChange(i, prop, value) {
   _renderSchemaEditor();
 }
 
+function _schemaCardConfig(i, prop, value) {
+  const tmpl = _editingSchema.cardTemplates[i];
+  if (!tmpl) return;
+  if (!tmpl.cardConfig) tmpl.cardConfig = {};
+  const n = value === '' ? undefined : parseInt(value, 10);
+  if (n == null || isNaN(n)) delete tmpl.cardConfig[prop];
+  else tmpl.cardConfig[prop] = n;
+}
+
 function _schemaSingleImageSlot(ti, si, value) {
   if (!_editingSchema.cardTemplates[ti]?.mapping) return;
   _editingSchema.cardTemplates[ti].mapping.imageSlots[si] = value;
@@ -1243,4 +1286,192 @@ function saveSchema() {
   setDirty();
   closeSchemaEditor();
   renderRecordsPanel();
+}
+
+// ── Records JSON Export / Import ───────────────────────────────────────────────
+
+function exportRecordsJson() {
+  if (!state.schema || !state.records.length) { showToast('No records to export'); return; }
+  const allFields = state.schema.fields;
+  const out = {
+    schema: allFields.map(f => ({ key: f.key, label: f.label, type: f.type })),
+    records: state.records.map(r => {
+      const obj = { id: r.id };
+      allFields.forEach(f => {
+        const val = r.fields[f.key] ?? '';
+        // strip data: URLs to keep export file small
+        obj[f.key] = (f.type === 'image' && val.startsWith('data:')) ? '' : val;
+      });
+      return obj;
+    })
+  };
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${state.projectName || 'records'}-records.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function copyRecordsForAI() {
+  if (!state.schema) { showToast('No schema defined'); return; }
+  // Pre-populate textarea with existing record names (first text field)
+  const nameField = state.schema.fields.find(f => f.type !== 'image');
+  const lines = state.records.length && nameField
+    ? state.records.map(r => r.fields[nameField.key] ?? '').join('\n')
+    : '';
+  document.getElementById('records-ai-names').value = lines;
+  document.getElementById('records-ai-modal').showModal();
+  setTimeout(() => document.getElementById('records-ai-names').focus(), 50);
+}
+
+function closeRecordsAiModal() {
+  document.getElementById('records-ai-modal').close();
+}
+
+function pasteRecordsAiNames() {
+  navigator.clipboard.readText()
+    .then(text => { document.getElementById('records-ai-names').value = text.trim(); })
+    .catch(() => showToast('Clipboard read failed'));
+}
+
+function executeRecordsAiCopy() {
+  if (!state.schema) return;
+  const rawNames = document.getElementById('records-ai-names').value;
+  const names = rawNames.split('\n').map(s => s.trim()).filter(Boolean);
+  if (!names.length) { showToast('Enter at least one name'); return; }
+
+  const allFields = state.schema.fields;
+  const nameField = allFields.find(f => f.type !== 'image');
+  const otherFields = allFields.filter(f => f !== nameField);
+  const imageFields = allFields.filter(f => f.type === 'image');
+  const schemaLines = allFields.map(f => `- ${f.key} (${f.type}): ${f.label}`).join('\n');
+
+  // Match names to existing records to preserve IDs — but keep other fields empty for AI to fill
+  const filledNames = new Set(names);
+  const records = names.map(name => {
+    const existing = nameField && state.records.find(r => r.fields[nameField.key] === name);
+    const obj = { id: existing ? existing.id : `rec_${uid()}` };
+    if (nameField) obj[nameField.key] = name;
+    otherFields.forEach(f => { obj[f.key] = ''; });
+    return obj;
+  });
+
+  // Pick up to 2 filled records as style reference (exclude names in the fill list)
+  const referenceRecords = state.records.filter(r => {
+    if (!nameField) return false;
+    if (filledNames.has(r.fields[nameField.key] ?? '')) return false;
+    return otherFields.some(f => f.type !== 'image' && (r.fields[f.key] ?? '').trim());
+  }).slice(0, 2);
+
+  let referenceSection = '';
+  if (referenceRecords.length) {
+    const refObjs = referenceRecords.map(r => {
+      const obj = { id: r.id };
+      allFields.forEach(f => {
+        const val = r.fields[f.key] ?? '';
+        obj[f.key] = (f.type === 'image' && val.startsWith('data:')) ? '' : val;
+      });
+      return obj;
+    });
+    referenceSection = `\nReference examples — match this style, tone, length, and language (DO NOT include these in output):\n${JSON.stringify(refObjs, null, 2)}\n`;
+  }
+
+  const out = {
+    schema: allFields.map(f => ({ key: f.key, label: f.label, type: f.type })),
+    records
+  };
+
+  const imgNote = imageFields.length
+    ? `\n- For image fields (type "image"): set the value to a concise English search term for Wikimedia/Wikipedia (e.g. species scientific name, landmark name) — NOT a URL`
+    : '';
+  const filledNote = otherFields.length
+    ? `The "${nameField?.label}" field is already filled. Fill in all other fields.`
+    : 'Improve or rewrite all fields.';
+
+  const aiPrompt = `You are filling in flashcard record data.
+
+Schema fields:
+${schemaLines}
+${referenceSection}
+${filledNote}
+Rules:
+- Keep the same record IDs and JSON structure
+- Text fields: 2–4 sentences of specific, accurate, interesting information
+- Use Markdown for formatting (e.g. **bold**, *italic*, - list items) — do NOT use any HTML tags
+- Ensure all JSON strings are properly escaped (no unescaped double quotes inside values)${imgNote}
+- Return ONLY valid JSON — the "records" array only, no wrapper object, no explanation, no markdown fences
+
+${JSON.stringify(out.records, null, 2)}`;
+
+  navigator.clipboard.writeText(aiPrompt)
+    .then(() => { showToast('✦ Copied for AI'); closeRecordsAiModal(); })
+    .catch(() => showToast('Copy failed'));
+}
+
+function importRecordsJsonClick() {
+  document.getElementById('records-import-input')?.click();
+}
+
+async function _applyImportedRecords(jsonText, append = false) {
+  let parsed = JSON.parse(jsonText);
+  const incoming = Array.isArray(parsed) ? parsed : (parsed.records || []);
+  if (!incoming.length) { showToast('No records found'); return; }
+
+  const allFields = state.schema?.fields || [];
+  const imageFields = allFields.filter(f => f.type === 'image');
+  let added = 0, updated = 0;
+
+  for (const row of incoming) {
+    const existing = !append && row.id && state.records.find(r => r.id === row.id);
+    const target = existing || (() => {
+      if (!state.schema) return null;
+      const rec = { id: `rec_${uid()}`, fieldsHash: '', fields: {} };
+      state.schema.fields.forEach(f => { rec.fields[f.key] = ''; });
+      state.records.push(rec);
+      added++;
+      return rec;
+    })();
+    if (!target) continue;
+    if (existing) { existing.fieldsHash = ''; updated++; }
+
+    allFields.filter(f => f.type !== 'image').forEach(f => {
+      if (f.key in row) target.fields[f.key] = row[f.key];
+    });
+
+    for (const f of imageFields) {
+      const val = row[f.key] ?? '';
+      if (!val) continue;
+      if (val.startsWith('http') || val.startsWith('data:')) {
+        target.fields[f.key] = val;
+      } else {
+        try {
+          const url = await _wikimediaFirstResult(val);
+          if (url) target.fields[f.key] = url;
+        } catch (_) {}
+      }
+    }
+  }
+
+  setDirty();
+  renderRecordsPanel();
+  showToast(`Imported: ${updated} updated, ${added} added`);
+}
+
+function importRecordsJsonFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  const reader = new FileReader();
+  reader.onload = e => _applyImportedRecords(e.target.result).catch(err => alert('Import failed: ' + err.message));
+  reader.readAsText(file);
+}
+
+function pasteRecordsJson(append = false) {
+  navigator.clipboard.readText()
+    .then(text => {
+      const stripped = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+      return _applyImportedRecords(stripped, append);
+    })
+    .catch(err => alert('Paste failed: ' + (err.message || err)));
 }

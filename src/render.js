@@ -53,7 +53,7 @@ function buildAttrHtml(img) {
   return `<div class="fc-img-attribution"><a href="${esc(photoUrl)}" target="_blank">Photo</a> by <a href="${esc(profileUrl)}" target="_blank">${esc(name)}</a> on <a href="https://unsplash.com" target="_blank">Unsplash</a></div>`;
 }
 
-function buildSlots(card, slotCount, imgStyle) {
+function buildSlots(card, slotCount, imgStyle, forPrint = false) {
   return Array.from({ length: slotCount }, (_, i) => {
     const img = card.images.find((im) => im.slot === i);
     if (img && img.url) {
@@ -66,6 +66,7 @@ function buildSlots(card, slotCount, imgStyle) {
         '</div>'
       );
     }
+    if (forPrint) return '<div class="fc-image-slot fc-image-slot-' + i + '" style="background:transparent;"></div>';
     return '<div class="fc-image-slot fc-image-slot-' + i + '"><span class="empty-placeholder">📷</span></div>';
   }).join("");
 }
@@ -131,21 +132,25 @@ function buildCompoundCellStyle(baseStyle, options = {}) {
   );
 }
 
-function buildCompoundImageSlots(card, imgStyle, cellOptions, sections) {
+function buildCompoundImageSlots(card, imgStyle, cellOptions, sections, forPrint = false) {
   const slotCount = LAYOUT_SLOTS[card.layout] || 0;
   return Array.from({ length: slotCount }, (_, i) => {
     const img = card.images.find((im) => im.slot === i);
     const section = sections ? sections[i] : null;
     const label = section && !card.hideSectionLabels && section.label ? section.label : null;
+    const hasImg = !!(img && img.url);
+    const effectiveCellOptions = (forPrint && !hasImg) ? { ...cellOptions, borderWidth: 0 } : cellOptions;
     const slotStyle = buildCompoundCellStyle(
       label ? "display:flex;flex-direction:column;" : "",
-      { ...cellOptions, overflow: "hidden" }
+      { ...effectiveCellOptions, overflow: "hidden" }
     );
-    const imgContent = img && img.url
+    const imgContent = hasImg
       ? '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;overflow:hidden;"><div class="img-bg" style="background-image:url(\'' +
       esc(img.url) + "\');" + resolveImgStyle(img, imgStyle) +
       'background-repeat:no-repeat;width:100%;height:100%;"></div></div>'
-      : '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden;"><span class="empty-placeholder">📷</span></div>';
+      : forPrint
+        ? '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;background:transparent;"></div>'
+        : '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden;"><span class="empty-placeholder">📷</span></div>';
     const labelHtml = label
       ? '<div class="fc-img-label"' + (section.labelSize ? ' style="font-size:' + section.labelSize + 'px"' : '') + '>' + mdParseInline(label) + '</div>'
       : '';
@@ -158,13 +163,16 @@ function buildCompoundImageSlots(card, imgStyle, cellOptions, sections) {
   }).join("");
 }
 
-function buildSectionCellsHtml(sections, count, contentStyle, cellOptions, hideLabels) {
+function buildSectionCellsHtml(sections, count, contentStyle, cellOptions, hideLabels, forPrint = false) {
   return Array.from({ length: count }, (_, i) => {
+    const sec = sections[i];
+    const isEmpty = !sec || (!(sec.content || '').trim() && !((sec.label || '').trim() && !hideLabels));
+    const opts = (forPrint && isEmpty) ? { ...cellOptions, borderWidth: 0 } : cellOptions;
     return (
       '<div class="fc-sections" style="' +
-      buildCompoundCellStyle(contentStyle, cellOptions) +
+      buildCompoundCellStyle(contentStyle, opts) +
       '">' +
-      buildSectionCellHtml(sections[i], hideLabels) +
+      buildSectionCellHtml(sec, hideLabels) +
       "</div>"
     );
   }).join("");
@@ -250,7 +258,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
     s.image.backgroundPosition +
     ";";
 
-  const slots = buildSlots(card, slotCount, imgStyle);
+  const slots = buildSlots(card, slotCount, imgStyle, forPrint);
   const handles = forPrint ? "" : buildHandles(card.layout, split);
   const hideLabels = !!card.hideSectionLabels;
   const sectionsHtml = buildSectionsHtml(card.sections, hideLabels, !!card.inlineSections);
@@ -353,7 +361,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   if (card.layout === "2img-2txt") {
     const sectionA = buildSectionCellHtml(card.sections[0], hideLabels);
     const sectionB = buildSectionCellHtml(card.sections[1], hideLabels);
-    const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions);
+    const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions, null, forPrint);
     return (
       cardStyleTag +
       '<div class="' +
@@ -393,7 +401,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
     const sectionA = buildSectionCellHtml(card.sections[0], true);
     const sectionB = buildSectionCellHtml(card.sections[1], true);
     const sectionC = buildSectionCellHtml(card.sections[2], true);
-    const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions, card.sections);
+    const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions, card.sections, forPrint);
     return (
       cardStyleTag +
       '<div class="' +
@@ -431,15 +439,21 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
       const img = card.images.find(im => im.slot === i);
       const imgContent = img && img.url
         ? '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;overflow:hidden;"><div class="img-bg" style="background-image:url(\'' + esc(img.url) + '\');' + resolveImgStyle(img, imgStyle) + 'background-repeat:no-repeat;width:100%;height:100%;"></div></div>'
-        : '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden;"><span class="empty-placeholder">📷</span></div>';
+        : forPrint
+          ? '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;background:transparent;"></div>'
+          : '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden;"><span class="empty-placeholder">📷</span></div>';
       const label = sec && !card.hideSectionLabels && sec.label ? sec.label : null;
       const labelHtml = label ? '<div class="fc-img-label"' + (sec.labelSize ? ' style="font-size:' + sec.labelSize + 'px"' : '') + '>' + mdParseInline(label) + '</div>' : '';
+      const isImgEmpty = !(img && img.url);
+      const isTxtEmpty = !((sec.content || '').trim() || (sec.label || '').trim());
       // rowBorders mode: merge img+txt into one visual row — remove the shared border edge and set directional radius
       const imgExtra = rowBorders ? 'border-right:0;border-radius:' + r + 'px 0 0 ' + r + 'px;' : '';
       const txtExtra = rowBorders ? 'border-left:0;border-radius:0 ' + r + 'px ' + r + 'px 0;' : '';
-      const imgCellStyle = buildCompoundCellStyle(label ? 'display:flex;flex-direction:column;' : '', imgCompoundCellOptions) + imgExtra;
+      const imgCellOpts = (forPrint && isImgEmpty) ? { ...imgCompoundCellOptions, borderWidth: 0 } : imgCompoundCellOptions;
+      const txtCellOpts = (forPrint && isTxtEmpty) ? { ...compoundCellOptions, borderWidth: 0 } : compoundCellOptions;
+      const imgCellStyle = buildCompoundCellStyle(label ? 'display:flex;flex-direction:column;' : '', { ...imgCellOpts, overflow: 'hidden' }) + imgExtra;
       const imgCell = '<div class="fc-image-slot fc-image-slot-' + i + '" style="' + imgCellStyle + '">' + imgContent + labelHtml + '</div>';
-      const txtCell = '<div class="fc-sections" style="' + buildCompoundCellStyle(compoundTextBase + contentStyle, compoundCellOptions) + txtExtra + '">' + buildSectionCellHtml(sec, true) + '</div>';
+      const txtCell = '<div class="fc-sections" style="' + buildCompoundCellStyle(compoundTextBase + contentStyle, txtCellOpts) + txtExtra + '">' + buildSectionCellHtml(sec, true) + '</div>';
       return imgCell + txtCell;
     }).join('');
     const gapStyle = rowBorders
@@ -481,9 +495,10 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
           buildSectionCellHtml(section, true) +
           '</div>'
         : '';
+      const isEmpty = !hasImg && !hasContent && !hasTitle;
       const cellStyle = buildCompoundCellStyle('display:flex;flex-direction:column;', {
         paddingPx: 0,
-        borderWidth: s.border.width,
+        borderWidth: (forPrint && isEmpty) ? 0 : s.border.width,
         borderCss,
         borderRadiusPx: s.border.radius,
         overflow: 'hidden',
@@ -505,7 +520,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   }
 
   if (card.layout === "2img-4txt") {
-    const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions);
+    const compoundSlots = buildCompoundImageSlots(card, imgStyle, imgCompoundCellOptions, null, forPrint);
     return (
       cardStyleTag +
       '<div class="' +
@@ -526,7 +541,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
       compoundGridStyle +
       '">' +
       compoundSlots +
-      buildSectionCellsHtml(card.sections, 4, compoundTextBase + contentStyle, compoundCellOptions, hideLabels) +
+      buildSectionCellsHtml(card.sections, 4, compoundTextBase + contentStyle, compoundCellOptions, hideLabels, forPrint) +
       handles +
       "</div></div>"
     );
@@ -550,7 +565,9 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
       const imgContent = img && img.url
         ? '<div style="width:100%;height:100%;overflow:hidden;"><div class="img-bg" style="background-image:url(\'' +
         esc(img.url) + '\');' + resolveImgStyle(img, imgStyle) + 'background-repeat:no-repeat;width:100%;height:100%;"></div></div>'
-        : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;"><span class="empty-placeholder">📷</span></div>';
+        : forPrint
+          ? '<div style="width:100%;height:100%;background:transparent;"></div>'
+          : '<div style="width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;"><span class="empty-placeholder">📷</span></div>';
       imgItems.push(
         '<div class="fc-image-slot fc-image-slot-' + i + '" style="' +
         buildCompoundCellStyle("", { paddingPx: imgPaddingPx, borderWidth: s.border.width, borderCss, borderRadiusPx: s.border.radius, overflow: "hidden" }) + '">' +
@@ -594,7 +611,7 @@ function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
       '" style="' + compoundWrapperStyle + '">' +
       (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + '</div>' : '') +
       '<div style="flex:1;overflow:auto;display:grid;gap:' + marginPx + 'px;' + gridStyle3 + '">' +
-      buildSectionCellsHtml(card.sections, cellCount, compoundTextBase + gridContentStyle, compoundCellOptions, hideLabels) +
+      buildSectionCellsHtml(card.sections, cellCount, compoundTextBase + gridContentStyle, compoundCellOptions, hideLabels, forPrint) +
       '</div></div>'
     );
   }

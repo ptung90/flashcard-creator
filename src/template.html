@@ -303,7 +303,8 @@
         <button id="redo-btn" class="btn btn-secondary btn-sm btn-icon" onclick="redo()" title="Redo (Ctrl+Y)" disabled>
           <svg class="icon"><use href="#i-redo"/></svg>
         </button>
-        <button class="btn btn-secondary btn-sm" onclick="saveJSON()" title="Save (Ctrl+S)">
+        <span id="readonly-badge" style="display:none">Read Only</span>
+        <button id="save-btn" class="btn btn-secondary btn-sm" onclick="saveJSON()" title="Save (Ctrl+S)">
           <svg class="icon"><use href="#i-save"/></svg><span class="btn-label" data-i18n="toolbar.save">Save</span><span id="dirty-dot" style="display: none">●</span>
         </button>
         <button class="btn btn-secondary btn-sm btn-icon" onclick="saveJSONAs()" title="Save As">
@@ -330,6 +331,9 @@
             </button>
             <button class="toolbar-more-item" onclick="openJsonModal();closeMoreMenu()">
               <svg class="icon"><use href="#i-code"/></svg> JSON
+            </button>
+            <button class="toolbar-more-item" onclick="openBackupModal();closeMoreMenu()">
+              <svg class="icon"><use href="#i-undo"/></svg> Backups
             </button>
             <div class="toolbar-more-sep"></div>
             <div class="toolbar-more-lang">
@@ -909,73 +913,37 @@
 
     <!-- Load / Recent modal -->
     <div class="modal-backdrop" id="load-modal" style="display: none">
-      <div class="modal" style="max-width: 500px">
+      <div class="modal load-modal-wide">
         <div class="modal-header">
           <span>Load</span>
-          <button class="modal-close" onclick="closeLoadModal()">×</button>
-        </div>
-        <div
-          class="modal-body"
-          style="
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 60vh;
-            overflow-y: auto;
-          "
-        >
-          <div id="load-folder-section" style="display: none">
-            <div class="load-folder-header">
-              <div
-                id="load-folder-breadcrumb"
-                class="load-folder-breadcrumb"
-              ></div>
-              <button
-                class="btn btn-secondary btn-sm"
-                id="load-new-folder-btn"
-                onclick="createSubfolder()"
-                style="display: none"
-              >
-                + Folder
-              </button>
-            </div>
-            <div id="load-folder-list"></div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="modal-close" onclick="_renderFolderSection()" title="Refresh"><svg class="icon" style="width:15px;height:15px"><use href="#i-refresh"/></svg></button>
+            <button class="modal-close" onclick="closeLoadModal()">×</button>
           </div>
-          <div>
-            <div
-              style="
-                font-size: 11px;
-                color: #6b7280;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                margin-bottom: 6px;
-              "
-            >
-              Recent
+        </div>
+        <div class="modal-body load-modal-body">
+          <!-- 2-panel folder explorer -->
+          <div id="load-folder-section" style="display:none">
+            <div class="load-panel-left">
+              <div id="load-folder-tree" class="load-folder-tree"></div>
+              <button class="btn btn-secondary btn-sm load-new-folder-btn"
+                id="load-new-folder-btn" onclick="createSubfolder()">+ Folder</button>
             </div>
+            <div class="load-panel-right">
+              <div id="load-folder-files"></div>
+            </div>
+          </div>
+          <!-- Recent -->
+          <div class="load-recent-section">
+            <div class="load-section-label">Recent</div>
             <div id="load-recent-list"></div>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary btn-sm" onclick="closeLoadModal()">
-            Cancel
-          </button>
-          <button class="btn btn-secondary btn-sm" onclick="newProject()">
-            + New Project
-          </button>
-          <button class="btn btn-secondary btn-sm" onclick="setWorkDir()">
-            📁 Set Folder
-          </button>
-          <button
-            class="btn btn-primary btn-sm"
-            onclick="
-              closeLoadModal();
-              openFilePicker();
-            "
-          >
-            Browse file…
-          </button>
+          <button class="btn btn-secondary btn-sm" onclick="closeLoadModal()">Cancel</button>
+          <button class="btn btn-secondary btn-sm" onclick="newProject()">+ New Project</button>
+          <button class="btn btn-secondary btn-sm" onclick="setWorkDir()">📁 Set Folder</button>
+          <button class="btn btn-primary btn-sm" onclick="closeLoadModal();openFilePicker()">Browse file…</button>
         </div>
       </div>
     </div>
@@ -1318,6 +1286,16 @@
             <input type="file" id="style-import-input" accept=".json" style="display:none" onchange="importStyle(this)" />
           </div>
 
+          <!-- Access Control -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Access Control</div>
+            <div class="cfg-row">
+              <label>My edit folders<br><small style="color:#9ca3af">Comma-separated folders I can edit. Leave empty to allow editing everywhere.</small></label>
+              <input id="set-edit-folders" type="text" style="width:160px;font-size:12px" placeholder="e.g. john, john/vocab"
+                onchange="const v=this.value.trim();const arr=v?v.split(',').map(s=>s.trim()).filter(Boolean):[];localStorage.setItem('fc_edit_folders',JSON.stringify(arr));_computeReadOnly();_updateLabels();">
+            </div>
+          </div>
+
           <!-- Maintenance -->
           <div class="cfg-section">
             <div class="cfg-section-title">Maintenance</div>
@@ -1387,6 +1365,36 @@
       <div class="dialog-footer">
         <button class="btn btn-sm btn-primary" onclick="confirmPack()">Pack</button>
         <button class="btn btn-sm btn-secondary" onclick="closePackDialog()">Cancel</button>
+      </div>
+    </dialog>
+
+    <dialog id="backup-modal">
+      <div class="dialog-header">
+        <span class="dialog-title" id="backup-modal-title">Backups</span>
+        <button class="btn btn-sm modal-close" onclick="closeBackupModal()">×</button>
+      </div>
+      <div class="dialog-body" id="backup-list" style="padding:0"></div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-primary" style="margin-right:auto" onclick="manualBackup(this)">Backup Now</button>
+        <button class="btn btn-sm btn-secondary" onclick="closeBackupModal()">Close</button>
+      </div>
+    </dialog>
+
+    <dialog id="records-ai-modal">
+      <div class="dialog-header">
+        <span class="dialog-title">✦ Copy Records for AI</span>
+        <button class="btn btn-sm modal-close" onclick="closeRecordsAiModal()">×</button>
+      </div>
+      <div class="dialog-body" style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12px;color:var(--ink-500)">Enter names (one per line). AI will fill all other fields.</span>
+          <button class="btn btn-sm btn-secondary" onclick="pasteRecordsAiNames()">Paste</button>
+        </div>
+        <textarea id="records-ai-names" rows="12" style="width:100%;font-family:monospace;font-size:13px;resize:vertical;box-sizing:border-box;padding:8px;border:1px solid var(--border);border-radius:4px" placeholder="Name 1&#10;Name 2&#10;Name 3..."></textarea>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-secondary" onclick="closeRecordsAiModal()">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="executeRecordsAiCopy()">✦ Copy for AI</button>
       </div>
     </dialog>
 

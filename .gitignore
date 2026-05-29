@@ -12,6 +12,7 @@ backup-*/
 *.pdf
 sessions/
 docs/
+.superpowers
 
 # Office docs
 *.docx

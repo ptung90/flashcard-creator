@@ -538,7 +538,7 @@ input[type="range"] { accent-color: var(--mint-600); }
 .col-menu-item:hover { background: var(--mint-50); }
 .col-menu-item input[type="checkbox"] { cursor: pointer; }
 
-.records-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+.records-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .records-table th {
   text-align: left; padding: 4px 7px;
   font-size: 10px; font-weight: 600; color: var(--ink-500);
@@ -686,7 +686,24 @@ input[type="range"] { accent-color: var(--mint-600); }
 .schema-template-slots { font-size: 12px; }
 .schema-template-slots > div { margin-top: 4px; }
 
+.schema-cardconfig-row {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px;
+}
+.schema-cardconfig-item {
+  display: flex; align-items: center; gap: 4px;
+}
+.schema-cardconfig-item span {
+  font-size: 11px; color: var(--ink-500); white-space: nowrap;
+}
+.schema-cardconfig-item input[type="number"] {
+  width: 60px; text-align: center;
+  -moz-appearance: textfield; appearance: textfield;
+}
+.schema-cardconfig-item input[type="number"]::-webkit-inner-spin-button,
+.schema-cardconfig-item input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; appearance: none; }
+
 #schema-editor-content input[type="text"],
+#schema-editor-content input[type="number"],
 #schema-editor-content select {
   background: #fff; border: 1px solid var(--line-strong);
   border-radius: 5px; padding: 0 8px; height: 28px;
@@ -695,6 +712,7 @@ input[type="range"] { accent-color: var(--mint-600); }
   transition: border-color .12s;
 }
 #schema-editor-content input[type="text"]:focus,
+#schema-editor-content input[type="number"]:focus,
 #schema-editor-content select:focus { outline: none; border-color: var(--mint-400); }
 #schema-editor-content .btn { height: 28px; }
 
@@ -709,6 +727,61 @@ input[type="range"] { accent-color: var(--mint-600); }
 }
 #pack-dialog-records label:hover { background: var(--mint-50); }
 #pack-dialog-records input[type="checkbox"] { accent-color: var(--mint-600); width: 14px; height: 14px; }
+
+/* ── Read-only badge ── */
+#readonly-badge {
+  display: none;
+  align-items: center;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em;
+  color: #b45309; background: #fef3c7;
+  border: 1px solid #fcd34d; border-radius: 4px;
+  padding: 2px 7px; white-space: nowrap; flex-shrink: 0;
+}
+#save-btn:disabled { opacity: 0.4; cursor: default; pointer-events: none; }
+
+/* ── Records AI Modal ── */
+#records-ai-modal {
+  width: 460px; max-width: 95vw;
+  padding: 0; margin: auto;
+  border: 1px solid var(--line-strong); border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.14), 0 2px 8px rgba(0,0,0,.08);
+}
+#records-ai-modal[open] { display: flex; flex-direction: column; }
+#records-ai-modal::backdrop { background: rgba(0,0,0,.46); backdrop-filter: blur(2px); }
+
+/* ── Backup Modal ── */
+#backup-modal {
+  width: 420px; max-width: 95vw;
+  padding: 0; margin: auto;
+  border: 1px solid var(--line-strong); border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.14), 0 2px 8px rgba(0,0,0,.08);
+}
+#backup-modal[open] { display: flex; flex-direction: column; }
+#backup-modal::backdrop { background: rgba(0,0,0,.46); backdrop-filter: blur(2px); }
+#backup-modal .dialog-title { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 340px; }
+
+#backup-list { overflow-y: auto; max-height: 380px; }
+
+.backup-empty {
+  padding: 24px 16px; text-align: center;
+  font-size: 13px; color: var(--ink-300);
+}
+
+.backup-item {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 7px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.backup-item:last-child { border-bottom: none; }
+.backup-item:hover { background: var(--mint-50); }
+
+.backup-item-info { display: flex; flex-direction: column; gap: 2px; }
+.backup-item-date { font-size: 12.5px; color: var(--ink-900); font-variant-numeric: tabular-nums; }
+.backup-item-rel { font-size: 11px; color: var(--ink-300); }
+
+.backup-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.backup-del-btn { width: 28px; padding: 0; font-size: 16px; color: var(--ink-300); }
+.backup-del-btn:hover { color: var(--danger); border-color: var(--danger); }
 
 /* ── Preview header ── */
 .fc-preview-header { padding: 10px 14px; gap: 8px; }

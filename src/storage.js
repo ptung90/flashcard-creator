@@ -69,6 +69,8 @@ async function addToRecent(name, dataObj, path) {
       path: path || name,
       savedAt: new Date().toISOString(),
       cardCount: (dataObj.cards || []).length,
+      projectName: dataObj.project_name || name,
+      projectIcon: dataObj.project_icon || "🗂️",
     },
     ...kept,
   ]);
@@ -86,6 +88,16 @@ function formatRelDate(iso) {
   return d.toLocaleDateString();
 }
 
+// ── Path helpers ───────────────────────────────────────────────────
+async function _getDirFromPath(path) {
+  if (!path) return workDirHandle;
+  let dir = workDirHandle;
+  for (const part of path.split('/')) dir = await dir.getDirectoryHandle(part);
+  return dir;
+}
+function _pathDepth(path) { return path ? path.split('/').length : 0; }
+function _pathLeaf(path) { return path ? path.split('/').pop() : (workDirHandle?.name || ''); }
+
 // ── Load modal ─────────────────────────────────────────────────────
 async function openLoadModal() {
   _modalSubfolder = currentSubfolder;
@@ -94,13 +106,25 @@ async function openLoadModal() {
   _renderRecentList();
 }
 
-function _renderRecentList() {
+async function _renderRecentList() {
   const meta = getRecentMeta();
+  let dirty = false;
+  for (const m of meta) {
+    if (!m.projectName) {
+      const data = await idbGet(m.id).catch(() => null);
+      if (data) {
+        m.projectName = data.project_name || m.name;
+        m.projectIcon = data.project_icon || "🗂️";
+        dirty = true;
+      }
+    }
+  }
+  if (dirty) setRecentMeta(meta);
   const list = document.getElementById("load-recent-list");
   list.innerHTML = meta.length ? meta.map((m) => `
     <div class="recent-item">
       <div class="recent-item-info">
-        <div class="recent-item-name">${esc(m.name)}</div>
+        <div class="recent-item-name">${esc(m.projectIcon || "🗂️")} ${esc(m.projectName || m.name)}</div>
         <div class="recent-item-meta">${m.path && m.path !== m.name ? `<span class="recent-path">${esc(m.path)}</span> · ` : ""}${m.cardCount} card${m.cardCount !== 1 ? "s" : ""} · ${formatRelDate(m.savedAt)}</div>
       </div>
       <div class="recent-item-btns">
@@ -113,158 +137,133 @@ function _renderRecentList() {
 
 async function _renderFolderSection() {
   const folderSection = document.getElementById("load-folder-section");
-  const folderList = document.getElementById("load-folder-list");
-  const breadcrumb = document.getElementById("load-folder-breadcrumb");
-  const newFolderBtn = document.getElementById("load-new-folder-btn");
-
   if (!workDirHandle) { folderSection.style.display = "none"; return; }
-  folderSection.style.display = "block";
-
-  if (_modalSubfolder) {
-    breadcrumb.innerHTML = `<span class="breadcrumb-back" onclick="browseSubfolder(null)">📁 ${esc(workDirHandle.name)}</span><span class="breadcrumb-sep">›</span><span class="breadcrumb-cur">📁 ${esc(_modalSubfolder)}</span>`;
-    newFolderBtn.style.display = "none";
-  } else {
-    breadcrumb.innerHTML = `<span class="breadcrumb-cur">📁 ${esc(workDirHandle.name)}</span>`;
-    newFolderBtn.style.display = "";
-  }
-
-  folderList.innerHTML = '<div class="recent-empty">Loading…</div>';
+  folderSection.style.display = "flex";
   try {
     const perm = await workDirHandle.requestPermission({ mode: "readwrite" });
     if (perm !== "granted") throw new Error("Permission denied — click Set Folder again");
-
-    if (_modalSubfolder) {
-      // ── Subfolder detail view ─────────────────────────────────────
-      const dir = await workDirHandle.getDirectoryHandle(_modalSubfolder);
-      const files = [];
-      for await (const [name, handle] of dir.entries()) {
-        if (handle.kind === "file" && name.endsWith(".json") && name !== "user-config.json") {
-          const file = await handle.getFile();
-          let projectName = name, projectIcon = "🗂️";
-          try { const d = JSON.parse(await file.text()); projectName = d.project_name || name; projectIcon = d.project_icon || "🗂️"; } catch (_) {}
-          files.push({ name, projectName, projectIcon, lastModified: file.lastModified });
-        }
-      }
-      files.sort((a, b) => b.lastModified - a.lastModified);
-      folderList.innerHTML = files.map(f => {
-        const sn = JSON.stringify(f.name);
-        const isActive = f.name === currentFileName && _modalSubfolder === currentSubfolder;
-        return `<div class="recent-item${isActive ? " recent-item--active" : ""}">
-          <div class="recent-item-info">
-            <div class="recent-item-name">${esc(f.projectIcon)} ${esc(f.projectName)}</div>
-            <div class="recent-item-meta">${esc(f.name)} · ${formatRelDate(f.lastModified)}</div>
-          </div>
-          <div class="recent-item-btns" style="position:relative">
-            <button class="btn btn-primary btn-sm" onclick='loadFromFolder(${sn})'>Open</button>
-            <button class="btn btn-secondary btn-sm" onclick='showMoveMenu(${sn},this)' title="Move to folder">⇄</button>
-            <button class="btn btn-danger btn-sm btn-icon" onclick='deleteFromFolder(${sn},this)'><svg class="icon" style="width:13px;height:13px"><use href="#i-trash"/></svg></button>
-          </div>
-        </div>`;
-      }).join("") || '<div class="recent-empty">Empty folder</div>';
-
-    } else {
-      // ── Root view: all subfolders expanded inline ─────────────────
-      const subfolders = [], rootFiles = [];
-      for await (const [name, handle] of workDirHandle.entries()) {
-        if (handle.kind === "directory" && name !== "_backups" && name !== "_library") subfolders.push({ name, handle });
-        else if (handle.kind === "file" && name.endsWith(".json") && name !== "user-config.json") {
-          const file = await handle.getFile();
-          let projectName = name, projectIcon = "🗂️";
-          try { const d = JSON.parse(await file.text()); projectName = d.project_name || name; projectIcon = d.project_icon || "🗂️"; } catch (_) {}
-          rootFiles.push({ name, projectName, projectIcon, lastModified: file.lastModified });
-        }
-      }
-      const pinnedFolder = localStorage.getItem("fc_pinned_folder");
-      subfolders.sort((a, b) => {
-        if (a.name === pinnedFolder) return -1;
-        if (b.name === pinnedFolder) return 1;
-        return a.name.localeCompare(b.name);
-      });
-      rootFiles.sort((a, b) => b.lastModified - a.lastModified);
-      _modalFolders = subfolders.map(s => s.name);
-
-      let html = "";
-      for (const sf of subfolders) {
-        const sfFiles = [];
-        for await (const [name, handle] of sf.handle.entries()) {
-          if (handle.kind === "file" && name.endsWith(".json") && name !== "user-config.json") {
-            const file = await handle.getFile();
-            let projectName = name, projectIcon = "🗂️";
-            try { const d = JSON.parse(await file.text()); projectName = d.project_name || name; projectIcon = d.project_icon || "🗂️"; } catch (_) {}
-            sfFiles.push({ name, projectName, projectIcon, lastModified: file.lastModified });
-          }
-        }
-        if (!sfFiles.length) continue;
-        sfFiles.sort((a, b) => b.lastModified - a.lastModified);
-        const isPinned = sf.name === pinnedFolder;
-        const sfJson = JSON.stringify(sf.name);
-        html += `<div class="folder-group-header${isPinned ? " folder-group-header--pinned" : ""}" onclick='browseSubfolder(${sfJson})'>
-          <span class="folder-icon">📁</span>
-          <span class="folder-group-name">${esc(sf.name)}</span>
-          <button class="folder-pin-btn${isPinned ? " folder-pin-btn--active" : ""}" onclick='event.stopPropagation();togglePinFolder(${sfJson})' title="${isPinned ? "Unpin" : "Pin this folder"}">📌</button>
-          <span class="folder-item-arrow">›</span>
-        </div>`;
-        html += sfFiles.map(f => {
-          const isActive = f.name === currentFileName && sf.name === currentSubfolder;
-          return `<div class="recent-item folder-group-file${isActive ? " recent-item--active" : ""}">
-            <div class="recent-item-info">
-              <div class="recent-item-name">${esc(f.projectIcon)} ${esc(f.projectName)}</div>
-              <div class="recent-item-meta">${formatRelDate(f.lastModified)}</div>
-            </div>
-            <div class="recent-item-btns">
-              <button class="btn btn-primary btn-sm" onclick='loadFromFolder(${JSON.stringify(f.name)},${JSON.stringify(sf.name)})'>Open</button>
-            </div>
-          </div>`;
-        }).join("");
-      }
-
-      // root-level files
-      if (rootFiles.length) {
-        if (html) html += '<div class="folder-divider"></div>';
-        html += rootFiles.map(f => {
-          const sn = JSON.stringify(f.name);
-          const isActive = f.name === currentFileName && !currentSubfolder;
-          return `<div class="recent-item${isActive ? " recent-item--active" : ""}">
-            <div class="recent-item-info">
-              <div class="recent-item-name">${esc(f.projectIcon)} ${esc(f.projectName)}</div>
-              <div class="recent-item-meta">${esc(f.name)} · ${formatRelDate(f.lastModified)}</div>
-            </div>
-            <div class="recent-item-btns" style="position:relative">
-              <button class="btn btn-primary btn-sm" onclick='loadFromFolder(${sn})'>Open</button>
-              <button class="btn btn-secondary btn-sm" onclick='showMoveMenu(${sn},this)' title="Move to folder">⇄</button>
-              <button class="btn btn-danger btn-sm btn-icon" onclick='deleteFromFolder(${sn},this)'><svg class="icon" style="width:13px;height:13px"><use href="#i-trash"/></svg></button>
-            </div>
-          </div>`;
-        }).join("");
-      }
-
-      folderList.innerHTML = html || '<div class="recent-empty">Empty folder</div>';
-    }
+    await Promise.all([_renderFolderTree(), _renderFolderFiles()]);
   } catch (err) {
-    folderList.innerHTML = `<div class="recent-empty">${esc(err.message)}</div>`;
+    document.getElementById("load-folder-files").innerHTML = `<div class="recent-empty">${esc(err.message)}</div>`;
   }
 }
 
-async function browseSubfolder(name) {
-  _modalSubfolder = name;
-  await _renderFolderSection();
+async function _renderFolderTree() {
+  const treeEl = document.getElementById("load-folder-tree");
+  if (!treeEl) return;
+
+  // Scan L1 and L2 folders (max 2 levels, skip hidden)
+  const items = []; // { path, name, depth }
+  for await (const [n1, h1] of workDirHandle.entries()) {
+    if (h1.kind !== "directory" || n1.startsWith("_")) continue;
+    items.push({ path: n1, name: n1, depth: 1 });
+    for await (const [n2, h2] of h1.entries()) {
+      if (h2.kind !== "directory" || n2.startsWith("_")) continue;
+      items.push({ path: `${n1}/${n2}`, name: n2, depth: 2 });
+    }
+  }
+  items.sort((a, b) => a.path.localeCompare(b.path));
+  _modalAllPaths = items.map(t => t.path);
+
+  // Build L1 → has-children map
+  const l1HasChildren = {};
+  for (const item of items) {
+    if (item.depth === 2) l1HasChildren[item.path.split('/')[0]] = true;
+  }
+
+  const rootSel = _modalSubfolder === null ? " folder-tree-item--selected" : "";
+  let html = `<div class='folder-tree-item folder-tree-root${rootSel}' onclick='browseSubfolder(null)'>
+    <span class="folder-tree-toggle-spacer"></span><span>📁</span> ${esc(workDirHandle.name)}
+  </div>`;
+  for (const item of items) {
+    if (item.depth === 2) {
+      const l1 = item.path.split('/')[0];
+      if (_collapsedFolders.has(l1)) continue;
+    }
+    const sel = _modalSubfolder === item.path ? " folder-tree-item--selected" : "";
+    if (item.depth === 1) {
+      const hasKids = !!l1HasChildren[item.path];
+      const collapsed = _collapsedFolders.has(item.path);
+      const toggle = hasKids
+        ? `<button class='folder-tree-toggle' onclick='event.stopPropagation();toggleFolderCollapse(${JSON.stringify(item.path)})'><svg style='width:12px;height:12px'><use href='#${collapsed ? 'i-chevron-right' : 'i-chevron-down'}'/></svg></button>`
+        : '<span class="folder-tree-toggle-spacer"></span>';
+      html += `<div class='folder-tree-item${sel}' onclick='browseSubfolder(${JSON.stringify(item.path)})'>
+        ${toggle}<span>📁</span> ${esc(item.name)}
+      </div>`;
+    } else {
+      html += `<div class='folder-tree-item${sel}' style='padding-left:32px;' onclick='browseSubfolder(${JSON.stringify(item.path)})'>
+        <span class="folder-tree-toggle-spacer"></span><span>📁</span> ${esc(item.name)}
+      </div>`;
+    }
+  }
+  treeEl.innerHTML = html;
+
+  const newFolderBtn = document.getElementById("load-new-folder-btn");
+  if (newFolderBtn) newFolderBtn.style.display = _pathDepth(_modalSubfolder) < 2 ? "" : "none";
 }
 
-function togglePinFolder(name) {
-  const current = localStorage.getItem("fc_pinned_folder");
-  if (current === name) localStorage.removeItem("fc_pinned_folder");
-  else localStorage.setItem("fc_pinned_folder", name);
-  _renderFolderSection();
+async function _renderFolderFiles() {
+  const filesEl = document.getElementById("load-folder-files");
+  if (!filesEl) return;
+  filesEl.innerHTML = '<div class="recent-empty">Loading…</div>';
+  try {
+    const dir = await _getDirFromPath(_modalSubfolder);
+    const files = [];
+    for await (const [name, handle] of dir.entries()) {
+      if (handle.kind === "file" && name.endsWith(".json") && name !== "user-config.json") {
+        const file = await handle.getFile();
+        let projectName = name, projectIcon = "🗂️";
+        try { const d = JSON.parse(await file.text()); projectName = d.project_name || name; projectIcon = d.project_icon || "🗂️"; } catch (_) {}
+        files.push({ name, projectName, projectIcon, lastModified: file.lastModified });
+      }
+    }
+    files.sort((a, b) => b.lastModified - a.lastModified);
+    filesEl.innerHTML = files.map(f => {
+      const sn = JSON.stringify(f.name);
+      const isActive = f.name === currentFileName && _modalSubfolder === currentSubfolder;
+      return `<div class="recent-item${isActive ? " recent-item--active" : ""}">
+        <div class="recent-item-info">
+          <div class="recent-item-name">${esc(f.projectIcon)} ${esc(f.projectName)}</div>
+          <div class="recent-item-meta">${esc(f.name)} · ${formatRelDate(f.lastModified)}</div>
+        </div>
+        <div class="recent-item-btns" style="position:relative">
+          <div class="btn-group">
+            <button class="btn btn-primary btn-sm btn-icon" onclick='loadFromFolder(${sn})' title="Open"><svg class="icon" style="width:13px;height:13px"><use href="#i-folder"/></svg></button>
+            <button class="btn btn-secondary btn-sm btn-icon" onclick='showMoveMenu(${sn},this)' title="Move to"><svg class="icon" style="width:13px;height:13px"><use href="#i-arrow-lr"/></svg></button>
+            <button class="btn btn-secondary btn-sm btn-icon" onclick='showCloneMenu(${sn},this)' title="Clone to"><svg class="icon" style="width:13px;height:13px"><use href="#i-clone"/></svg></button>
+            <button class="btn btn-danger btn-sm btn-icon" onclick='deleteFromFolder(${sn},this)' title="Delete"><svg class="icon" style="width:13px;height:13px"><use href="#i-trash"/></svg></button>
+          </div>
+        </div>
+      </div>`;
+    }).join("") || '<div class="recent-empty">Empty</div>';
+  } catch (err) {
+    filesEl.innerHTML = `<div class="recent-empty">${esc(err.message)}</div>`;
+  }
+}
+
+async function browseSubfolder(path) {
+  _modalSubfolder = path;
+  await _renderFolderTree();
+  await _renderFolderFiles();
+}
+
+function toggleFolderCollapse(path) {
+  if (_collapsedFolders.has(path)) _collapsedFolders.delete(path);
+  else _collapsedFolders.add(path);
+  _renderFolderTree();
 }
 
 async function createSubfolder() {
+  if (_pathDepth(_modalSubfolder) >= 2) return;
   const name = prompt("Folder name:");
   if (!name) return;
   const clean = name.trim().replace(/[\\/:*?"<>|]/g, "");
   if (!clean) return;
   try {
-    await workDirHandle.getDirectoryHandle(clean, { create: true });
-    await browseSubfolder(clean);
+    const parentDir = await _getDirFromPath(_modalSubfolder);
+    await parentDir.getDirectoryHandle(clean, { create: true });
+    const newPath = _modalSubfolder ? `${_modalSubfolder}/${clean}` : clean;
+    await browseSubfolder(newPath);
   } catch (e) { alert("Cannot create folder: " + e.message); }
 }
 function closeLoadModal() {
@@ -283,14 +282,22 @@ async function newProject() {
   state.projectName = "Untitled";
   activeCardId = null;
   currentFileName = null;
-  currentSubfolder = null;
+  const _editFolders = _getEditFolders().filter(f => f);
+  currentSubfolder = _editFolders.length ? _editFolders[0] : null;
   closeLoadModal();
+  _computeReadOnly();
   dispatch('INIT_LOAD');
   clearDirty();
 }
 async function loadFromRecent(id) {
   const data = await idbGet(id).catch(() => null);
   if (!data) return alert("Session data not found. It may have been cleared by the browser.");
+  const meta = getRecentMeta().find(m => m.id === id);
+  if (meta?.path) {
+    const parts = meta.path.split('/');
+    currentFileName = parts[parts.length - 1];
+    currentSubfolder = parts.length >= 2 ? parts.slice(0, -1).join('/') : null;
+  }
   applyLoadedData(data);
   closeLoadModal();
 }
@@ -304,14 +311,34 @@ async function deleteRecentItem(id, btn) {
 
 // ── Save / Load JSON ───────────────────────────────────────────────
 let workDirHandle = null;
-let currentSubfolder = null;  // null = root, string = subfolder name
+let currentSubfolder = null;  // null = root, "l1" or "l1/l2" path (max 2 levels)
 let currentFileName = null;
 let _modalSubfolder = null;   // browsing state inside load modal
-let _modalFolders = [];       // all subfolders, used by move menu
+let _modalAllPaths = [];      // all folder paths (L1 and L2), used by move menu
+let _collapsedFolders = new Set(); // L1 paths collapsed in folder tree
 let dirty = false;
+let readOnly = false;
 let _autoSaveTimer = null;
+let _lastAutoSaveAt = 0;
+let _lastBackupAt = 0;
+let _periodicBackupTimer = null;
+
+function _getEditFolders() {
+  try { return JSON.parse(localStorage.getItem('fc_edit_folders') || '[]'); } catch { return []; }
+}
+function _computeReadOnly() {
+  const folders = _getEditFolders();
+  if (!folders.length) { readOnly = false; return; }
+  if (!currentFileName) { readOnly = false; return; }
+  if (!currentSubfolder) {
+    readOnly = !folders.includes('');
+  } else {
+    readOnly = !folders.some(f => f === currentSubfolder || currentSubfolder.startsWith(f + '/'));
+  }
+}
 
 function setDirty() {
+  if (readOnly) return;
   dirty = true;
   _updateLabels();
   clearTimeout(_autoSaveTimer);
@@ -334,13 +361,25 @@ function showToast(msg) {
 }
 
 async function _autoSaveToFile() {
-  if (!workDirHandle || !state.cards.length) return;
+  if (readOnly || !workDirHandle || !state.cards.length) return;
   if (!currentFileName) currentFileName = _defaultFileName();
+  // Snapshot before any await — currentFileName/currentSubfolder may change if user opens another file mid-save
+  const _fname = currentFileName;
+  const _sub = currentSubfolder;
   try {
     const dataObj = _buildDataObj();
-    await _writeToDir(currentFileName, JSON.stringify(dataObj, null, 2));
-    const path = currentSubfolder ? `${currentSubfolder}/${currentFileName}` : currentFileName;
+    const json = JSON.stringify(dataObj, null, 2);
+    const perm = await workDirHandle.requestPermission({ mode: "readwrite" });
+    if (perm !== "granted") return;
+    const dir = await _getDirFromPath(_sub);
+    const fh = await dir.getFileHandle(_fname, { create: true });
+    const w = await fh.createWritable();
+    await w.write(json);
+    await w.truncate(new TextEncoder().encode(json).byteLength);
+    await w.close();
+    const path = _sub ? `${_sub}/${_fname}` : _fname;
     localStorage.setItem("fc_last_file", path);
+    _lastAutoSaveAt = Date.now();
     clearDirty();
     showToast("✓ Saved");
   } catch (_) { }
@@ -353,14 +392,27 @@ function _updateLabels() {
   const iconBtn = document.getElementById("project-icon-btn");
   if (iconBtn) iconBtn.textContent = state.projectIcon || "🗂️";
   const loadBtnLabel = document.getElementById("load-btn-label");
-  if (loadBtnLabel) loadBtnLabel.textContent = currentSubfolder || "Load";
+  if (loadBtnLabel) loadBtnLabel.textContent = currentSubfolder ? _pathLeaf(currentSubfolder) : "Load";
   if (dot) dot.style.display = dirty ? "inline" : "none";
+  const badge = document.getElementById("readonly-badge");
+  if (badge) badge.style.display = readOnly ? "inline-flex" : "none";
+  const saveBtn = document.getElementById("save-btn");
+  if (saveBtn) saveBtn.disabled = readOnly;
 }
 
 async function _setWorkDir(handle) {
   workDirHandle = handle;
   await idbPut("_work_dir", handle).catch(() => { });
   _updateLabels();
+  _startPeriodicBackup();
+}
+
+function _startPeriodicBackup() {
+  clearInterval(_periodicBackupTimer);
+  _periodicBackupTimer = setInterval(async () => {
+    if (!workDirHandle || !currentFileName) return;
+    if (_lastAutoSaveAt > _lastBackupAt) await _silentBackup();
+  }, 5 * 60 * 1000);
 }
 
 async function setWorkDir() {
@@ -377,8 +429,7 @@ async function setWorkDir() {
 }
 
 async function _getActiveDirHandle() {
-  if (!currentSubfolder) return workDirHandle;
-  return await workDirHandle.getDirectoryHandle(currentSubfolder);
+  return await _getDirFromPath(currentSubfolder);
 }
 
 async function _writeToDir(fileName, json) {
@@ -431,6 +482,114 @@ async function saveToLibrary(type, name, data) {
   await w.close();
 }
 
+// ── Backup Modal ───────────────────────────────────────────────────
+async function openBackupModal() {
+  const modal = document.getElementById('backup-modal');
+  if (!modal) return;
+  const titleEl = document.getElementById('backup-modal-title');
+  const listEl = document.getElementById('backup-list');
+  if (!workDirHandle || !currentFileName) {
+    listEl.innerHTML = '<div class="backup-empty">No file open.</div>';
+    titleEl.textContent = 'Backups';
+    modal.showModal();
+    return;
+  }
+  titleEl.textContent = 'Backups — ' + (currentSubfolder ? currentSubfolder + '/' : '') + currentFileName;
+  listEl.innerHTML = '<div class="backup-empty">Loading…</div>';
+  modal.showModal();
+  try {
+    const activeDir = await _getActiveDirHandle();
+    let backupDir;
+    try { backupDir = await activeDir.getDirectoryHandle('_backups'); }
+    catch (_) { listEl.innerHTML = '<div class="backup-empty">No backups found.</div>'; return; }
+    const base = currentFileName.replace(/\.json$/i, '') + '-';
+    const items = [];
+    for await (const [name] of backupDir.entries()) {
+      if (name.startsWith(base) && name.endsWith('.json')) items.push(name);
+    }
+    items.sort().reverse();
+    if (!items.length) { listEl.innerHTML = '<div class="backup-empty">No backups for this file.</div>'; return; }
+    listEl.innerHTML = items.map(name => {
+      const m = name.match(/(\d{4})-(\d{2})-(\d{2})_(\d{2})(\d{2})\.json$/);
+      let label = name, rel = '';
+      if (m) {
+        const d = new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5]);
+        label = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}  ${m[4]}:${m[5]}`;
+        const h = (Date.now() - d) / 3600000;
+        rel = h < 1 ? Math.round(h*60) + 'm ago'
+            : h < 24 ? Math.round(h) + 'h ago'
+            : h < 48 ? 'Yesterday'
+            : Math.floor(h/24) + 'd ago';
+      }
+      const sn = JSON.stringify(name);
+      return `<div class="backup-item">
+        <div class="backup-item-info">
+          <span class="backup-item-date">${label}</span>
+          <span class="backup-item-rel">${rel}</span>
+        </div>
+        <div class="backup-item-actions">
+          <button class="btn btn-sm btn-secondary" onclick='restoreBackup(${sn},this)'>Restore</button>
+          <button class="btn btn-sm btn-secondary backup-del-btn" onclick='deleteBackup(${sn},this)' title="Delete">×</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (err) { listEl.innerHTML = `<div class="backup-empty">Error: ${err.message}</div>`; }
+}
+
+async function restoreBackup(backupName, btn) {
+  if (!workDirHandle || !currentFileName) return;
+  // Inline confirm: first click shows warning, second click executes
+  if (btn.dataset.confirming !== 'yes') {
+    btn.dataset.confirming = 'yes';
+    btn.textContent = 'Sure?';
+    btn.classList.add('btn-danger');
+    setTimeout(() => { if (btn.dataset.confirming) { btn.dataset.confirming = ''; btn.textContent = 'Restore'; btn.classList.remove('btn-danger'); } }, 3000);
+    return;
+  }
+  btn.dataset.confirming = '';
+  try {
+    btn.disabled = true;
+    const activeDir = await _getActiveDirHandle();
+    const backupDir = await activeDir.getDirectoryHandle('_backups');
+    const fh = await backupDir.getFileHandle(backupName);
+    const data = JSON.parse(await (await fh.getFile()).text());
+    closeBackupModal();
+    applyLoadedData(data);
+    setDirty();
+    showToast('Restored from backup — saving…');
+  } catch (err) { alert('Restore failed: ' + err.message); btn.disabled = false; }
+}
+
+async function deleteBackup(backupName, btn) {
+  if (!confirm(`Delete backup?\n"${backupName}"`)) return;
+  try {
+    const activeDir = await _getActiveDirHandle();
+    const backupDir = await activeDir.getDirectoryHandle('_backups');
+    await backupDir.removeEntry(backupName);
+    btn.closest('.backup-item').remove();
+    const listEl = document.getElementById('backup-list');
+    if (!listEl.querySelector('.backup-item'))
+      listEl.innerHTML = '<div class="backup-empty">No backups for this file.</div>';
+  } catch (err) { alert('Delete failed: ' + err.message); }
+}
+
+async function manualBackup(btn) {
+  if (!workDirHandle || !currentFileName) { alert('No file open.'); return; }
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    await _silentBackup();
+    _lastBackupAt = Date.now();
+    showToast('Backup created');
+    await openBackupModal();
+  } catch (err) { alert('Backup failed: ' + err.message); }
+  finally { btn.disabled = false; btn.textContent = 'Backup Now'; }
+}
+
+function closeBackupModal() {
+  document.getElementById('backup-modal')?.close();
+}
+
 async function loadFromLibrary(type, name) {
   const dir = await _getLibraryDir(type);
   const fh = await dir.getFileHandle(`${name}.json`);
@@ -446,7 +605,7 @@ async function _silentBackup() {
   if (!workDirHandle || !currentFileName) return;
   // Skip if current file is itself a backup (name ends with -YYYY-MM-DD_HHmm.json)
   if (/\-\d{4}-\d{2}-\d{2}_\d{4}\.json$/i.test(currentFileName)) return;
-  if (currentSubfolder === '_backups') return;
+  if (currentSubfolder?.split('/').includes('_backups')) return;
   try {
     const activeDir = await _getActiveDirHandle();
     const backupDir = await activeDir.getDirectoryHandle('_backups', { create: true });
@@ -463,14 +622,15 @@ async function _silentBackup() {
     await w.write(json);
     await w.truncate(new TextEncoder().encode(json).byteLength);
     await w.close();
-    // Prune: keep only the 10 most recent backups for this project
+    _lastBackupAt = Date.now();
+    // Prune: keep only the 15 most recent backups for this project
     const prefix = base + '-';
     const old = [];
     for await (const [name] of backupDir.entries()) {
       if (name.startsWith(prefix) && name.endsWith('.json')) old.push(name);
     }
     old.sort();
-    for (const name of old.slice(0, -10)) await backupDir.removeEntry(name).catch(() => {});
+    for (const name of old.slice(0, -15)) await backupDir.removeEntry(name).catch(() => {});
   } catch (_) { }
 }
 
@@ -491,6 +651,7 @@ function _timestampedFileName() {
 }
 
 async function saveJSON() {
+  if (readOnly) { showToast('⚠ Read-only — cannot save'); return; }
   const dataObj = _buildDataObj();
   const json = JSON.stringify(dataObj, null, 2);
   if (workDirHandle) {
@@ -536,20 +697,27 @@ async function openSaveAsModal() {
   const folderSelect = document.getElementById("save-as-folder");
   const nameInput = document.getElementById("save-as-name");
 
-  // populate folder options
-  const subfolders = [];
+  // populate folder options (L1 and L2, max 2 levels)
+  const folderOpts = [`<option value="">${esc(workDirHandle.name)} (root)</option>`];
   try {
     const perm = await workDirHandle.requestPermission({ mode: "readwrite" });
     if (perm === "granted") {
-      for await (const [name, handle] of workDirHandle.entries()) {
-        if (handle.kind === "directory") subfolders.push(name);
+      const l1s = [];
+      for await (const [n1, h1] of workDirHandle.entries()) {
+        if (h1.kind === "directory" && !n1.startsWith("_")) l1s.push({ name: n1, handle: h1 });
       }
-      subfolders.sort((a, b) => a.localeCompare(b));
+      l1s.sort((a, b) => a.name.localeCompare(b.name));
+      for (const { name: n1, handle: h1 } of l1s) {
+        folderOpts.push(`<option value="${esc(n1)}"${currentSubfolder === n1 ? " selected" : ""}>📁 ${esc(n1)}</option>`);
+        for await (const [n2, h2] of h1.entries()) {
+          if (h2.kind !== "directory" || n2.startsWith("_")) continue;
+          const path = `${n1}/${n2}`;
+          folderOpts.push(`<option value="${esc(path)}"${currentSubfolder === path ? " selected" : ""}>　📁 ${esc(n2)}</option>`);
+        }
+      }
     }
   } catch (_) {}
-
-  folderSelect.innerHTML = `<option value="">${workDirHandle.name} (root)</option>`
-    + subfolders.map(f => `<option value="${esc(f)}"${f === currentSubfolder ? " selected" : ""}>${esc(f)}</option>`).join("");
+  folderSelect.innerHTML = folderOpts.join("");
   if (currentSubfolder) folderSelect.value = currentSubfolder;
 
   nameInput.value = _timestampedFileName();
@@ -570,9 +738,7 @@ async function executeSaveAs() {
   const targetSubfolder = folderSelect.value || null;
 
   try {
-    const dir = targetSubfolder
-      ? await workDirHandle.getDirectoryHandle(targetSubfolder)
-      : workDirHandle;
+    const dir = await _getDirFromPath(targetSubfolder);
     let exists = false;
     try { await dir.getFileHandle(name, { create: false }); exists = true; }
     catch (e) { if (e.name !== "NotFoundError") exists = true; }
@@ -590,15 +756,22 @@ async function executeSaveAs() {
     const path = targetSubfolder ? `${targetSubfolder}/${name}` : name;
     localStorage.setItem("fc_last_file", path);
     addToRecent(name, dataObj, path).catch(() => { });
+    _computeReadOnly();
     clearDirty();
     closeSaveAsModal();
   } catch (err) { alert("Save failed: " + err.message); }
 }
 
 async function loadFromFolder(fileName, subfolder) {
+  // Flush any pending dirty save to the current file before switching
+  if (dirty && workDirHandle && currentFileName) {
+    clearTimeout(_autoSaveTimer);
+    _autoSaveTimer = null;
+    await _autoSaveToFile();
+  }
   const sf = subfolder !== undefined ? subfolder : _modalSubfolder;
   try {
-    const dir = sf ? await workDirHandle.getDirectoryHandle(sf) : workDirHandle;
+    const dir = await _getDirFromPath(sf);
     const fh = await dir.getFileHandle(fileName);
     const file = await fh.getFile();
     const data = JSON.parse(await file.text());
@@ -616,57 +789,86 @@ async function loadFromFolder(fileName, subfolder) {
 async function deleteFromFolder(fileName, btn) {
   if (!confirm("Xóa " + fileName + "?")) return;
   try {
-    const dir = _modalSubfolder
-      ? await workDirHandle.getDirectoryHandle(_modalSubfolder)
-      : workDirHandle;
+    const dir = await _getDirFromPath(_modalSubfolder);
     await dir.removeEntry(fileName);
     btn.closest(".recent-item").remove();
   } catch (err) { alert("Không xóa được: " + err.message); }
 }
 
-function showMoveMenu(fileName, btn) {
-  closeMoveMenu();
-  const destinations = [
+function _folderDestinations() {
+  return [
     ...(_modalSubfolder ? [{ label: "📁 Root", value: null }] : []),
-    ..._modalFolders.filter(f => f !== _modalSubfolder).map(f => ({ label: `📁 ${f}`, value: f })),
+    ..._modalAllPaths.filter(p => p !== _modalSubfolder).map(p => ({
+      label: `📁 ${p.split("/").map(s => s.length > 15 ? s.slice(0, 14) + "…" : s).join(" › ")}`,
+      value: p
+    })),
   ];
+}
+
+function _showFolderMenu(id, fileName, execFn, btn) {
+  if (document.getElementById(id)) { closeMoveMenu(); closeCloneMenu(); return; }
+  closeMoveMenu();
+  closeCloneMenu();
+  const destinations = _folderDestinations();
   if (!destinations.length) return;
   const menu = document.createElement("div");
-  menu.id = "move-menu";
+  menu.id = id;
   menu.className = "move-menu";
   menu.innerHTML = destinations.map(d =>
-    `<button class="move-menu-item" onclick='_execMove(${JSON.stringify(fileName)},${JSON.stringify(d.value)})'>${esc(d.label)}</button>`
+    `<button class="move-menu-item" onclick='${execFn}(${JSON.stringify(fileName)},${JSON.stringify(d.value)})'>${esc(d.label)}</button>`
   ).join("");
   menu.addEventListener("click", e => e.stopPropagation());
   btn.after(menu);
-  setTimeout(() => document.addEventListener("click", closeMoveMenu, { once: true }), 0);
+  setTimeout(() => document.addEventListener("click", () => { closeMoveMenu(); closeCloneMenu(); }, { once: true }), 0);
+}
+
+function showMoveMenu(fileName, btn) {
+  _showFolderMenu("move-menu", fileName, "_execMove", btn);
 }
 
 function closeMoveMenu() {
   document.getElementById("move-menu")?.remove();
 }
 
-async function _execMove(fileName, destSubfolder) {
+function showCloneMenu(fileName, btn) {
+  _showFolderMenu("clone-menu", fileName, "_execClone", btn);
+}
+
+function closeCloneMenu() {
+  document.getElementById("clone-menu")?.remove();
+}
+
+async function _execMove(fileName, destPath) {
   closeMoveMenu();
   try {
-    const srcDir = _modalSubfolder
-      ? await workDirHandle.getDirectoryHandle(_modalSubfolder)
-      : workDirHandle;
-    const destDir = destSubfolder
-      ? await workDirHandle.getDirectoryHandle(destSubfolder, { create: true })
-      : workDirHandle;
+    const srcDir = await _getDirFromPath(_modalSubfolder);
+    const destDir = destPath ? await _getDirFromPath(destPath) : workDirHandle;
     const text = await (await (await srcDir.getFileHandle(fileName)).getFile()).text();
     const writable = await (await destDir.getFileHandle(fileName, { create: true })).createWritable();
     await writable.write(text);
     await writable.close();
     await srcDir.removeEntry(fileName);
     if (currentFileName === fileName && currentSubfolder === _modalSubfolder) {
-      currentSubfolder = destSubfolder;
-      const newPath = destSubfolder ? `${destSubfolder}/${fileName}` : fileName;
-      localStorage.setItem("fc_last_file", newPath);
+      currentSubfolder = destPath;
+      localStorage.setItem("fc_last_file", destPath ? `${destPath}/${fileName}` : fileName);
+      _computeReadOnly();
+      _updateLabels();
     }
     await _renderFolderSection();
   } catch (err) { alert("Move failed: " + err.message); }
+}
+
+async function _execClone(fileName, destPath) {
+  closeCloneMenu();
+  try {
+    const srcDir = await _getDirFromPath(_modalSubfolder);
+    const destDir = destPath ? await _getDirFromPath(destPath) : workDirHandle;
+    const text = await (await (await srcDir.getFileHandle(fileName)).getFile()).text();
+    const writable = await (await destDir.getFileHandle(fileName, { create: true })).createWritable();
+    await writable.write(text);
+    await writable.close();
+    await _renderFolderSection();
+  } catch (err) { alert("Clone failed: " + err.message); }
 }
 
 async function openFilePicker() {
@@ -693,6 +895,7 @@ async function restoreWorkDir() {
     if (!handle) return;
     workDirHandle = handle;
     _updateLabels();
+    _startPeriodicBackup();
   } catch { }
 }
 
@@ -801,6 +1004,7 @@ function applyLoadedData(data) {
   if (!state.settings.googleFonts) state.settings.googleFonts = [];
   applyGoogleFonts(); applySettingsToUI();
   document.getElementById("fc-custom-css").textContent = state.settings.customCss || "";
+  _computeReadOnly();
   dispatch('INIT_LOAD');
   clearDirty();
 }

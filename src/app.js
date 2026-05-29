@@ -255,6 +255,8 @@ function applySettingsToUI() {
     s.customCss || "";
   renderGFontTags();
   _syncBdSwatch();
+  const efInput = document.getElementById('set-edit-folders');
+  if (efInput) efInput.value = _getEditFolders().join(', ');
 }
 
 // ── Card Management ────────────────────────────────────────────────
@@ -358,6 +360,10 @@ function openCardMenu(id, btn) {
       <svg class="icon" style="width:13px;height:13px"><use href="#i-clipboard"/></svg>${t('misc.pasteStyle')}
     </button>
     <div class="card-more-sep"></div>
+    <button class="card-more-item${card.twoUp ? ' card-more-item--active' : ''}" onclick="setTwoUpRatio('${id}',${card.twoUp ? "''" : 50});closeCardMenu()">
+      <svg class="icon" style="width:13px;height:13px"><use href="#i-arrow-tb"/></svg>${t('misc.twoUp')}${card.twoUp ? ' ✓' : ''}
+    </button>
+    <div class="card-more-sep"></div>
     <button class="card-more-item card-more-item--danger" onclick="if(confirm(t('confirm.deleteCard'))){deleteCard('${id}');}closeCardMenu()">
       <svg class="icon" style="width:13px;height:13px"><use href="#i-trash"/></svg>${t('misc.delete')}
     </button>`;
@@ -412,6 +418,21 @@ function setActive(id) {
   dispatch('ACTIVE_CARD_CHANGED');
 }
 
+function setTwoUpRatio(id, value) {
+  const card = state.cards.find(c => c.id === id);
+  if (!card) return;
+  const n = parseInt(value, 10);
+  if (!value || isNaN(n)) {
+    card.twoUp = false;
+    card.twoUpRatio = undefined;
+  } else {
+    card.twoUp = true;
+    card.twoUpRatio = Math.min(90, Math.max(10, n));
+  }
+  setDirty();
+  renderSidebar();
+}
+
 // ── Sidebar ────────────────────────────────────────────────────────
 function setViewMode(mode) {
   sidebarView = mode;
@@ -434,7 +455,7 @@ function _renderListSidebar() {
   list.innerHTML = state.cards
     .map(
       (c, i) => `
-    <div class="fc-card-item ${c.id === activeCardId ? "active" : ""}" draggable="true" onclick="setActive('${c.id}')" data-id="${c.id}">
+    <div class="fc-card-item ${c.id === activeCardId ? "active" : ""}${c.twoUp ? ' card-item--twoUp' : ''}" draggable="true" onclick="setActive('${c.id}')" data-id="${c.id}" style="${c.twoUp ? `--twoUp-ratio:${c.twoUpRatio||50}%` : ''}">
       <span class="card-num">${i + 1}</span>
       <span class="card-title">${esc(c.title || t('card.untitled'))}</span>
       <span class="card-actions">
@@ -464,6 +485,14 @@ function _renderGridSidebar() {
       if (titleEl) titleEl.textContent = state.cards[i].title || t('card.untitled');
       const numEl = el.querySelector('.card-thumb-num');
       if (numEl) numEl.textContent = '#' + (i + 1);
+      el.classList.toggle('fc-card-thumb-item--twoUp', !!state.cards[i].twoUp);
+      el.style.setProperty('--twoUp-ratio', state.cards[i].twoUp ? (state.cards[i].twoUpRatio || 50) + '%' : '');
+      const ratioRow = el.querySelector('.card-thumb-ratio');
+      if (ratioRow) {
+        ratioRow.classList.toggle('card-thumb-ratio--hidden', !state.cards[i].twoUp);
+        const inp = ratioRow.querySelector('.card-2up-input');
+        if (inp) inp.value = state.cards[i].twoUp ? (state.cards[i].twoUpRatio || 50) : '';
+      }
     });
     if (_thumbRenderedVersion !== _thumbDirtyVersion) {
       _requestThumbGeneration(items);
@@ -474,11 +503,14 @@ function _renderGridSidebar() {
   // Full rebuild needed (cards added/removed/reordered)
   const genId = ++_thumbGenId;
   list.innerHTML = '<div class="fc-card-grid">' + state.cards.map((c, i) => `
-    <div class="fc-card-thumb-item ${c.id === activeCardId ? "active" : ""} ${getCardOrientation(c) === "landscape" ? "fc-card-thumb-item--landscape" : "fc-card-thumb-item--portrait"}"
+    <div class="fc-card-thumb-item ${c.id === activeCardId ? "active" : ""} ${getCardOrientation(c) === "landscape" ? "fc-card-thumb-item--landscape" : "fc-card-thumb-item--portrait"}${c.twoUp ? ' fc-card-thumb-item--twoUp' : ''}" style="${c.twoUp ? `--twoUp-ratio:${c.twoUpRatio||50}%` : ''}"
          draggable="true" onclick="setActive('${c.id}')" data-id="${c.id}">
       <div class="card-thumb-img thumb-loading"></div>
       <span class="card-thumb-num">#${i + 1}</span>
       <div class="card-thumb-title">${esc(c.title || t('card.untitled'))}</div>
+      <div class="card-thumb-ratio${c.twoUp ? '' : ' card-thumb-ratio--hidden'}" onclick="event.stopPropagation()">
+        <input class="card-2up-input card-2up-input--on" type="number" min="10" max="90" placeholder="50" title="Nhập % để ghép trang 2-up, xóa để tắt" value="${c.twoUp ? (c.twoUpRatio || 50) : ''}" onchange="event.stopPropagation();setTwoUpRatio('${c.id}',this.value)" oninput="event.stopPropagation()"><span class="card-thumb-ratio-pct">%</span>
+      </div>
       <div class="card-thumb-actions">
         <button class="icon-btn card-more-btn" title="More" onclick="event.stopPropagation();openCardMenu('${c.id}',this)"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
       </div>
