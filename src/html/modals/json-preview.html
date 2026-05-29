@@ -1,0 +1,29 @@
+﻿    <!-- JSON Preview / Edit Modal -->
+    <div class="modal-backdrop" id="json-preview-modal" style="display: none">
+      <div class="modal">
+        <div class="modal-header">
+          <span>Preview &amp; Edit JSON</span>
+          <button class="modal-close" onclick="closeJsonPreview()">×</button>
+        </div>
+        <div class="modal-body" style="padding: 12px; display: flex; flex-direction: column; gap: 8px">
+          <div style="flex:1; display:flex; min-height:420px; border:1px solid #d1d5db; border-radius:5px; overflow:hidden; background:#f9fafb">
+            <div id="json-line-numbers" style="padding:10px 6px 10px 8px; background:#f3f4f6; border-right:1px solid #e5e7eb; font-family:'Courier New',monospace; font-size:12px; line-height:1.5; color:#9ca3af; text-align:right; user-select:none; overflow:hidden; white-space:pre; min-width:36px"></div>
+            <textarea
+              id="json-preview-textarea"
+              wrap="off"
+              style="flex:1; font-family:'Courier New',monospace; font-size:12px; line-height:1.5; background:transparent; border:none; padding:10px; resize:none; color:#1a1a2e; outline:none; overflow:auto; white-space:pre"
+              oninput="_syncJsonLineNums()"
+              onscroll="document.getElementById('json-line-numbers').scrollTop=this.scrollTop"
+            ></textarea>
+          </div>
+          <div id="json-preview-status" style="font-size:11px; min-height:16px"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" onclick="validateJsonPreview()">✓ Validate</button>
+          <button class="btn btn-secondary btn-sm" onclick="closeJsonPreview()">Cancel</button>
+          <button class="btn btn-primary btn-sm" onclick="applyJsonPreview()">Apply</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load / Recent modal -->

@@ -31,7 +31,11 @@ const vendorBlock = vendorJs ? `    <script>\n${vendorJs}\n    </script>` : "";
 // ── HTML fragments ─────────────────────────────────────────────────
 const template   = fs.readFileSync(path.join(HTML, "template.html"), "utf8");
 const svgHtml    = fs.existsSync(path.join(HTML, "svg.html"))    ? fs.readFileSync(path.join(HTML, "svg.html"),    "utf8") : "";
-const modalsHtml = fs.existsSync(path.join(HTML, "modals.html")) ? fs.readFileSync(path.join(HTML, "modals.html"), "utf8") : "";
+const modalsHtml = [
+  "img-modal.html", "css-modal.html", "json-modal.html", "json-preview.html",
+  "load-modal.html", "save-as-modal.html", "settings-modal.html", "dialogs.html",
+].map(f => { const p = path.join(HTML, "modals", f); return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : ""; })
+ .filter(Boolean).join("\n\n");
 
 // ── JS load order ──────────────────────────────────────────────────
 // Each file may only call functions defined in files loaded BEFORE it.

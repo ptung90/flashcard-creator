@@ -1,0 +1,34 @@
+﻿    <!-- Custom CSS Modal -->
+    <div class="modal-backdrop css-modal" id="css-modal" style="display: none">
+      <div class="modal">
+        <div class="modal-header">
+          <span>Custom CSS</span>
+          <button class="modal-close" onclick="closeCssModal()">×</button>
+        </div>
+        <div
+          class="modal-body"
+          style="padding: 12px; display: flex; flex-direction: column; gap: 8px"
+        >
+          <div style="font-size: 11px; color: #555">
+            CSS classes: .fc-card, .fc-image-area, .fc-image-slot,
+            .fc-image-slot-0...3, .fc-text-area, .fc-title, .fc-sections,
+            .fc-section, .fc-section__label, .fc-section__content
+          </div>
+          <textarea
+            id="custom-css-input"
+            placeholder=".fc-title { font-size: 16px; color: #333; }&#10;.fc-section__label { color: #6B21A8; }"
+          ></textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger btn-sm" onclick="resetCustomCss()">
+            Reset
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="closeCssModal()">
+            Cancel
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="applyCustomCss()">
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>

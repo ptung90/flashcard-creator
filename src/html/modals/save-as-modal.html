@@ -1,0 +1,23 @@
+﻿    <!-- Save As Modal -->
+    <div class="modal-backdrop" id="save-as-modal" style="display:none">
+      <div class="modal" style="max-width:340px;width:90%">
+        <div class="modal-header">
+          <span>Save As</span>
+          <button class="modal-close" onclick="closeSaveAsModal()">×</button>
+        </div>
+        <div class="modal-body" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="font-size:12px;font-weight:600;color:#374151">Folder</label>
+            <select id="save-as-folder" style="font-size:13px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;background:#fff"></select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="font-size:12px;font-weight:600;color:#374151">File name</label>
+            <input id="save-as-name" type="text" style="font-size:13px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px" onkeydown="if(event.key==='Enter')executeSaveAs()">
+          </div>
+        </div>
+        <div class="modal-footer" style="padding:10px 16px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #e5e7eb">
+          <button class="btn btn-secondary btn-sm" onclick="closeSaveAsModal()">Cancel</button>
+          <button class="btn btn-primary btn-sm" onclick="executeSaveAs()">Save</button>
+        </div>
+      </div>
+    </div>

@@ -1,0 +1,70 @@
+﻿         DIALOGS — native <dialog> (showModal / close)
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- Schema Editor Modal -->
+    <dialog id="schema-editor-modal">
+      <div class="dialog-header">
+        <span class="dialog-title">Schema Editor</span>
+        <button class="btn btn-sm modal-close" onclick="closeSchemaEditor()">×</button>
+      </div>
+      <div class="dialog-body" id="schema-editor-content"></div>
+      <div class="dialog-footer">
+        <div style="display:flex;gap:4px;align-items:center;margin-right:auto">
+          <select id="schema-library-select" style="width:130px;height:26px;font-size:12px"><option value="">— library —</option></select>
+          <button class="btn btn-sm btn-secondary" onclick="applySchemaFromLibrary()">Load</button>
+          <button class="btn btn-sm btn-secondary" onclick="saveSchemaToLibrary()">Save</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteSchemaFromLibrary()">Delete</button>
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="saveSchema()">Save</button>
+        <button class="btn btn-sm btn-secondary" onclick="closeSchemaEditor()">Cancel</button>
+      </div>
+    </dialog>
+
+    <!-- Pack Dialog -->
+    <dialog id="pack-dialog">
+      <div class="dialog-header">
+        <span class="dialog-title">Pack into <span id="pack-dialog-layout" style="font-family:'SF Mono',Consolas,monospace;"></span></span>
+        <button class="btn btn-sm modal-close" onclick="closePackDialog()">×</button>
+      </div>
+      <div class="dialog-body">
+        <div id="pack-dialog-records"></div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-primary" onclick="confirmPack()">Pack</button>
+        <button class="btn btn-sm btn-secondary" onclick="closePackDialog()">Cancel</button>
+      </div>
+    </dialog>
+
+    <!-- Backup Modal -->
+    <dialog id="backup-modal">
+      <div class="dialog-header">
+        <span class="dialog-title" id="backup-modal-title">Backups</span>
+        <button class="btn btn-sm modal-close" onclick="closeBackupModal()">×</button>
+      </div>
+      <div class="dialog-body" id="backup-list" style="padding:0"></div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-primary" style="margin-right:auto" onclick="manualBackup(this)">Backup Now</button>
+        <button class="btn btn-sm btn-secondary" onclick="closeBackupModal()">Close</button>
+      </div>
+    </dialog>
+
+    <!-- Records AI (Copy for AI) Modal -->
+    <dialog id="records-ai-modal">
+      <div class="dialog-header">
+        <span class="dialog-title">✦ Copy Records for AI</span>
+        <button class="btn btn-sm modal-close" onclick="closeRecordsAiModal()">×</button>
+      </div>
+      <div class="dialog-body" style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12px;color:var(--ink-500)">Enter names (one per line). AI will fill all other fields.</span>
+          <button class="btn btn-sm btn-secondary" onclick="pasteRecordsAiNames()">Paste</button>
+        </div>
+        <textarea id="records-ai-names" rows="12" style="width:100%;font-family:monospace;font-size:13px;resize:vertical;box-sizing:border-box;padding:8px;border:1px solid var(--border);border-radius:4px" placeholder="Name 1&#10;Name 2&#10;Name 3..."></textarea>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-secondary" onclick="closeRecordsAiModal()">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="executeRecordsAiCopy()">✦ Copy for AI</button>
+      </div>
+    </dialog>
+
+    <div id="fc-toast"></div>

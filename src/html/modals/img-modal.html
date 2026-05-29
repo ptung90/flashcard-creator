@@ -1,0 +1,219 @@
+﻿    <!-- Image Search Modal -->
+    <div class="modal-backdrop" id="img-modal" style="display: none">
+      <div class="modal">
+        <div class="modal-header">
+          <span>Search Image — Slot <span id="modal-slot-num">0</span></span>
+          <button class="modal-close" onclick="closeImgModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="search-tabs">
+            <div
+              class="search-tab active"
+              data-tab="unsplash"
+              onclick="switchTab(this)"
+            >
+              Unsplash
+            </div>
+            <div
+              class="search-tab"
+              data-tab="wikimedia"
+              onclick="switchTab(this)"
+            >
+              Wikimedia
+            </div>
+            <div
+              class="search-tab"
+              data-tab="inaturalist"
+              onclick="switchTab(this)"
+            >
+              iNaturalist
+            </div>
+            <div
+              class="search-tab"
+              data-tab="pixabay"
+              onclick="switchTab(this)"
+            >
+              Pixabay
+            </div>
+            <div class="search-tab" data-tab="upload" onclick="switchTab(this)">
+              📁 Upload
+            </div>
+            <div class="search-tab" data-tab="url" onclick="switchTab(this)">
+              URL
+            </div>
+          </div>
+
+          <div id="tab-wikimedia" style="display: none">
+            <div class="search-bar">
+              <input
+                type="text"
+                id="search-wikimedia"
+                placeholder="Search Wikimedia Commons..."
+                onkeydown="if (event.key === 'Enter') searchWikimedia();"
+              />
+              <button
+                class="btn btn-primary btn-sm"
+                onclick="searchWikimedia()"
+              >
+                Search
+              </button>
+            </div>
+            <div class="search-results" id="results-wikimedia">
+              <div class="search-status">Type a query and press Search</div>
+            </div>
+          </div>
+
+          <div id="tab-inaturalist" style="display: none">
+            <div class="search-bar">
+              <input
+                type="text"
+                id="search-inaturalist"
+                placeholder="Search iNaturalist (species, nature)..."
+                onkeydown="if (event.key === 'Enter') searchINaturalist();"
+              />
+              <button
+                class="btn btn-primary btn-sm"
+                onclick="searchINaturalist()"
+              >
+                Search
+              </button>
+            </div>
+            <div class="search-results" id="results-inaturalist">
+              <div class="search-status">Type a query and press Search</div>
+            </div>
+          </div>
+
+          <div id="tab-pixabay" style="display: none">
+            <div class="pixabay-key-row">
+              <span>API Key:</span>
+              <input
+                type="text"
+                id="pixabay-key"
+                placeholder="Enter Pixabay API key..."
+                value=""
+              />
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="savePixabayKey()"
+              >
+                Save
+              </button>
+            </div>
+            <div class="search-bar">
+              <input
+                type="text"
+                id="search-pixabay"
+                placeholder="Search Pixabay..."
+                onkeydown="if (event.key === 'Enter') searchPixabay();"
+              />
+              <button class="btn btn-primary btn-sm" onclick="searchPixabay()">
+                Search
+              </button>
+            </div>
+            <div class="search-results" id="results-pixabay">
+              <div class="search-status">Enter API key and search</div>
+            </div>
+          </div>
+
+          <div id="tab-unsplash">
+            <div class="pixabay-key-row">
+              <span>Access Key:</span>
+              <input
+                type="text"
+                id="unsplash-key"
+                placeholder="Enter Unsplash Access Key..."
+              />
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="saveUnsplashKey()"
+              >
+                Save
+              </button>
+            </div>
+            <div class="search-bar">
+              <input
+                type="text"
+                id="search-unsplash"
+                placeholder="Search Unsplash..."
+                onkeydown="if (event.key === 'Enter') searchUnsplash();"
+              />
+              <button class="btn btn-primary btn-sm" onclick="searchUnsplash()">
+                Search
+              </button>
+            </div>
+            <div class="search-results" id="results-unsplash">
+              <div class="search-status">Enter Access Key and search</div>
+            </div>
+          </div>
+
+          <div id="tab-upload" style="display: none">
+            <div
+              class="upload-drop-zone"
+              id="upload-drop-zone"
+              onclick="document.getElementById('upload-file-input').click()"
+            >
+              <div class="upload-drop-icon">📂</div>
+              <div>Click hoặc kéo thả ảnh vào đây</div>
+              <div style="font-size: 11px; color: #555; margin-top: 4px">
+                Chọn nhiều file cùng lúc (jpg, png, webp, gif)
+              </div>
+              <input
+                type="file"
+                id="upload-file-input"
+                accept="image/*"
+                multiple
+                style="display: none"
+                onchange="handleUploadFiles(this.files)"
+              />
+            </div>
+            <div
+              class="search-results"
+              id="results-upload"
+              style="display: none"
+            ></div>
+          </div>
+
+          <div id="tab-url" style="display: none">
+            <div class="url-input-area">
+              <label style="color: #888; font-size: 12px"
+                >Paste image URL:</label
+              >
+              <input
+                type="text"
+                id="url-input"
+                placeholder="https://example.com/image.jpg"
+                oninput="previewUrlInput()"
+              />
+              <img id="url-preview-img" class="url-preview" />
+              <button class="btn btn-primary" onclick="insertUrl()">
+                Insert Image
+              </button>
+            </div>
+          </div>
+
+          <div id="tab-data" style="display: none">
+            <div class="url-input-area">
+              <label style="color: #888; font-size: 12px"
+                >Current Slot & Card Data:</label
+              >
+              <textarea
+                id="data-tab-content"
+                style="
+                  width: 100%;
+                  height: 250px;
+                  background: #f9fafb;
+                  border: 1px solid #d1d5db;
+                  color: #1a1a2e;
+                  border-radius: 5px;
+                  padding: 10px;
+                  font-family: monospace;
+                  font-size: 12px;
+                  resize: vertical;
+                "
+                readonly
+              ></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>

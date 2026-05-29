@@ -1,0 +1,363 @@
+﻿    <!-- Settings Modal -->
+    <div
+      class="modal-backdrop settings-modal"
+      id="settings-modal"
+      style="display: none"
+    >
+      <div class="modal">
+        <div class="modal-header">
+          <span>⚙️ Settings</span>
+          <button class="modal-close" onclick="closeSettingsModal()">×</button>
+        </div>
+        <div
+          class="modal-body"
+          style="
+            padding: 14px;
+            max-height: 70vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          "
+        >
+          <!-- App Behaviour -->
+          <div class="cfg-section" data-section="behaviour">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">App Behaviour</div>
+            <div class="cfg-row">
+              <label for="cfg-pasteBlock">Show Paste Block in editor</label>
+              <input type="checkbox" id="cfg-pasteBlock" />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-maxImgPx">Max image size khi paste</label>
+              <select id="cfg-maxImgPx">
+                <option value="800">Small — 800px (A6 @ 200dpi)</option>
+                <option value="1240">Medium — 1240px (A4 @ 150dpi)</option>
+                <option value="1654">Large — 1654px (A4 @ 200dpi)</option>
+                <option value="2480">Original — 2480px (A4 @ 300dpi)</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-undoMax">Undo steps</label>
+              <input type="number" id="cfg-undoMax" min="1" max="200" step="1">
+            </div>
+          </div>
+
+          <!-- New Card Defaults -->
+          <div class="cfg-section" data-section="newcard">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">New Card Defaults</div>
+            <div class="cfg-row">
+              <label for="cfg-newCard-layout">Default layout</label>
+              <select id="cfg-newCard-layout">
+                <option value="2top-1bot">2top-1bot</option>
+                <option value="1top-2bot">1top-2bot</option>
+                <option value="1big-2small">1big-2small</option>
+                <option value="2x2">2x2</option>
+                <option value="1full">1full</option>
+                <option value="1left-2right">1left-2right</option>
+                <option value="1left-3right">1left-3right</option>
+                <option value="1top-3bot">1top-3bot</option>
+                <option value="1top-1bot">1top-1bot</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-newCard-ihp">Image height % (20–80)</label>
+              <input
+                type="number"
+                id="cfg-newCard-ihp"
+                min="20"
+                max="80"
+                step="1"
+              />
+            </div>
+          </div>
+
+          <!-- Paper & Spacing -->
+          <div class="cfg-section" data-section="paper">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">Paper &amp; Spacing</div>
+            <div class="cfg-row">
+              <label for="cfg-paperSize">Paper size</label>
+              <select id="cfg-paperSize">
+                <option value="A4">A4</option>
+                <option value="A5">A5</option>
+                <option value="A6">A6</option>
+                <option value="Letter">Letter</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-orientation">Orientation</label>
+              <select id="cfg-orientation">
+                <option value="portrait">Portrait</option>
+                <option value="landscape">Landscape</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-margin">Margin (mm)</label>
+              <input type="number" id="cfg-margin" min="0" max="40" step="1" />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-padding">Padding (mm)</label>
+              <input type="number" id="cfg-padding" min="0" max="40" step="1" />
+            </div>
+          </div>
+
+          <!-- Default Border -->
+          <div class="cfg-section" data-section="border">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">Default Border</div>
+            <div class="cfg-row">
+              <label for="cfg-border-width">Width (px)</label>
+              <input
+                type="number"
+                id="cfg-border-width"
+                min="0"
+                max="10"
+                step="1"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-border-style">Style</label>
+              <select id="cfg-border-style">
+                <option value="none">none</option>
+                <option value="solid">solid</option>
+                <option value="dashed">dashed</option>
+                <option value="dotted">dotted</option>
+                <option value="double">double</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-border-color">Color</label>
+              <div class="cfg-color-row">
+                <input
+                  type="color"
+                  id="cfg-border-color"
+                  oninput="
+                    document.getElementById('cfg-border-color-hex').value =
+                      this.value
+                  "
+                />
+                <input
+                  type="text"
+                  id="cfg-border-color-hex"
+                  maxlength="7"
+                  placeholder="#6B21A8"
+                  oninput="
+                    syncColorPicker('cfg-border-color', 'cfg-border-color-hex')
+                  "
+                />
+              </div>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-border-radius">Radius (px)</label>
+              <input
+                type="number"
+                id="cfg-border-radius"
+                min="0"
+                max="40"
+                step="1"
+              />
+            </div>
+          </div>
+
+          <!-- Default Image -->
+          <div class="cfg-section" data-section="image">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">Default Image</div>
+            <div class="cfg-row">
+              <label for="cfg-img-size">Background-size</label>
+              <select id="cfg-img-size">
+                <option value="cover">cover</option>
+                <option value="contain">contain</option>
+                <option value="auto">auto</option>
+                <option value="100% 100%">stretch (100% 100%)</option>
+                <option value="100% auto">100% width</option>
+                <option value="auto 100%">100% height</option>
+                <option value="50%">50%</option>
+                <option value="75%">75%</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-img-pos">Background-position</label>
+              <input type="text" id="cfg-img-pos" placeholder="center" />
+            </div>
+          </div>
+
+          <!-- Title Font (global) -->
+          <div class="cfg-section" data-section="tfont">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">Title Font</div>
+            <div class="cfg-row">
+              <label for="cfg-font-family">Family</label>
+              <input
+                type="text"
+                id="cfg-font-family"
+                placeholder="sans-serif"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-font-size">Size (px)</label>
+              <input
+                type="number"
+                id="cfg-font-size"
+                min="8"
+                max="48"
+                step="1"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-font-color">Color</label>
+              <div class="cfg-color-row">
+                <input
+                  type="color"
+                  id="cfg-font-color"
+                  oninput="
+                    document.getElementById('cfg-font-color-hex').value =
+                      this.value
+                  "
+                />
+                <input
+                  type="text"
+                  id="cfg-font-color-hex"
+                  maxlength="7"
+                  placeholder="#1a1a1a"
+                  oninput="
+                    syncColorPicker('cfg-font-color', 'cfg-font-color-hex')
+                  "
+                />
+              </div>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-font-lh">Line-height</label>
+              <input
+                type="number"
+                id="cfg-font-lh"
+                min="0.8"
+                max="3"
+                step="0.1"
+              />
+            </div>
+          </div>
+
+          <!-- Content Font (global) -->
+          <div class="cfg-section" data-section="cfont">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">Content Font</div>
+            <div class="cfg-row">
+              <label for="cfg-cfont-family">Family</label>
+              <input
+                type="text"
+                id="cfg-cfont-family"
+                placeholder="sans-serif"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-cfont-size">Size (px)</label>
+              <input
+                type="number"
+                id="cfg-cfont-size"
+                min="8"
+                max="48"
+                step="1"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-cfont-color">Color</label>
+              <div class="cfg-color-row">
+                <input
+                  type="color"
+                  id="cfg-cfont-color"
+                  oninput="
+                    document.getElementById('cfg-cfont-color-hex').value =
+                      this.value
+                  "
+                />
+                <input
+                  type="text"
+                  id="cfg-cfont-color-hex"
+                  maxlength="7"
+                  placeholder="#1a1a1a"
+                  oninput="
+                    syncColorPicker('cfg-cfont-color', 'cfg-cfont-color-hex')
+                  "
+                />
+              </div>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-cfont-lh">Line-height</label>
+              <input
+                type="number"
+                id="cfg-cfont-lh"
+                min="0.8"
+                max="3"
+                step="0.1"
+              />
+            </div>
+          </div>
+
+          <!-- Style Export/Import -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Style</div>
+            <div class="cfg-row">
+              <label>Style library<br /><small style="color:#9ca3af">Save and reuse styles across projects</small></label>
+              <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+                <select id="style-library-select" style="width:130px;height:26px;font-size:12px"><option value="">— select —</option></select>
+                <button class="btn btn-secondary btn-sm" onclick="applyStyleFromLibrary()">Apply</button>
+                <button class="btn btn-secondary btn-sm" onclick="saveStyleToLibrary()">Save</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteStyleFromLibrary()">Delete</button>
+              </div>
+            </div>
+            <div class="cfg-row">
+              <label>Export style<br /><small style="color:#9ca3af">Download style settings as a file</small></label>
+              <button class="btn btn-secondary btn-sm" onclick="exportStyle()">Export</button>
+            </div>
+            <div class="cfg-row">
+              <label>Import style<br /><small style="color:#9ca3af">Apply style from a previously exported file</small></label>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('style-import-input').click()">Import</button>
+            </div>
+            <input type="file" id="style-import-input" accept=".json" style="display:none" onchange="importStyle(this)" />
+          </div>
+
+          <!-- Access Control -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Access Control</div>
+            <div class="cfg-row">
+              <label>My edit folders<br><small style="color:#9ca3af">Comma-separated folders I can edit. Leave empty to allow editing everywhere.</small></label>
+              <input id="set-edit-folders" type="text" style="width:160px;font-size:12px" placeholder="e.g. john, john/vocab"
+                onchange="const v=this.value.trim();const arr=v?v.split(',').map(s=>s.trim()).filter(Boolean):[];localStorage.setItem('fc_edit_folders',JSON.stringify(arr));_computeReadOnly();_updateLabels();">
+            </div>
+          </div>
+
+          <!-- Maintenance -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Maintenance</div>
+            <div class="cfg-row">
+              <label
+                >Compress all pasted images<br /><small style="color: #9ca3af"
+                  >Re-compress existing base64 images to current max size</small
+                ></label
+              >
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="migrateImages(this)"
+              >
+                Run
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger btn-sm" onclick="resetUserConfig()">
+            Reset to defaults
+          </button>
+          <button
+            class="btn btn-secondary btn-sm"
+            onclick="closeSettingsModal()"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn btn-primary btn-sm"
+            onclick="applyAndSaveSettings()"
+          >
+            Apply &amp; Save
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════

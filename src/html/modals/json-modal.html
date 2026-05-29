@@ -1,0 +1,171 @@
+﻿    <!-- JSON Export Modal -->
+    <div class="modal-backdrop" id="json-modal" style="display: none">
+      <div class="modal" style="max-width: 340px">
+        <div class="modal-header">
+          <span data-i18n="json.modalTitle">Export / Copy JSON</span>
+          <button class="modal-close" onclick="closeJsonModal()">×</button>
+        </div>
+        <div
+          class="modal-body"
+          style="padding: 12px; display: flex; flex-direction: column; gap: 8px"
+        >
+          <button
+            class="btn btn-secondary json-action-btn"
+            onclick="exportJsonFile()"
+          >
+            <span class="json-action-icon">⬇</span>
+            <span>
+              <span class="json-action-label" data-i18n="json.exportFile"
+                >Export to file</span
+              >
+              <span class="json-action-desc" data-i18n="json.exportFileDesc"
+                >Download as .json</span
+              >
+            </span>
+          </button>
+          <button
+            class="btn btn-secondary json-action-btn"
+            onclick="copyJsonFull()"
+          >
+            <span class="json-action-icon">⎘</span>
+            <span>
+              <span class="json-action-label" data-i18n="json.copyFull"
+                >Copy JSON</span
+              >
+              <span class="json-action-desc" data-i18n="json.copyFullDesc"
+                >Full project including images</span
+              >
+            </span>
+          </button>
+          <button
+            class="btn btn-secondary json-action-btn"
+            onclick="copyJsonNoImg()"
+          >
+            <span class="json-action-icon">⎘</span>
+            <span>
+              <span class="json-action-label" data-i18n="json.copyNoImg"
+                >Copy JSON (no images)</span
+              >
+              <span class="json-action-desc" data-i18n="json.copyNoImgDesc"
+                >Images replaced with placeholder URL</span
+              >
+            </span>
+          </button>
+          <button
+            class="btn btn-secondary json-action-btn"
+            onclick="copyJsonForAI()"
+          >
+            <span class="json-action-icon">✦</span>
+            <span>
+              <span class="json-action-label">Copy for AI</span>
+              <span class="json-action-desc">Prompt + JSON, paste vào AI Studio</span>
+            </span>
+          </button>
+          <hr
+            style="border: none; border-top: 1px solid #e5e7eb; margin: 4px 0"
+          />
+          <button
+            class="btn btn-secondary json-action-btn"
+            onclick="pasteJsonLoad()"
+          >
+            <span class="json-action-icon">📋</span>
+            <span>
+              <span class="json-action-label" data-i18n="json.pasteLoad"
+                >Paste & Load</span
+              >
+              <span class="json-action-desc" data-i18n="json.pasteLoadDesc"
+                >Load project from clipboard JSON</span
+              >
+            </span>
+          </button>
+          <hr
+            style="border: none; border-top: 1px solid #e5e7eb; margin: 4px 0"
+          />
+          <div class="ai-section">
+            <div class="ai-section-header" onclick="toggleAiSection()">
+              <span>✦ AI Generate</span>
+              <span id="ai-section-chevron">▸</span>
+            </div>
+            <div id="ai-section-body" style="display: none">
+              <div class="ai-provider-row">
+                <button
+                  class="btn btn-secondary btn-sm ai-provider-btn active"
+                  data-provider="gemini"
+                  onclick="switchAiProvider('gemini')"
+                >
+                  Gemini
+                </button>
+                <button
+                  class="btn btn-secondary btn-sm ai-provider-btn"
+                  data-provider="openai"
+                  onclick="switchAiProvider('openai')"
+                >
+                  OpenAI
+                </button>
+              </div>
+              <div id="ai-key-gemini" class="pixabay-key-row">
+                <span>API Key:</span>
+                <input type="password" id="gemini-key" placeholder="AIza..." />
+                <input
+                  type="text"
+                  id="gemini-model"
+                  list="gemini-model-list"
+                  placeholder="gemini-2.0-flash"
+                  onchange="localStorage.setItem('gemini-model', this.value)"
+                  style="
+                    font-size: 11px;
+                    padding: 2px 6px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 4px;
+                    background: #f9fafb;
+                    width: 160px;
+                  "
+                />
+                <datalist id="gemini-model-list">
+                  <option value="gemini-2.0-flash"></option>
+                  <option value="gemini-2.5-flash-preview-05-20"></option>
+                  <option value="gemini-2.5-pro-preview-05-06"></option>
+                </datalist>
+                <button
+                  class="btn btn-secondary btn-sm"
+                  onclick="saveAiKey('gemini')"
+                >
+                  Save
+                </button>
+              </div>
+              <div
+                id="ai-key-openai"
+                class="pixabay-key-row"
+                style="display: none"
+              >
+                <span>API Key:</span>
+                <input type="password" id="openai-key" placeholder="sk-..." />
+                <button
+                  class="btn btn-secondary btn-sm"
+                  onclick="saveAiKey('openai')"
+                >
+                  Save
+                </button>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center">
+                <input
+                  type="text"
+                  id="ai-subject"
+                  class="ai-subject-input"
+                  placeholder="New subject (e.g. Tiger, Blue whale...)"
+                  onkeydown="if (event.key === 'Enter') aiGenerateProject();"
+                />
+                <button
+                  class="btn btn-primary btn-sm"
+                  id="ai-generate-btn"
+                  onclick="aiGenerateProject()"
+                >
+                  ✦ Go
+                </button>
+              </div>
+              <div id="ai-status" class="ai-status"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>

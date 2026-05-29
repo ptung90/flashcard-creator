@@ -1,0 +1,35 @@
+﻿    <div class="modal-backdrop" id="load-modal" style="display: none">
+      <div class="modal load-modal-wide">
+        <div class="modal-header">
+          <span>Load</span>
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="modal-close" onclick="_renderFolderSection()" title="Refresh"><svg class="icon" style="width:15px;height:15px"><use href="#i-refresh"/></svg></button>
+            <button class="modal-close" onclick="closeLoadModal()">×</button>
+          </div>
+        </div>
+        <div class="modal-body load-modal-body">
+          <!-- 2-panel folder explorer -->
+          <div id="load-folder-section" style="display:none">
+            <div class="load-panel-left">
+              <div id="load-folder-tree" class="load-folder-tree"></div>
+              <button class="btn btn-secondary btn-sm load-new-folder-btn"
+                id="load-new-folder-btn" onclick="createSubfolder()">+ Folder</button>
+            </div>
+            <div class="load-panel-right">
+              <div id="load-folder-files"></div>
+            </div>
+          </div>
+          <!-- Recent -->
+          <div class="load-recent-section">
+            <div class="load-section-label">Recent</div>
+            <div id="load-recent-list"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" onclick="closeLoadModal()">Cancel</button>
+          <button class="btn btn-secondary btn-sm" onclick="newProject()">+ New Project</button>
+          <button class="btn btn-secondary btn-sm" onclick="setWorkDir()">📁 Set Folder</button>
+          <button class="btn btn-primary btn-sm" onclick="closeLoadModal();openFilePicker()">Browse file…</button>
+        </div>
+      </div>
+    </div>
