@@ -12,30 +12,26 @@ const JS     = path.join(ROOT, "src", "js");
 const CSS    = path.join(ROOT, "src", "css");
 const VENDOR = path.join(ROOT, "src", "vendor");
 
-function readJs(name) {
-  const p = path.join(JS, name);
-  return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
-}
+const stripBOM = s => s.charCodeAt(0) === 0xFEFF ? s.slice(1) : s;
+const readFile = p => fs.existsSync(p) ? stripBOM(fs.readFileSync(p, "utf8")) : "";
+function readJs(name)     { return readFile(path.join(JS,     name)); }
+function readVendorFile(name) { return readFile(path.join(VENDOR, name)); }
+function readHtml(name)   { return readFile(path.join(HTML,   name)); }
 
 // ── Vendor libs (inlined for offline use) ─────────────────────────
-function readVendor(name) {
-  const p = path.join(VENDOR, name);
-  return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
-}
 const vendorJs = ["marked.min.js", "turndown.min.js"]
-  .map(f => readVendor(f))
+  .map(f => readVendorFile(f))
   .filter(Boolean)
   .join("\n");
 const vendorBlock = vendorJs ? `    <script>\n${vendorJs}\n    </script>` : "";
 
 // ── HTML fragments ─────────────────────────────────────────────────
-const template   = fs.readFileSync(path.join(HTML, "template.html"), "utf8");
-const svgHtml    = fs.existsSync(path.join(HTML, "svg.html"))    ? fs.readFileSync(path.join(HTML, "svg.html"),    "utf8") : "";
+const template   = readHtml("template.html");
+const svgHtml    = readHtml("svg.html");
 const modalsHtml = [
   "img-modal.html", "css-modal.html", "json-modal.html", "json-preview.html",
   "load-modal.html", "save-as-modal.html", "settings-modal.html", "dialogs.html",
-].map(f => { const p = path.join(HTML, "modals", f); return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : ""; })
- .filter(Boolean).join("\n\n");
+].map(f => readFile(path.join(HTML, "modals", f))).filter(Boolean).join("\n\n");
 
 // ── JS load order ──────────────────────────────────────────────────
 // Each file may only call functions defined in files loaded BEFORE it.
