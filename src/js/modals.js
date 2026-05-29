@@ -174,7 +174,7 @@ function applyAndSaveSettings() {
   }
 
   // Optionally also write to work dir
-  if (workDirHandle) {
+  if (hasWorkDir()) {
     _writeToDir("user-config.json", JSON.stringify(patch, null, 2)).catch(
       (e) => console.warn("user-config.json write failed:", e),
     );
@@ -216,7 +216,7 @@ async function migrateImages(btn) {
 }
 
 async function saveStyleToLibrary() {
-  if (!workDirHandle) { alert('Set a work folder first.'); return; }
+  if (!hasWorkDir()) { alert('Set a work folder first.'); return; }
   const name = prompt('Save style as:');
   if (!name?.trim()) return;
   try {

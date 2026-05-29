@@ -3,7 +3,7 @@ let _editingSchema = null;
 let _loadedSchemaName = null;
 
 async function saveSchemaToLibrary() {
-  if (!workDirHandle) { alert(t('rec.schema.setFolderAlert')); return; }
+  if (!hasWorkDir()) { alert(t('rec.schema.setFolderAlert')); return; }
   const name = prompt(t('rec.schema.savePrompt'), _loadedSchemaName || '');
   if (!name?.trim()) return;
   const schema = _editingSchema || state.schema;

@@ -283,8 +283,6 @@ function newCard() {
   };
 }
 
-const HIDE_TITLE_LAYOUTS = new Set(['2img-2txt', '8img-8txt', 'img3-txt3', '6cell', 'txtgrid', 'fullimage', 'fulltext']);
-
 function addCard() {
   pushUndo();
   const nc     = (window.FC_CONFIG || {}).newCard || {};

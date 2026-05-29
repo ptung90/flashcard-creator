@@ -61,6 +61,8 @@ const LAYOUT_SLOTS = {
   "2img-4txt": 2,
   "8img-8txt": 8,
 };
+const HIDE_TITLE_LAYOUTS = new Set(['2img-2txt', '8img-8txt', 'img3-txt3', '6cell', 'txtgrid', 'fullimage', 'fulltext']);
+
 const PAPER_MM = {
   A4: { w: 210, h: 297 },
   A5: { w: 148, h: 210 },

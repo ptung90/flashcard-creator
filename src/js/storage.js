@@ -313,6 +313,7 @@ async function deleteRecentItem(id, btn) {
 let workDirHandle = null;
 let currentSubfolder = null;  // null = root, "l1" or "l1/l2" path (max 2 levels)
 let currentFileName = null;
+function hasWorkDir() { return !!workDirHandle; }
 let _modalSubfolder = null;   // browsing state inside load modal
 let _modalAllPaths = [];      // all folder paths (L1 and L2), used by move menu
 let _collapsedFolders = new Set(); // L1 paths collapsed in folder tree
