@@ -101,13 +101,16 @@
   margin: 0 0 2px;
 }
 
-.fc-section__content>ul,
-.fc-section__content>ol {
+.fc-section__content ul,
+.fc-section__content ol {
   display: block;
   padding-left: 14px;
   margin: 1px 0 0;
-  list-style: disc;
 }
+.fc-section__content ul { list-style: disc; }
+.fc-section__content ol { list-style: decimal; }
+.fc-section__content ul ul { list-style: circle; }
+.fc-section__content ul ul ul { list-style: square; }
 
 .fc-section__content li {
   margin-bottom: 1px;

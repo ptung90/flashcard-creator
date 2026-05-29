@@ -1,4 +1,4 @@
-window.FC_VERSION = "3.1.9";
+window.FC_VERSION = "3.1.10";
 
 window.FC_CONFIG = {
   // ── Paper & Layout ────────────────────────────────────────────────
