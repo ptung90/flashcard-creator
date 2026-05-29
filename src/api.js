@@ -1,70 +1,44 @@
 // ── External APIs (Image Search) ──────────────────────────────────
 
-// Wikimedia Commons
-async function searchWikimedia() {
-  const q = document.getElementById("search-wikimedia").value.trim();
+function _imgItem(full, thumb) {
+  return `<div class="search-result-item" onclick="insertImageUrl('${esc(full)}')"><img src="${esc(thumb)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`;
+}
+
+async function _searchImages(inputId, resultId, fetchFn) {
+  const q = document.getElementById(inputId).value.trim();
   if (!q) return;
-  const res = document.getElementById("results-wikimedia");
+  const res = document.getElementById(resultId);
   res.innerHTML = '<div class="search-status">Searching...</div>';
   try {
-    const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=20&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=300&format=json&origin=*`;
-    const r = await fetch(url);
-    const data = await r.json();
-    const pages = Object.values(data.query?.pages || {});
-    if (!pages.length) {
-      res.innerHTML = '<div class="search-status">No results</div>';
-      return;
-    }
-    res.innerHTML = pages
-      .map((p) => {
-        const info = p.imageinfo?.[0];
-        if (!info) return "";
-        const thumb = info.thumburl || info.url;
-        const full = info.url;
-        return `<div class="search-result-item" onclick="insertImageUrl('${esc(full)}')"><img src="${esc(thumb)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`;
-      })
-      .join("");
+    const html = await fetchFn(q);
+    res.innerHTML = html || '<div class="search-status">No results</div>';
   } catch (e) {
     res.innerHTML = `<div class="search-status">Error: ${e.message}</div>`;
   }
 }
 
+// Wikimedia Commons
+async function searchWikimedia() {
+  _searchImages("search-wikimedia", "results-wikimedia", async (q) => {
+    const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=20&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=300&format=json&origin=*`;
+    const data = await fetch(url).then(r => r.json());
+    return Object.values(data.query?.pages || {})
+      .map(p => { const info = p.imageinfo?.[0]; return info ? _imgItem(info.url, info.thumburl || info.url) : ""; })
+      .join("");
+  });
+}
+
 // iNaturalist
 async function searchINaturalist() {
-  const q = document.getElementById("search-inaturalist").value.trim();
-  if (!q) return;
-  const res = document.getElementById("results-inaturalist");
-  res.innerHTML = '<div class="search-status">Searching...</div>';
-  try {
+  _searchImages("search-inaturalist", "results-inaturalist", async (q) => {
     const url = `https://api.inaturalist.org/v1/observations?q=${encodeURIComponent(q)}&per_page=24&photos=true&order_by=votes`;
-    const r = await fetch(url);
-    const data = await r.json();
-    const items = data.results || [];
-    if (!items.length) {
-      res.innerHTML = '<div class="search-status">No results</div>';
-      return;
-    }
-    const imgs = [];
-    for (const obs of items) {
-      for (const photo of obs.photos || []) {
-        const thumb = photo.url?.replace("square", "medium");
-        const full = photo.url?.replace("square", "large");
-        if (thumb && full) imgs.push({ thumb, full });
-      }
-    }
-    if (!imgs.length) {
-      res.innerHTML = '<div class="search-status">No images found</div>';
-      return;
-    }
-    res.innerHTML = imgs
-      .map(
-        (img) =>
-          `<div class="search-result-item" onclick="insertImageUrl('${esc(img.full)}')"><img src="${esc(img.thumb)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`,
-      )
-      .join("");
-  } catch (e) {
-    res.innerHTML = `<div class="search-status">Error: ${e.message}</div>`;
-  }
+    const data = await fetch(url).then(r => r.json());
+    const imgs = (data.results || []).flatMap(obs =>
+      (obs.photos || []).map(p => ({ thumb: p.url?.replace("square","medium"), full: p.url?.replace("square","large") }))
+        .filter(p => p.thumb && p.full)
+    );
+    return imgs.map(p => _imgItem(p.full, p.thumb)).join("");
+  });
 }
 
 // Unsplash
@@ -78,56 +52,24 @@ function saveUnsplashKey() {
 function _unsplashPick(i) {
   const d = _unsplashCache[i];
   if (!d) return;
-  const key = document.getElementById("unsplash-key")?.value.trim()
-    || localStorage.getItem("unsplash-key") || "";
-  if (key && d.dlUrl) {
-    fetch(`${d.dlUrl}?client_id=${encodeURIComponent(key)}`).catch(() => {});
-  }
+  const key = document.getElementById("unsplash-key")?.value.trim() || localStorage.getItem("unsplash-key") || "";
+  if (key && d.dlUrl) fetch(`${d.dlUrl}?client_id=${encodeURIComponent(key)}`).catch(() => {});
   insertUnsplashImage(d.url, { name: d.name, profileUrl: d.profileUrl, photoUrl: d.photoUrl });
 }
 
 async function searchUnsplash() {
-  const key =
-    document.getElementById("unsplash-key").value.trim() ||
-    localStorage.getItem("unsplash-key") ||
-    "";
-  if (!key) {
-    alert("Please enter your Unsplash Access Key first.");
-    return;
-  }
-  const q = document.getElementById("search-unsplash").value.trim();
-  if (!q) return;
-  const res = document.getElementById("results-unsplash");
-  res.innerHTML = '<div class="search-status">Searching...</div>';
-  try {
+  const key = document.getElementById("unsplash-key").value.trim() || localStorage.getItem("unsplash-key") || "";
+  if (!key) { alert("Please enter your Unsplash Access Key first."); return; }
+  _searchImages("search-unsplash", "results-unsplash", async (q) => {
     const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=20&client_id=${encodeURIComponent(key)}`;
     const r = await fetch(url);
-    if (r.status === 401) {
-      res.innerHTML = '<div class="search-status">Invalid Access Key</div>';
-      return;
-    }
+    if (r.status === 401) return '<div class="search-status">Invalid Access Key</div>';
     const data = await r.json();
-    const results = data.results || [];
-    if (!results.length) {
-      res.innerHTML = '<div class="search-status">No results</div>';
-      return;
-    }
-    res.innerHTML = results
-      .map((p, i) => {
-        const thumb = p.urls.small;
-        _unsplashCache[i] = {
-          url: p.urls.regular,
-          dlUrl: p.links?.download_location || "",
-          name: p.user?.name || "",
-          profileUrl: p.user?.links?.html || "https://unsplash.com",
-          photoUrl: p.links?.html || "https://unsplash.com",
-        };
-        return `<div class="search-result-item" title="${esc(_unsplashCache[i].name)}" onclick="_unsplashPick(${i})"><img src="${esc(thumb)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`;
-      })
-      .join("");
-  } catch (e) {
-    res.innerHTML = `<div class="search-status">Error: ${e.message}</div>`;
-  }
+    return (data.results || []).map((p, i) => {
+      _unsplashCache[i] = { url: p.urls.regular, dlUrl: p.links?.download_location || "", name: p.user?.name || "", profileUrl: p.user?.links?.html || "https://unsplash.com", photoUrl: p.links?.html || "https://unsplash.com" };
+      return `<div class="search-result-item" title="${esc(_unsplashCache[i].name)}" onclick="_unsplashPick(${i})"><img src="${esc(p.urls.small)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`;
+    }).join("");
+  });
 }
 
 // ── AI Generate ────────────────────────────────────────────────────
