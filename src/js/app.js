@@ -621,13 +621,13 @@ async function _generateThumbs(genId, targetItems = null) {
       const canvas = await html2canvas(offscreen, {
         useCORS: true,
         allowTaint: false,
-        scale: 0.18,
+        scale: 0.12,
         backgroundColor: '#f0f0f2',
         logging: false,
         imageTimeout: 0,
       });
       if (imgDiv) {
-        imgDiv.innerHTML = `<img src="${canvas.toDataURL('image/jpeg', 0.35)}">`;
+        imgDiv.innerHTML = `<img src="${canvas.toDataURL('image/jpeg', 0.25)}">`;
         imgDiv.classList.remove('thumb-loading');
         _thumbHashes[card.id] = hash;
       }
