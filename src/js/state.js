@@ -127,6 +127,7 @@ let _thumbRefreshTimer = null;
 let _thumbDirtyVersion = 0;
 let _thumbRenderedVersion = 0;
 let _pendingThumbCardId = undefined; // undefined=idle, null=all, string=specific card
+let _thumbHashes = {};  // card.id → content hash, skip re-render if unchanged
 
 function getActiveCard() { return state.cards.find((c) => c.id === uiState.activeCardId); }
 function getCardOrientation(card) { return card?.orientation || state.settings.orientation; }

@@ -21,6 +21,8 @@ function dispatch(action) {
 
   switch (action) {
     case 'INIT_LOAD':
+      _thumbHashes = {};  // new project — invalidate all cached hashes
+      // fall through
     case 'ACTIVE_CARD_CHANGED':
     case 'CARD_LIST_CHANGED':
     case 'FULL_STATE_UPDATED':
@@ -565,6 +567,20 @@ function _requestThumbGeneration(items = null) {
   _generateThumbs(genId, els);
 }
 
+function _cardThumbHash(card) {
+  const s = state.settings;
+  return _hashStr(JSON.stringify({
+    layout: card.layout, title: card.title, sections: card.sections,
+    images: (card.images || []).map(i => i?.url?.slice(0, 60)),
+    imageHeightPercent: card.imageHeightPercent, imageGridSplit: card.imageGridSplit,
+    orientation: card.orientation, hideTitle: card.hideTitle, paperSize: card.paperSize,
+    titleFont: card.titleFont, contentFont: card.contentFont, cssClass: card.cssClass,
+    // key global settings that affect visual
+    border: s.border, padding: s.padding, margin: s.margin,
+    titleFont_g: s.titleFont, contentFont_g: s.contentFont,
+  }));
+}
+
 async function _generateThumbs(genId, targetItems = null) {
   const targetDirtyVersion = _thumbDirtyVersion;
   const offscreen = document.createElement('div');
@@ -573,11 +589,25 @@ async function _generateThumbs(genId, targetItems = null) {
 
   const targetIds = targetItems ? new Set(targetItems.map(el => el.dataset.id)) : null;
 
-  for (const card of [...state.cards]) {
+  // Render active card first for better perceived performance
+  const cards = [...state.cards].sort((a, b) =>
+    a.id === uiState.activeCardId ? -1 : b.id === uiState.activeCardId ? 1 : 0
+  );
+
+  for (const card of cards) {
     if (genId !== _thumbGenId) break;
     if (targetIds && !targetIds.has(card.id)) continue;
     const item = document.querySelector(`.fc-card-thumb-item[data-id="${card.id}"]`);
     if (!item) continue;
+
+    // Skip if content hasn't changed and thumbnail already exists
+    const hash = _cardThumbHash(card);
+    const imgDiv = item.querySelector('.card-thumb-img');
+    if (_thumbHashes[card.id] === hash && imgDiv?.querySelector('img')) {
+      imgDiv.classList.remove('thumb-loading');
+      continue;
+    }
+
     const orientation = getCardOrientation(card);
     const { w, h } = getPaperPx(state.settings.paperSize, orientation);
     offscreen.style.width = w + 'px';
@@ -585,7 +615,7 @@ async function _generateThumbs(genId, targetItems = null) {
 
     const overridePx = card.paperSize ? getPaperPx(card.paperSize, orientation) : null;
     offscreen.innerHTML = buildCardHTML(card, state.settings, true, overridePx);
-    await new Promise(r => setTimeout(r, 30));
+    await new Promise(r => setTimeout(r, 10));
 
     try {
       const canvas = await html2canvas(offscreen, {
@@ -595,13 +625,12 @@ async function _generateThumbs(genId, targetItems = null) {
         backgroundColor: '#f0f0f2',
         logging: false,
       });
-      const imgDiv = item.querySelector('.card-thumb-img');
       if (imgDiv) {
         imgDiv.innerHTML = `<img src="${canvas.toDataURL('image/jpeg', 0.5)}">`;
         imgDiv.classList.remove('thumb-loading');
+        _thumbHashes[card.id] = hash;
       }
     } catch (e) {
-      const imgDiv = item.querySelector('.card-thumb-img');
       if (imgDiv) {
         imgDiv.innerHTML = '<div class="thumb-loading">⚠</div>';
         imgDiv.classList.remove('thumb-loading');
