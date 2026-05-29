@@ -68,3 +68,33 @@
       </div>
     </dialog>
 
+    <!-- Export PDF Dialog -->
+    <dialog id="export-pdf-dialog">
+      <div class="dialog-header">
+        <span class="dialog-title">Export PDF</span>
+        <button class="btn btn-sm modal-close" onclick="document.getElementById('export-pdf-dialog').close()">×</button>
+      </div>
+      <div class="dialog-body" style="display:flex;flex-direction:column;gap:14px;min-width:280px">
+        <div class="dialog-section">
+          <div class="dialog-section-title">Page Orientation</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="radio" name="pdf-orient" value="" checked> ↕↔ Mixed <span style="font-size:11px;color:var(--ink-400)">(keep each card's orientation)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="radio" name="pdf-orient" value="portrait"> ↕ All Portrait <span style="font-size:11px;color:var(--ink-400)">(rotate landscape cards)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="radio" name="pdf-orient" value="landscape"> ↔ All Landscape <span style="font-size:11px;color:var(--ink-400)">(rotate portrait cards)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('export-pdf-dialog').close()">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="runExportPdf()">
+          <svg class="icon" style="width:13px;height:13px"><use href="#i-download"/></svg> Export PDF
+        </button>
+      </div>
+    </dialog>
+

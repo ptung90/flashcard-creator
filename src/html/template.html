@@ -278,14 +278,9 @@
         <button class="btn btn-secondary btn-sm" onclick="printAll()" data-i18n-title="toolbar.printAll" title="Print all cards">
           <svg class="icon"><use href="#i-printer"/></svg><span class="btn-label" data-i18n="toolbar.printAll">Print All</span>
         </button>
-        <button class="btn btn-primary btn-sm" onclick="exportPDF()" data-i18n-title="toolbar.pdfAll" title="Export PDF (all)">
+        <button class="btn btn-primary btn-sm" onclick="openExportPdfDialog()" data-i18n-title="toolbar.pdfAll" title="Export PDF (all)">
           <svg class="icon"><use href="#i-download"/></svg><span class="btn-label" data-i18n="toolbar.pdfAll">PDF All</span>
         </button>
-        <select id="pdf-orient-normalize" title="Normalize page orientation" style="height:26px;font-size:11px;border:1px solid var(--border);border-radius:4px;background:var(--surface);padding:0 4px;cursor:pointer;color:var(--ink-700)">
-          <option value="">↕↔ Mixed</option>
-          <option value="portrait">↕ Portrait</option>
-          <option value="landscape">↔ Landscape</option>
-        </select>
 
         <!-- More menu -->
         <div class="toolbar-more-wrap">

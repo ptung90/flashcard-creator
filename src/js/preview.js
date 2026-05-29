@@ -310,11 +310,21 @@ async function exportOnePDF() {
 }
 
 // ── PDF Export ────────────────────────────────────────────────────
-async function exportPDF() {
+function openExportPdfDialog() {
+  if (!state.cards.length) { showToast('No cards to export'); return; }
+  document.getElementById('export-pdf-dialog').showModal();
+}
+
+function runExportPdf() {
+  document.getElementById('export-pdf-dialog').close();
+  const normalizeOrient = document.querySelector('#export-pdf-dialog input[name="pdf-orient"]:checked')?.value || '';
+  exportPDF(normalizeOrient);
+}
+
+async function exportPDF(normalizeOrient = '') {
   if (!state.cards.length) return alert("No cards to export.");
   const { jsPDF } = window.jspdf;
   const s = state.settings;
-  const normalizeOrient = document.getElementById('pdf-orient-normalize')?.value || '';
   const firstOrientation = normalizeOrient || getCardOrientation(state.cards[0]);
   const firstPage = getPaperMm(s.paperSize, firstOrientation);
 
