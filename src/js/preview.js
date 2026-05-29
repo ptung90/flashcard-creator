@@ -259,6 +259,17 @@ function mountPrintPageStyle() {
   return styleEl;
 }
 
+function _rotateCanvas90(canvas) {
+  const out = document.createElement('canvas');
+  out.width = canvas.height;
+  out.height = canvas.width;
+  const ctx = out.getContext('2d');
+  ctx.translate(out.width / 2, out.height / 2);
+  ctx.rotate(Math.PI / 2);
+  ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+  return out;
+}
+
 function _pdfName(label) {
   const dt = new Date();
   const pad = (n) => String(n).padStart(2, "0");
@@ -303,7 +314,8 @@ async function exportPDF() {
   if (!state.cards.length) return alert("No cards to export.");
   const { jsPDF } = window.jspdf;
   const s = state.settings;
-  const firstOrientation = getCardOrientation(state.cards[0]);
+  const normalizeOrient = document.getElementById('pdf-orient-normalize')?.value || '';
+  const firstOrientation = normalizeOrient || getCardOrientation(state.cards[0]);
   const firstPage = getPaperMm(s.paperSize, firstOrientation);
 
   const pdf = new jsPDF({
@@ -324,10 +336,11 @@ async function exportPDF() {
     const doPair = card.twoUp && nextCard && nextCard.twoUp;
 
     const orientation = getCardOrientation(card);
-    const { w: pw, h: ph } = getPaperMm(card.paperSize || s.paperSize, orientation);
+    const targetOrient = normalizeOrient || orientation;
+    const { w: pw, h: ph } = getPaperMm(card.paperSize || s.paperSize, targetOrient);
+    const needsRotation = normalizeOrient && orientation !== normalizeOrient;
 
     if (doPair) {
-      // capture both cards
       wrap.innerHTML = buildCaptureHTML(_cardForExport(card), s);
       await _waitForRender();
       const canvas1 = await _capture(wrap.firstElementChild);
@@ -336,7 +349,6 @@ async function exportPDF() {
       await _waitForRender();
       const canvas2 = await _capture(wrap.firstElementChild);
 
-      // crop each canvas by ratio (no scaling — just cut bottom portion)
       const splitRatio = Math.min(90, Math.max(10, card.twoUpRatio || 50)) / 100;
       const cropCanvas = (src, frac) => {
         const c = document.createElement('canvas');
@@ -345,11 +357,10 @@ async function exportPDF() {
         c.getContext('2d').drawImage(src, 0, 0);
         return c;
       };
-      const crop1 = cropCanvas(canvas1, splitRatio);
-      const crop2 = cropCanvas(canvas2, 1 - splitRatio);
+      const crop1 = cropCanvas(needsRotation ? _rotateCanvas90(canvas1) : canvas1, splitRatio);
+      const crop2 = cropCanvas(needsRotation ? _rotateCanvas90(canvas2) : canvas2, 1 - splitRatio);
 
-      // 2-up page: same size as original card
-      const orientStr = orientation === "landscape" ? "l" : "p";
+      const orientStr = targetOrient === "landscape" ? "l" : "p";
       if (pageIndex > 0) pdf.addPage([pw, ph], orientStr);
       else { pdf.deletePage(1); pdf.addPage([pw, ph], orientStr); }
       pdf.addImage(crop1.toDataURL("image/png"), "PNG", 0, 0, pw, ph * splitRatio);
@@ -357,10 +368,11 @@ async function exportPDF() {
       i += 2;
     } else {
       if (pageIndex > 0)
-        pdf.addPage([pw, ph], orientation === "landscape" ? "l" : "p");
+        pdf.addPage([pw, ph], targetOrient === "landscape" ? "l" : "p");
       wrap.innerHTML = buildCaptureHTML(_cardForExport(card), s);
       await _waitForRender();
-      const canvas = await _capture(wrap.firstElementChild);
+      let canvas = await _capture(wrap.firstElementChild);
+      if (needsRotation) canvas = _rotateCanvas90(canvas);
       pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, pw, ph);
       i += 1;
     }

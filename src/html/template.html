@@ -278,9 +278,16 @@
         <button class="btn btn-secondary btn-sm" onclick="printAll()" data-i18n-title="toolbar.printAll" title="Print all cards">
           <svg class="icon"><use href="#i-printer"/></svg><span class="btn-label" data-i18n="toolbar.printAll">Print All</span>
         </button>
-        <button class="btn btn-primary btn-sm" onclick="exportPDF()" data-i18n-title="toolbar.pdfAll" title="Export PDF (all)">
-          <svg class="icon"><use href="#i-download"/></svg><span class="btn-label" data-i18n="toolbar.pdfAll">PDF All</span>
-        </button>
+        <div style="display:flex;align-items:center;gap:2px">
+          <button class="btn btn-primary btn-sm" onclick="exportPDF()" data-i18n-title="toolbar.pdfAll" title="Export PDF (all)">
+            <svg class="icon"><use href="#i-download"/></svg><span class="btn-label" data-i18n="toolbar.pdfAll">PDF All</span>
+          </button>
+          <select id="pdf-orient-normalize" title="Page orientation for export" style="height:26px;font-size:11px;border:1px solid var(--mint-600);border-radius:0 4px 4px 0;background:var(--mint-50);color:var(--mint-800);padding:0 2px;cursor:pointer">
+            <option value="">↕↔</option>
+            <option value="portrait">↕ All</option>
+            <option value="landscape">↔ All</option>
+          </select>
+        </div>
 
         <!-- More menu -->
         <div class="toolbar-more-wrap">
