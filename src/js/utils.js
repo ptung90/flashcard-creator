@@ -1,4 +1,4 @@
-// ── Helpers ────────────────────────────────────────────────────────
+﻿// ── Helpers ────────────────────────────────────────────────────────
 function _show(id, display = "flex") { const el = document.getElementById(id); if (el) el.style.display = display; }
 function _hide(id) { const el = document.getElementById(id); if (el) el.style.display = "none"; }
 
@@ -30,6 +30,13 @@ function mmToPx(mm) {
 
 function mdParse(text) {
   return marked.parse((text || "").replace(/^ +/gm, (m) => " ".repeat(m.length)));
+}
+
+// Render section content: HTML passthrough or legacy markdown with breaks:false (preserves nested lists)
+function renderSectionContent(content) {
+  if (!content) return '';
+  if (content.trimStart().startsWith('<')) return content;
+  return marked.parse(content, { breaks: false });
 }
 
 function mdParseInline(text) {

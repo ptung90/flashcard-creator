@@ -8,6 +8,25 @@ let _turndownService = null;
 function _ensureTurndown() {
   if (!_turndownService && window.TurndownService) {
     _turndownService = new window.TurndownService({ headingStyle: 'atx', bulletListMarker: '-' });
+    // Force tight list items — strip blank lines so nested lists render correctly
+    _turndownService.addRule('tightListItem', {
+      filter: 'li',
+      replacement: (content, node, options) => {
+        const parent = node.parentNode;
+        let prefix;
+        if (parent.nodeName === 'OL') {
+          const start = parent.getAttribute('start');
+          const index = Array.prototype.indexOf.call(parent.children, node);
+          prefix = (start ? Number(start) + index : index + 1) + '. ';
+        } else {
+          prefix = options.bulletListMarker + ' ';
+        }
+        // Keep at most one blank line (for nested list separation), indent continuation
+        const indent = ' '.repeat(prefix.length);
+        const body = content.trim().replace(/\n{3,}/g, '\n\n').replace(/\n/g, '\n' + indent);
+        return prefix + body + '\n';
+      },
+    });
     _turndownService.addRule('alignedParagraph', {
       filter: (node) => node.nodeName === 'P' && node.style && node.style.textAlign,
       replacement: (content, node) => {
@@ -169,17 +188,17 @@ function renderEditor() {
         const url = img?.url || '';
         const curSize = img?.size ?? null;
         const sizeBtns = [
-          ['cover',   'Fill',       'i-img-fill'],
-          ['contain', 'Contain',    'i-img-fit'],
-          ['100% auto','Fit width', 'i-arrow-lr'],
-          ['auto 100%','Fit height','i-arrow-tb'],
+          ['cover', 'Fill', 'i-img-fill'],
+          ['contain', 'Contain', 'i-img-fit'],
+          ['100% auto', 'Fit width', 'i-arrow-lr'],
+          ['auto 100%', 'Fit height', 'i-arrow-tb'],
         ];
         const pairOverride = url ? `<div class="pair-size-group">
-          ${sizeBtns.map(([v,label,icon])=>`<button class="btn btn-secondary btn-sm btn-icon${curSize===v?' active':''}" onclick="setSlotSize(${si},'${v}')" title="${label}"><svg class="icon" style="width:12px;height:12px"><use href="#${icon}"/></svg></button>`).join('')}
-          ${curSize && curSize !== 'cover' ? `<input type="color" value="${img.color||'#e5e7e4'}" onchange="updateImgProp(${si},'color',this.value)" title="${t('editor.bgColor')}" class="pair-size-color">` : ''}
+          ${sizeBtns.map(([v, label, icon]) => `<button class="btn btn-secondary btn-sm btn-icon${curSize === v ? ' active' : ''}" onclick="setSlotSize(${si},'${v}')" title="${label}"><svg class="icon" style="width:12px;height:12px"><use href="#${icon}"/></svg></button>`).join('')}
+          ${curSize && curSize !== 'cover' ? `<input type="color" value="${img.color || '#e5e7e4'}" onchange="updateImgProp(${si},'color',this.value)" title="${t('editor.bgColor')}" class="pair-size-color">` : ''}
         </div>` : '';
         const thumb = url
-          ? `<div style="width:100%;height:100%;background-image:url('${esc(url)}');background-size:${img?.size||'cover'};background-position:center;"></div>`
+          ? `<div style="width:100%;height:100%;background-image:url('${esc(url)}');background-size:${img?.size || 'cover'};background-position:center;"></div>`
           : `<span style="font-size:16px">📷</span>`;
         const thumbBtns = `
           <div class="pair-thumb-btns">
@@ -419,20 +438,28 @@ function _destroyTipTapInstances() {
 
 // Shared Tiptap config used by both card editor and record editor
 function _tiptapBaseConfig(placeholder) {
+  let _editorRef = null;
   return {
     extensions: [
       window.TipTapStarterKit,
       window.TipTapUnderline,
       window.TipTapTextAlign?.configure({ types: ['paragraph', 'heading'] }),
     ].filter(Boolean),
+    onCreate({ editor }) { _editorRef = editor; },
+    onDestroy() { _editorRef = null; },
     editorProps: {
       attributes: { 'data-placeholder': placeholder || '' },
       handleKeyDown(view, event) {
         if (event.key === 'Tab') {
-          const { $from } = view.state.selection;
-          if ($from.parent.type.name === 'listItem') return false;
           event.preventDefault();
-          view.dispatch(view.state.tr.insertText('    '));
+          if (_editorRef) {
+            if (event.shiftKey) {
+              if (_editorRef.commands.liftListItem('listItem')) return true;
+            } else {
+              if (_editorRef.commands.sinkListItem('listItem')) return true;
+            }
+          }
+          view.dispatch(view.state.tr.insertText('    '));
           return true;
         }
         return false;
@@ -462,6 +489,14 @@ function _tiptapLabelConfig(placeholder) {
   };
 }
 
+// If content is already HTML (from new format), use as-is; otherwise convert markdown
+function _contentToHtml(content) {
+  if (!content) return '';
+  const t = content.trimStart();
+  if (t.startsWith('<')) return content;   // already HTML
+  return renderSectionContent(content);  // legacy markdown → HTML (breaks:false preserves nested lists)
+}
+
 function _initTipTapInstances(card) {
   _ensureTurndown();
 
@@ -472,15 +507,11 @@ function _initTipTapInstances(card) {
     const editor = new window.TipTapEditor({
       element: el,
       ...(_tiptapBaseConfig(t('editor.contentPh') || 'Write something...')),
-      content: mdParse(s.content || ''),
+      content: _contentToHtml(s.content),
     });
 
     editor.on('update', () => {
-      if (!_turndownService) {
-        console.warn('[TipTap] turndown not ready — content change dropped');
-        return;
-      }
-      s.content = _turndownService.turndown(editor.getHTML());
+      s.content = editor.getHTML();
       dispatch('CARD_CONTENT_CHANGED');
     });
 

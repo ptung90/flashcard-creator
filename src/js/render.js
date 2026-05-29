@@ -1,4 +1,4 @@
-// ── Card Render (HTML) ─────────────────────────────────────────────
+﻿// ── Card Render (HTML) ─────────────────────────────────────────────
 const GRID_STRATEGIES = {
   "2x2": (r, c, n) => `grid-template-rows:${r}% ${100 - r}%;grid-template-columns:${c}% ${100 - c}%;`,
   "1top-1bot": (r, c, n) => `grid-template-rows:${r}% ${100 - r}%;`,
@@ -78,7 +78,7 @@ function buildSectionsHtml(sections, hideLabels, inlineSections) {
         `<div class="fc-section${sec.customClass ? ` ${esc(sec.customClass)}` : ''}">` +
         (!hideLabels && sec.label ? '<span class="fc-section__label"' + (sec.labelSize ? ` style="font-size:${sec.labelSize}px"` : '') + '>• ' + mdParseInline(sec.label) + ': </span>' : '') +
         '<div class="fc-section__content"' + buildSectionContentStyle(sec, inlineSections) + '>' +
-        (inlineSections ? mdParseInline(sec.content) : mdParse(sec.content)) +
+        (inlineSections ? mdParseInline(sec.content) : renderSectionContent(sec.content)) +
         "</div></div>",
     )
     .join("");
@@ -97,7 +97,7 @@ function buildSectionCellHtml(section, hideLabels) {
     `<div class="fc-section${section.customClass ? ` ${esc(section.customClass)}` : ''}">` +
     (!hideLabels && section.label ? '<span class="fc-section__label"' + (section.labelSize ? ` style="font-size:${section.labelSize}px"` : '') + '>• ' + mdParseInline(section.label) + ': </span>' : '') +
     '<div class="fc-section__content"' + ((section.fontSize || section.textAlign) ? ` style="${section.fontSize ? `font-size:${section.fontSize}px;` : ''}${section.textAlign ? `text-align:${section.textAlign};` : ''}"` : '') + '>' +
-    mdParse(section.content) +
+    renderSectionContent(section.content) +
     "</div></div>"
   );
 }

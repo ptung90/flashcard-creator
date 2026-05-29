@@ -22,6 +22,7 @@ function dispatch(action) {
   switch (action) {
     case 'INIT_LOAD':
       _thumbHashes = {};  // new project — invalidate all cached hashes
+      if (document.getElementById('records-panel')?.style.display === 'flex') renderRecordsPanel();
       // fall through
     case 'ACTIVE_CARD_CHANGED':
     case 'CARD_LIST_CHANGED':
