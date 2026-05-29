@@ -31,8 +31,11 @@ const editor  = readJs("editor.js");
 const preview = readJs("preview.js");
 const modals  = readJs("modals.js");
 const undo    = readJs("undo.js");
-const records = readJs("records.js");
-const app     = readJs("app.js");
+const records       = readJs("records.js");
+const recordsPack   = readJs("records-pack.js");
+const schemaEditor  = readJs("schema-editor.js");
+const recordsAi     = readJs("records-ai.js");
+const app           = readJs("app.js");
 
 const cssFiles = ["base.css", "sidebar.css", "editor.css", "preview.css", "modal.css", "tomoe.css"];
 const css = cssFiles
@@ -40,7 +43,7 @@ const css = cssFiles
   .map(f => fs.readFileSync(path.join(CSS, f), "utf8"))
   .join("\n\n");
 
-const allJs = [state, utils, storage, api, i18n, render, editor, preview, modals, undo, records, app]
+const allJs = [state, utils, storage, api, i18n, render, editor, preview, modals, undo, records, recordsPack, schemaEditor, recordsAi, app]
   .filter(Boolean).join("\n\n");
 
 const output = template
