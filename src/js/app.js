@@ -621,7 +621,7 @@ async function _generateThumbs(genId, targetItems = null) {
       const canvas = await html2canvas(offscreen, {
         useCORS: true,
         allowTaint: false,
-        scale: 0.16,
+        scale: 0.18,
         backgroundColor: '#f0f0f2',
         logging: false,
         imageTimeout: 0,
