@@ -73,12 +73,17 @@ const recordsAi     = readJs("records-ai.js");    // export/import/AI copy for r
 const app     = readJs("app.js");       // init, dispatch, sidebar, toolbar, event wiring    ← all layers
 
 // ── CSS load order ─────────────────────────────────────────────────
-// base.css first (variables + reset), tomoe.css last (feature overrides)
+// Embedded fonts first, then base.css (variables + reset), tomoe.css last (feature overrides)
+const embeddedFonts = ["lexend-embedded.css"]
+  .map(f => { const p = path.join(VENDOR, f); return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : ""; })
+  .filter(Boolean)
+  .join("\n\n");
+
 const cssFiles = ["base.css", "sidebar.css", "editor.css", "preview.css", "modal.css", "tomoe.css"];
-const css = cssFiles
+const css = [embeddedFonts, ...cssFiles
   .filter(f => fs.existsSync(path.join(CSS, f)))
   .map(f => fs.readFileSync(path.join(CSS, f), "utf8"))
-  .join("\n\n");
+].filter(Boolean).join("\n\n");
 
 // ── Assemble ───────────────────────────────────────────────────────
 const allJs = [
