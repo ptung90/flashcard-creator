@@ -10,6 +10,8 @@ const ROOT = __dirname;
 const SRC = path.join(ROOT, "src");
 
 const template = fs.readFileSync(path.join(SRC, "template.html"), "utf8");
+const svgHtml = fs.existsSync(path.join(SRC, "svg.html")) ? fs.readFileSync(path.join(SRC, "svg.html"), "utf8") : "";
+const modalsHtml = fs.existsSync(path.join(SRC, "modals.html")) ? fs.readFileSync(path.join(SRC, "modals.html"), "utf8") : "";
 const config = fs.readFileSync(path.join(SRC, "config.js"), "utf8");
 const utils = fs.existsSync(path.join(SRC, "utils.js")) ? fs.readFileSync(path.join(SRC, "utils.js"), "utf8") : "";
 const state = fs.existsSync(path.join(SRC, "state.js")) ? fs.readFileSync(path.join(SRC, "state.js"), "utf8") : "";
@@ -39,6 +41,8 @@ const allJs = [state, utils, storage, api, i18n, render, editor, preview, modals
 const output = template
   .replace("    <!-- BUILD:CONFIG -->", `    <script>\n${config}\n    </script>`)
   .replace("    <!-- BUILD:CSS -->", `    <style>\n${css}\n    </style>`)
+  .replace("    <!-- BUILD:SVG -->", svgHtml)
+  .replace("    <!-- BUILD:MODALS -->", modalsHtml)
   .replace("    <!-- BUILD:JS -->", `    <script>\n${allJs}\n    </script>`);
 
 function writeAtomic(dest, content) {
