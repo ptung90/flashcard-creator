@@ -1,4 +1,4 @@
-// ── IndexedDB helpers ──────────────────────────────────────────────
+﻿// ── IndexedDB helpers ──────────────────────────────────────────────
 let _idb = null;
 function openIDB() {
   if (_idb) return Promise.resolve(_idb);
@@ -101,7 +101,7 @@ function _pathLeaf(path) { return path ? path.split('/').pop() : (workDirHandle?
 // ── Load modal ─────────────────────────────────────────────────────
 async function openLoadModal() {
   _modalSubfolder = currentSubfolder;
-  document.getElementById("load-modal").style.display = "flex";
+  _show("load-modal");
   await _renderFolderSection();
   _renderRecentList();
 }
@@ -267,7 +267,7 @@ async function createSubfolder() {
   } catch (e) { alert("Cannot create folder: " + e.message); }
 }
 function closeLoadModal() {
-  document.getElementById("load-modal").style.display = "none";
+  _hide("load-modal");
 }
 async function newProject() {
   if (dirty) {
@@ -721,12 +721,12 @@ async function openSaveAsModal() {
   if (currentSubfolder) folderSelect.value = currentSubfolder;
 
   nameInput.value = _timestampedFileName();
-  document.getElementById("save-as-modal").style.display = "flex";
+  _show("save-as-modal");
   setTimeout(() => nameInput.select(), 50);
 }
 
 function closeSaveAsModal() {
-  document.getElementById("save-as-modal").style.display = "none";
+  _hide("save-as-modal");
 }
 
 async function executeSaveAs() {

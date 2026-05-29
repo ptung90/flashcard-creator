@@ -1,4 +1,7 @@
 // ── Helpers ────────────────────────────────────────────────────────
+function _show(id, display = "flex") { const el = document.getElementById(id); if (el) el.style.display = display; }
+function _hide(id) { const el = document.getElementById(id); if (el) el.style.display = "none"; }
+
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }

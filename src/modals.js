@@ -1,11 +1,11 @@
-// ── Custom CSS Modal ───────────────────────────────────────────────
+﻿// ── Custom CSS Modal ───────────────────────────────────────────────
 function openCssModal() {
   document.getElementById("custom-css-input").value =
     state.settings.customCss || "";
-  document.getElementById("css-modal").style.display = "flex";
+  _show("css-modal");
 }
 function closeCssModal() {
-  document.getElementById("css-modal").style.display = "none";
+  _hide("css-modal");
 }
 function applyCustomCss() {
   const css = document.getElementById("custom-css-input").value;
@@ -72,7 +72,7 @@ function openSettingsModal() {
   set("cfg-cfont-color-hex", cf.color || "#1a1a1a");
   set("cfg-cfont-lh", cf.lineHeight ?? 1.1);
 
-  document.getElementById("settings-modal").style.display = "flex";
+  _show("settings-modal");
   document.querySelectorAll('.cfg-section-chk').forEach(cb => toggleCfgSection(cb));
   listLibrary('styles').then(names => {
     const sel = document.getElementById('style-library-select');
@@ -83,7 +83,7 @@ function openSettingsModal() {
 }
 
 function closeSettingsModal() {
-  document.getElementById("settings-modal").style.display = "none";
+  _hide("settings-modal");
 }
 
 function toggleCfgSection(cb) {
@@ -319,7 +319,7 @@ function resetUserConfig() {
 function openImgModal(slot) {
   imgModalSlot = slot;
   document.getElementById("modal-slot-num").textContent = slot;
-  document.getElementById("img-modal").style.display = "flex";
+  _show("img-modal");
   document.getElementById("pixabay-key").value =
     localStorage.getItem("pixabay-key") || "";
   document.getElementById("unsplash-key").value =
@@ -332,7 +332,7 @@ function openImgModal(slot) {
   if (gModel) gModel.value = localStorage.getItem("gemini-model") || "gemini-2.0-flash";
 }
 function closeImgModal() {
-  document.getElementById("img-modal").style.display = "none";
+  _hide("img-modal");
 }
 
 function switchTab(el) {
@@ -388,7 +388,7 @@ function insertUrl() {
   if (!url) return;
   insertImageUrl(url);
   document.getElementById("url-input").value = "";
-  document.getElementById("url-preview-img").style.display = "none";
+  _hide("url-preview-img");
 }
 
 // ── Copy / Paste image between slots ──────────────────────────────

@@ -1,4 +1,4 @@
-
+﻿
 marked.use({
   breaks: true,
   extensions: [{
@@ -719,10 +719,10 @@ function initUploadDropZone() {
 
 // ── JSON Export Modal ───────────────────────────────────────────────
 function openJsonModal() {
-  document.getElementById("json-modal").style.display = "flex";
+  _show("json-modal");
 }
 function closeJsonModal() {
-  document.getElementById("json-modal").style.display = "none";
+  _hide("json-modal");
 }
 
 function _fullSnapshot() {
@@ -820,7 +820,7 @@ function selectProjectIcon(emoji) {
   document.getElementById("project-icon-btn").textContent = emoji;
   const inp = document.getElementById("ep-custom-input");
   if (inp) inp.value = emoji;
-  document.getElementById("emoji-picker").style.display = "none";
+  _hide("emoji-picker");
   setDirty();
 }
 
@@ -899,11 +899,11 @@ function openJsonPreview(text) {
   document.getElementById("json-preview-textarea").value = text;
   document.getElementById("json-preview-status").textContent = "";
   _syncJsonLineNums();
-  document.getElementById("json-preview-modal").style.display = "flex";
+  _show("json-preview-modal");
 }
 
 function closeJsonPreview() {
-  document.getElementById("json-preview-modal").style.display = "none";
+  _hide("json-preview-modal");
 }
 
 function _jumpToJsonError(msg) {
@@ -1006,20 +1006,6 @@ async function init() {
   initPreviewPan();
   dispatch('INIT_LOAD');
   initUploadDropZone();
-
-  // Close modals on backdrop click — disabled
-  // document.getElementById("img-modal").addEventListener("click", (e) => {
-  //   if (e.target === e.currentTarget) closeImgModal();
-  // });
-  // document.getElementById("css-modal").addEventListener("click", (e) => {
-  //   if (e.target === e.currentTarget) closeCssModal();
-  // });
-  // document.getElementById("load-modal").addEventListener("click", (e) => {
-  //   if (e.target === e.currentTarget) closeLoadModal();
-  // });
-  // document.getElementById("settings-modal").addEventListener("click", (e) => {
-  //   if (e.target === e.currentTarget) closeSettingsModal();
-  // });
 
   // Close emoji picker on outside click
   document.addEventListener("click", () => {
