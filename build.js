@@ -27,7 +27,9 @@ const storage = readJs("storage.js");
 const api     = readJs("api.js");
 const i18n    = readJs("i18n.js");
 const render  = readJs("render.js");
-const editor  = readJs("editor.js");
+const editor          = readJs("editor.js");
+const editorControls  = readJs("editor-controls.js");
+const editorSections  = readJs("editor-sections.js");
 const preview = readJs("preview.js");
 const modals  = readJs("modals.js");
 const undo    = readJs("undo.js");
@@ -43,7 +45,7 @@ const css = cssFiles
   .map(f => fs.readFileSync(path.join(CSS, f), "utf8"))
   .join("\n\n");
 
-const allJs = [state, utils, storage, api, i18n, render, editor, preview, modals, undo, records, recordsPack, schemaEditor, recordsAi, app]
+const allJs = [state, utils, storage, api, i18n, render, editor, editorControls, editorSections, preview, modals, undo, records, recordsPack, schemaEditor, recordsAi, app]
   .filter(Boolean).join("\n\n");
 
 const output = template
