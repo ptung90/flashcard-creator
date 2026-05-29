@@ -722,6 +722,16 @@ function openJsonModal() {
 function closeJsonModal() {
   document.getElementById("json-modal").close();
 }
+function openJsonEditor() {
+  const snapshot = _fullSnapshot();
+  snapshot.cards.forEach(card => {
+    card.images = (card.images || []).map(img =>
+      img?.url?.startsWith("data:") ? { ...img, url: "" } : img
+    );
+  });
+  closeJsonModal();
+  openJsonPreview(JSON.stringify(snapshot, null, 2));
+}
 
 function _fullSnapshot() {
   return JSON.parse(JSON.stringify({ project_name: state.projectName, project_icon: state.projectIcon, settings: state.settings, cards: state.cards }));
