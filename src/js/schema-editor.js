@@ -2,7 +2,7 @@
 let _editingSchema = null;
 let _loadedSchemaName = null;
 
-async function saveSchemaToLibrary() {
+export async function saveSchemaToLibrary() {
   if (!hasWorkDir()) { alert(t('rec.schema.setFolderAlert')); return; }
   const name = prompt(t('rec.schema.savePrompt'), _loadedSchemaName || '');
   if (!name?.trim()) return;
@@ -22,7 +22,7 @@ async function saveSchemaToLibrary() {
   } catch (err) { alert(t('rec.schema.saveFailAlert').replace('{e}', err.message)); }
 }
 
-async function applySchemaFromLibrary() {
+export async function applySchemaFromLibrary() {
   const sel = document.getElementById('schema-library-select');
   const name = sel?.value;
   if (!name) return;
@@ -55,7 +55,7 @@ async function applySchemaFromLibrary() {
   } catch (err) { alert(t('rec.schema.loadFailAlert').replace('{e}', err.message)); }
 }
 
-async function deleteSchemaFromLibrary() {
+export async function deleteSchemaFromLibrary() {
   const sel = document.getElementById('schema-library-select');
   const name = sel?.value;
   if (!name) return;
@@ -68,7 +68,7 @@ async function deleteSchemaFromLibrary() {
   } catch (err) { alert(t('rec.schema.deleteFailAlert').replace('{e}', err.message)); }
 }
 
-function openSchemaEditor() {
+export function openSchemaEditor() {
   _editingSchema = state.schema
     ? JSON.parse(JSON.stringify(state.schema))
     : { fields: [], cardTemplates: [] };
@@ -367,15 +367,15 @@ function _addSchemaSection(ti) {
   _renderSchemaEditor();
 }
 
-function closeSchemaEditor() {
+export function closeSchemaEditor() {
   document.getElementById('schema-editor-modal').close();
 }
 
-function closePackDialog() {
+export function closePackDialog() {
   document.getElementById('pack-dialog').close();
 }
 
-function saveSchema() {
+export function saveSchema() {
   state.schema = _editingSchema;
   if (!Array.isArray(state.records)) state.records = [];
 

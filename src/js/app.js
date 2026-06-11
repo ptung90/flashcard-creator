@@ -13,7 +13,7 @@ marked.use({
   }],
 });
 // ── Dispatcher (State Management) ──────────────────────────────────
-function dispatch(action) {
+export function dispatch(action) {
   const skipDirty = ['ACTIVE_CARD_CHANGED', 'VIEW_MODE_CHANGED', 'INIT_LOAD', 'FULL_STATE_UPDATED'].includes(action);
   if (!skipDirty) {
     setDirty();
@@ -55,7 +55,7 @@ function dispatch(action) {
       break;
   }
 }
-function changePreviewZoom(delta) {
+export function changePreviewZoom(delta) {
   if (delta === 0) {
     uiState.previewZoom = 1.0; // reset to fit
   } else {
@@ -71,7 +71,7 @@ function changePreviewZoom(delta) {
   renderPreview();
 }
 
-function setPhysicalZoom() {
+export function setPhysicalZoom() {
   const card = getActiveCard();
   if (!card) return;
   const { w } = getPaperPx(state.settings.paperSize, card.orientation || state.settings.orientation);
@@ -91,7 +91,7 @@ function applyUIZoom() {
   localStorage.setItem("fc_ui_zoom", uiZoom);
   renderPreview();
 }
-function changeUIZoom(delta) {
+export function changeUIZoom(delta) {
   uiZoom = delta === 0 ? 1.0 : uiZoom + delta;
   applyUIZoom();
 }
@@ -148,7 +148,7 @@ function renderGFontTags() {
   ).join("");
 }
 
-function addGoogleFont(src) {
+export function addGoogleFont(src) {
   const input = document.getElementById("gfont-input");
   const name = (input.value || "").trim().replace(/['"]/g, "");
   if (!name) return;
@@ -215,7 +215,7 @@ function bindSettings() {
   }
 }
 
-function setGlobalOrient(val) {
+export function setGlobalOrient(val) {
   state.settings.orientation = val;
   applySettingsToUI();
   setDirty();
@@ -265,7 +265,7 @@ function applySettingsToUI() {
 }
 
 // ── Card Management ────────────────────────────────────────────────
-function newCard() {
+export function newCard() {
   return {
     id:                uid(),
     layout:            '1full',
@@ -288,7 +288,7 @@ function newCard() {
   };
 }
 
-function addCard() {
+export function addCard() {
   pushUndo();
   const nc     = (window.FC_CONFIG || {}).newCard || {};
   const layout = nc.layout || '2top-1bot';
@@ -437,14 +437,14 @@ function setTwoUpRatio(id, value) {
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────
-function setViewMode(mode) {
+export function setViewMode(mode) {
   uiState.sidebarView = mode;
   document.getElementById('view-list-btn').classList.toggle('active', mode === 'list');
   document.getElementById('view-grid-btn').classList.toggle('active', mode === 'grid');
   dispatch('VIEW_MODE_CHANGED');
 }
 
-function renderSidebar() {
+export function renderSidebar() {
   document.getElementById("card-count").textContent = state.cards.length;
   if (uiState.sidebarView === 'grid') {
     _renderGridSidebar();
@@ -647,13 +647,13 @@ async function _generateThumbs(genId, targetItems = null) {
   document.body.removeChild(offscreen);
 }
 
-function refreshAllThumbs() {
+export function refreshAllThumbs() {
   if (uiState.sidebarView !== 'grid') setViewMode('grid');
   const items = [...document.querySelectorAll('.fc-card-thumb-item')];
   if (items.length) _requestThumbGeneration(items);
 }
 
-function scheduleThumbRefresh(cardId = null) {
+export function scheduleThumbRefresh(cardId = null) {
   _thumbDirtyVersion += 1;
   // null = all cards; if different card scheduled, escalate to all
   if (cardId === null || (_pendingThumbCardId !== undefined && _pendingThumbCardId !== cardId)) {
@@ -749,10 +749,10 @@ function initUploadDropZone() {
 }
 
 // ── JSON Export Modal ───────────────────────────────────────────────
-function openJsonModal() {
+export function openJsonModal() {
   document.getElementById("json-modal").showModal();
 }
-function closeJsonModal() {
+export function closeJsonModal() {
   document.getElementById("json-modal").close();
 }
 function openJsonEditor() {
@@ -803,7 +803,7 @@ function _buildEmojiPicker() {
   _emojiPickerBuilt = true;
 }
 
-function showRecordsPanel() {
+export function showRecordsPanel() {
   document.querySelector('.fc-editor').style.display  = 'none';
   document.querySelector('.fc-preview-panel').style.display = 'none';
   document.getElementById('records-panel').style.display = 'flex';
@@ -819,7 +819,7 @@ function showCardPanel() {
   document.getElementById('records-btn')?.classList.remove('active');
 }
 
-function toggleMoreMenu(event) {
+export function toggleMoreMenu(event) {
   event.stopPropagation();
   const menu = document.getElementById('toolbar-more-menu');
   const btn = document.getElementById('toolbar-more-btn');
@@ -836,7 +836,7 @@ function closeMoreMenu() {
   if (btn) btn.setAttribute('aria-pressed', 'false');
 }
 
-function toggleSettingsBar() {
+export function toggleSettingsBar() {
   const bar = document.querySelector('.fc-settings-bar');
   const btn = document.getElementById('setup-toggle-btn');
   if (!bar) return;
@@ -844,7 +844,7 @@ function toggleSettingsBar() {
   if (btn) btn.setAttribute('aria-pressed', open ? 'true' : 'false');
 }
 
-function toggleEmojiPicker(event) {
+export function toggleEmojiPicker(event) {
   event.stopPropagation();
   _buildEmojiPicker();
   const picker = document.getElementById("emoji-picker");

@@ -11,7 +11,7 @@ const GRID_STRATEGIES = {
   "2img-2txt": (r, c, n) => `grid-template-columns:1fr 1fr;grid-template-rows:${r}% ${100 - r}%;`,
   "2img-4txt": (r, c, n) => `grid-template-columns:1fr 1fr;grid-template-rows:${r}% ${(100 - r) * n / 100}% ${100 - r - ((100 - r) * n / 100)}%;`
 };
-function getGridTemplateStyle(layout, sp) {
+export function getGridTemplateStyle(layout, sp) {
   const generator = GRID_STRATEGIES[layout];
   return generator ? generator(sp.row, sp.col, sp.inner) : "";
 }
@@ -37,7 +37,7 @@ const HANDLE_STRATEGIES = {
   "txtgrid": (r, c, n) => ""
 };
 
-function buildHandles(layout, sp) {
+export function buildHandles(layout, sp) {
   const generator = HANDLE_STRATEGIES[layout];
   return generator ? generator(sp.row, sp.col, sp.inner) : "";
 }
@@ -232,7 +232,7 @@ function _scopeCardCss(css, cardId) {
   );
 }
 
-function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
+export function buildCardHTML(card, settings, forPrint = false, overridePx = null) {
   const s = settings;
   const { w, h } = overridePx || getPaperPx(s.paperSize, card.orientation || s.orientation);
   const marginPx = mmToPx(s.margin);

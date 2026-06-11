@@ -42,7 +42,7 @@ const _undoStack = [];
 const _redoStack = [];
 function _undoMax() { return (window.FC_CONFIG || {}).undoMax ?? 50; }
 
-function pushUndo() {
+export function pushUndo() {
   const snap = _encodeState();
   if (_undoStack.length && _undoStack.at(-1) === snap) return;
   _undoStack.push(snap);
@@ -59,7 +59,7 @@ function _restoreState(snap) {
     uiState.activeCardId = state.cards.length ? state.cards[state.cards.length - 1].id : null;
 }
 
-function undo() {
+export function undo() {
   if (!_undoStack.length) return;
   _redoStack.push(_encodeState());
   _restoreState(_decodeSnap(_undoStack.pop()));
@@ -67,7 +67,7 @@ function undo() {
   _updateUndoButtons();
 }
 
-function redo() {
+export function redo() {
   if (!_redoStack.length) return;
   _undoStack.push(_encodeState());
   _restoreState(_decodeSnap(_redoStack.pop()));

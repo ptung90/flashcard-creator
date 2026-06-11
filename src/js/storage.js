@@ -99,7 +99,7 @@ function _pathDepth(path) { return path ? path.split('/').length : 0; }
 function _pathLeaf(path) { return path ? path.split('/').pop() : (workDirHandle?.name || ''); }
 
 // ── Load modal ─────────────────────────────────────────────────────
-async function openLoadModal() {
+export async function openLoadModal() {
   _modalSubfolder = currentSubfolder;
   document.getElementById("load-modal").showModal();
   await _renderFolderSection();
@@ -311,8 +311,8 @@ async function deleteRecentItem(id, btn) {
 
 // ── Save / Load JSON ───────────────────────────────────────────────
 let workDirHandle = null;
-let currentSubfolder = null;  // null = root, "l1" or "l1/l2" path (max 2 levels)
-let currentFileName = null;
+export let currentSubfolder = null;  // null = root, "l1" or "l1/l2" path (max 2 levels)
+export let currentFileName = null;
 function hasWorkDir() { return !!workDirHandle; }
 let _modalSubfolder = null;   // browsing state inside load modal
 let _modalAllPaths = [];      // all folder paths (L1 and L2), used by move menu
@@ -338,14 +338,14 @@ function _computeReadOnly() {
   }
 }
 
-function setDirty() {
+export function setDirty() {
   if (readOnly) return;
   dirty = true;
   _updateLabels();
   clearTimeout(_autoSaveTimer);
   _autoSaveTimer = setTimeout(_autoSaveToFile, 1500);
 }
-function clearDirty() {
+export function clearDirty() {
   dirty = false;
   clearTimeout(_autoSaveTimer);
   _autoSaveTimer = null;
@@ -353,7 +353,7 @@ function clearDirty() {
 }
 
 let _toastTimer = null;
-function showToast(msg) {
+export function showToast(msg) {
   const el = document.getElementById("fc-toast");
   el.textContent = msg;
   el.classList.add("show");
@@ -416,7 +416,7 @@ function _startPeriodicBackup() {
   }, 5 * 60 * 1000);
 }
 
-async function setWorkDir() {
+export async function setWorkDir() {
   if (!window.showDirectoryPicker) return alert("Browser không hỗ trợ Directory Picker.");
   try {
     const handle = await window.showDirectoryPicker({ mode: "readwrite" });
@@ -484,7 +484,7 @@ async function saveToLibrary(type, name, data) {
 }
 
 // ── Backup Modal ───────────────────────────────────────────────────
-async function openBackupModal() {
+export async function openBackupModal() {
   const modal = document.getElementById('backup-modal');
   if (!modal) return;
   const titleEl = document.getElementById('backup-modal-title');
@@ -574,7 +574,7 @@ async function deleteBackup(backupName, btn) {
   } catch (err) { alert('Delete failed: ' + err.message); }
 }
 
-async function manualBackup(btn) {
+export async function manualBackup(btn) {
   if (!workDirHandle || !currentFileName) { alert('No file open.'); return; }
   btn.disabled = true;
   btn.textContent = '…';
@@ -587,7 +587,7 @@ async function manualBackup(btn) {
   finally { btn.disabled = false; btn.textContent = 'Backup Now'; }
 }
 
-function closeBackupModal() {
+export function closeBackupModal() {
   document.getElementById('backup-modal')?.close();
 }
 
@@ -651,7 +651,7 @@ function _timestampedFileName() {
   return `${slug}-${dd}${mmm}${yy}-${hhmm}.json`;
 }
 
-async function saveJSON() {
+export async function saveJSON() {
   if (readOnly) { showToast('⚠ Read-only — cannot save'); return; }
   const dataObj = _buildDataObj();
   const json = JSON.stringify(dataObj, null, 2);
@@ -668,7 +668,7 @@ async function saveJSON() {
   await saveJSONAs();
 }
 
-async function saveJSONAs() {
+export async function saveJSONAs() {
   if (workDirHandle) {
     await openSaveAsModal();
     return;
@@ -890,7 +890,7 @@ async function openFilePicker() {
   document.getElementById("load-file").click();
 }
 
-async function restoreWorkDir() {
+export async function restoreWorkDir() {
   try {
     const handle = await idbGet("_work_dir");
     if (!handle) return;
@@ -900,7 +900,7 @@ async function restoreWorkDir() {
   } catch { }
 }
 
-async function _autoRestore() {
+export async function _autoRestore() {
   if (!workDirHandle) return;
   const lastFile = localStorage.getItem("fc_last_file");
   if (!lastFile) return;
@@ -938,7 +938,7 @@ async function _loadFileFromWorkDir(path) {
   applyLoadedData(data);
 }
 
-async function resumeLastProject() {
+export async function resumeLastProject() {
   const banner = document.getElementById("fc-restore-banner");
   const fileName = banner && banner._pendingFile;
   if (!fileName || !workDirHandle) return;
@@ -951,12 +951,12 @@ async function resumeLastProject() {
   } catch (e) { alert("Could not load: " + e.message); }
 }
 
-function dismissRestoreBanner() {
+export function dismissRestoreBanner() {
   const banner = document.getElementById("fc-restore-banner");
   if (banner) banner.style.display = "none";
 }
 
-function toggleSidebar() {
+export function toggleSidebar() {
   const sidebar = document.getElementById("fc-sidebar");
   const btn = document.getElementById("sidebar-toggle-btn");
   if (!sidebar || !btn) return;

@@ -1,5 +1,5 @@
 ﻿// ── Sections ───────────────────────────────────────────────────────
-function mergeSections() {
+export function mergeSections() {
   const card = getActiveCard();
   if (!card || card.sections.length < 2) return;
   pushUndo();
@@ -15,7 +15,7 @@ function mergeSections() {
   dispatch('CARD_UI_CHANGED');
 }
 
-function addSection() {
+export function addSection() {
   pushUndo();
   const card = getActiveCard();
   if (!card) return;
@@ -23,7 +23,7 @@ function addSection() {
   dispatch('CARD_UI_CHANGED');
 }
 
-function deleteSection(id) {
+export function deleteSection(id) {
   pushUndo();
   const card = getActiveCard();
   if (!card) return;
@@ -31,7 +31,7 @@ function deleteSection(id) {
   dispatch('CARD_UI_CHANGED');
 }
 
-function moveSection(id, dir) {
+export function moveSection(id, dir) {
   pushUndo();
   const card = getActiveCard();
   if (!card) return;
@@ -45,7 +45,7 @@ function moveSection(id, dir) {
   dispatch('CARD_UI_CHANGED');
 }
 
-function openSectionMenu(id, btn) {
+export function openSectionMenu(id, btn) {
   closeSectionMenu();
   const card = getActiveCard();
   const s = card?.sections?.find(sec => sec.id === id);
@@ -75,11 +75,11 @@ function openSectionMenu(id, btn) {
   setTimeout(() => document.addEventListener('click', closeSectionMenu, { once: true }), 0);
 }
 
-function closeSectionMenu() {
+export function closeSectionMenu() {
   document.getElementById('section-menu')?.remove();
 }
 
-function setSectionClass(id) {
+export function setSectionClass(id) {
   const card = getActiveCard();
   if (!card) return;
   const s = card.sections.find(sec => sec.id === id);
@@ -94,7 +94,7 @@ function setSectionClass(id) {
 
 let _sectionClipboard = null;
 
-function copySection(id) {
+export function copySection(id) {
   const card = getActiveCard();
   if (!card) return;
   const s = card.sections.find((s) => s.id === id);
@@ -103,7 +103,7 @@ function copySection(id) {
   showToast('Section copied');
 }
 
-function pasteSection(id) {
+export function pasteSection(id) {
   if (!_sectionClipboard) return;
   if (!confirm('Overwrite this section?')) return;
   pushUndo();
@@ -116,7 +116,7 @@ function pasteSection(id) {
   dispatch('CARD_UI_CHANGED');
 }
 
-function copySectionWithImage(id) {
+export function copySectionWithImage(id) {
   const card = getActiveCard();
   if (!card) return;
   const si = card.sections.findIndex(s => s.id === id);
@@ -127,7 +127,7 @@ function copySectionWithImage(id) {
   showToast('Pair copied');
 }
 
-function pasteSectionWithImage(id) {
+export function pasteSectionWithImage(id) {
   if (!_sectionClipboard?.image) return;
   if (!confirm('Overwrite this section and image?')) return;
   pushUndo();
@@ -145,7 +145,7 @@ function pasteSectionWithImage(id) {
   dispatch('CARD_UI_CHANGED');
 }
 
-function updateSection(id, field, val) {
+export function updateSection(id, field, val) {
   const card = getActiveCard();
   if (!card) return;
   const s = card.sections.find((s) => s.id === id);
@@ -155,7 +155,7 @@ function updateSection(id, field, val) {
 }
 
 
-function setFontAlign(key, val) {
+export function setFontAlign(key, val) {
   state.settings[key].textAlign = val;
   document.querySelectorAll('.align-btn[data-key="' + key + '"]').forEach((b) => {
     b.classList.toggle("active", b.dataset.align === val);
@@ -163,14 +163,14 @@ function setFontAlign(key, val) {
   dispatch('CARD_CONTENT_CHANGED');
 }
 
-function setTextVAlign(val) {
+export function setTextVAlign(val) {
   state.settings.textVAlign = val;
   document.querySelectorAll(".valign-btn").forEach((b) => b.classList.toggle("active", b.dataset.valign === val));
   dispatch('CARD_CONTENT_CHANGED');
 }
 
 // ── Per-card custom CSS ────────────────────────────────────────────
-function toggleCardCssEditor() {
+export function toggleCardCssEditor() {
   const area = document.getElementById("card-css-area");
   if (!area) return;
   const open = area.style.display === "none";
@@ -178,7 +178,7 @@ function toggleCardCssEditor() {
   if (open) document.getElementById("card-css-input")?.focus();
 }
 
-function updateCardCss(css) {
+export function updateCardCss(css) {
   const card = getActiveCard();
   if (!card) return;
   card.customCss = css;
@@ -192,7 +192,7 @@ function updateCardCss(css) {
 }
 
 // ── Paste block parser ────────────────────────────────────────────
-function togglePasteBlock() {
+export function togglePasteBlock() {
   const area = document.getElementById("paste-block-area");
   if (!area) return;
   area.style.display = area.style.display === "none" ? "" : "none";
@@ -200,7 +200,7 @@ function togglePasteBlock() {
     document.getElementById("paste-block-input").focus();
 }
 
-function parsePasteBlock(mode) {
+export function parsePasteBlock(mode) {
   const card = getActiveCard();
   if (!card) return;
   const raw = document.getElementById("paste-block-input").value;
@@ -225,7 +225,7 @@ function parsePasteBlock(mode) {
   dispatch('CARD_UI_CHANGED');
 }
 
-function toggleDataArea() {
+export function toggleDataArea() {
   const area = document.getElementById("data-area");
   if (!area) return;
   const open = area.style.display === "none";
@@ -235,7 +235,7 @@ function toggleDataArea() {
   }
 }
 
-function editCardData() {
+export function editCardData() {
   const ta = document.getElementById("data-area-content");
   const btns = document.getElementById("data-area-btns");
   if (!ta || !btns) return;
@@ -248,7 +248,7 @@ function editCardData() {
   `;
 }
 
-function cancelCardData() {
+export function cancelCardData() {
   const ta = document.getElementById("data-area-content");
   const btns = document.getElementById("data-area-btns");
   if (!ta || !btns) return;
@@ -260,7 +260,7 @@ function cancelCardData() {
   btns.innerHTML = '<button class="btn btn-secondary btn-sm" onclick="editCardData()">Edit</button>';
 }
 
-function saveCardData() {
+export function saveCardData() {
   const ta = document.getElementById("data-area-content");
   const card = getActiveCard();
   if (!ta || !card) return;
@@ -277,11 +277,11 @@ function saveCardData() {
 }
 
 // ── Drag & Drop onto image slot rows ──────────────────────────────
-function initSlotDragDrop() {
+export function initSlotDragDrop() {
   // delegated — re-init after editor re-renders
 }
 
-function swapSlots(a, b) {
+export function swapSlots(a, b) {
   const card = getActiveCard();
   if (!card || a === b) return;
   const aImg = card.images.find((im) => im.slot === a);
@@ -291,7 +291,7 @@ function swapSlots(a, b) {
   dispatch('CARD_UI_CHANGED');
 }
 
-function attachSlotDragHandlers() {
+export function attachSlotDragHandlers() {
   document.querySelectorAll(".image-slot-row").forEach((row) => {
     const slot = Number.parseInt(row.dataset.slot, 10);
 

@@ -1,4 +1,4 @@
-﻿function layoutIcon(layout, selected) {
+﻿export function layoutIcon(layout, selected) {
   const icons = {
     "2top-1bot": `
           <div class="lo-row" style="flex:1">
@@ -188,13 +188,13 @@
         </div>`;
 }
 
-function switchLayoutTab(idx, btn) {
+export function switchLayoutTab(idx, btn) {
   btn.parentElement.querySelectorAll('.layout-tab').forEach((b, i) => b.classList.toggle('active', i === idx));
   document.getElementById('layout-tab-0').style.display = idx === 0 ? '' : 'none';
   document.getElementById('layout-tab-1').style.display = idx === 1 ? '' : 'none';
 }
 
-function setLayout(layout) {
+export function setLayout(layout) {
   pushUndo();
   const card = getActiveCard();
   if (!card) return;
@@ -220,7 +220,7 @@ function setLayout(layout) {
   dispatch('LAYOUT_CHANGED');
 }
 
-function setTextRows(n) {
+export function setTextRows(n) {
   pushUndo();
   const card = getActiveCard();
   if (!card) return;
@@ -231,7 +231,7 @@ function setTextRows(n) {
   renderPreview();
 }
 
-function setTextCols(n) {
+export function setTextCols(n) {
   pushUndo();
   const card = getActiveCard();
   if (!card) return;
@@ -245,7 +245,7 @@ function setTextCols(n) {
 const FIS =
   "background:#fff;border:1px solid #d1d5d2;color:#1f2a28;border-radius:4px;padding:3px 5px;font-size:12px";
 
-function cardOrientationControls() {
+export function cardOrientationControls() {
   const card = getActiveCard();
   if (!card) return "";
   const useCustom = !!card.orientation;
@@ -271,7 +271,7 @@ function cardOrientationControls() {
 const _FL = `font-size:11px;color:#6b7672`;
 
 // Per-card font override controls (empty = inherit global)
-function cardFontControls(key) {
+export function cardFontControls(key) {
   const card = getActiveCard();
   if (!card) return "";
   const override = card[key] || {};
@@ -305,7 +305,7 @@ function cardFontControls(key) {
   </div>`;
 }
 
-function setCardFontAlign(key, val) {
+export function setCardFontAlign(key, val) {
   setCardFontProp(key, 'textAlign', val);
   const group = event?.target?.closest?.('.align-btn-group');
   if (group) {
@@ -315,7 +315,7 @@ function setCardFontAlign(key, val) {
   }
 }
 
-function setCardFontProp(key, prop, val) {
+export function setCardFontProp(key, prop, val) {
   const card = getActiveCard();
   if (!card) return;
   if (val === null || val === undefined) {
@@ -332,7 +332,7 @@ function setCardFontProp(key, prop, val) {
   dispatch('CARD_CONTENT_CHANGED');
 }
 
-function toggleCardFontColor(key, enabled) {
+export function toggleCardFontColor(key, enabled) {
   pushUndo();
   const card = getActiveCard();
   if (!card) return;
@@ -351,7 +351,7 @@ function toggleCardFontColor(key, enabled) {
   dispatch('CARD_UI_CHANGED');
 }
 
-function toggleCardOrientation(enabled) {
+export function toggleCardOrientation(enabled) {
   pushUndo();
   const card = getActiveCard();
   if (!card) return;
@@ -362,7 +362,7 @@ function toggleCardOrientation(enabled) {
   dispatch('CARD_UI_CHANGED');
 }
 
-function setCardOrientation(val) {
+export function setCardOrientation(val) {
   pushUndo();
   const card = getActiveCard();
   if (!card) return;
@@ -373,7 +373,7 @@ function setCardOrientation(val) {
   dispatch('CARD_UI_CHANGED');
 }
 
-function updateCardProp(prop, val) {
+export function updateCardProp(prop, val) {
   const card = getActiveCard();
   if (!card) return;
   card[prop] = val;
@@ -384,7 +384,7 @@ function updateCardProp(prop, val) {
   dispatch(prop === "title" ? "CARD_TITLE_CHANGED" : "CARD_CONTENT_CHANGED");
 }
 
-function updateGridSplitProp(key, val) {
+export function updateGridSplitProp(key, val) {
   const card = getActiveCard();
   if (!card) return;
   if (!card.imageGridSplit) card.imageGridSplit = {};
@@ -395,13 +395,13 @@ function updateGridSplitProp(key, val) {
 }
 
 
-function _syncBdSwatch() {
+export function _syncBdSwatch() {
   const swatch = document.getElementById("bd-swatch");
   const color = document.getElementById("set-bc")?.value;
   if (swatch && color) swatch.style.background = color;
 }
 
-function setSlotSize(slot, val) {
+export function setSlotSize(slot, val) {
   const card = getActiveCard();
   if (!card) return;
   const img = card.images.find((im) => im.slot === slot);
@@ -412,7 +412,7 @@ function setSlotSize(slot, val) {
   dispatch('CARD_UI_CHANGED');
 }
 
-function toggleImgOverride(slot, enabled) {
+export function toggleImgOverride(slot, enabled) {
   const card = getActiveCard();
   if (!card) return;
   const img = card.images.find((im) => im.slot === slot);
@@ -426,7 +426,7 @@ function toggleImgOverride(slot, enabled) {
   dispatch('CARD_UI_CHANGED');
 }
 
-function updateImgProp(slot, key, value) {
+export function updateImgProp(slot, key, value) {
   const card = getActiveCard();
   if (!card) return;
   const img = card.images.find((im) => im.slot === slot);
@@ -435,7 +435,7 @@ function updateImgProp(slot, key, value) {
   dispatch('CARD_UI_CHANGED');
 }
 
-function clearSlot(slot) {
+export function clearSlot(slot) {
   pushUndo();
   const card = getActiveCard();
   if (!card) return;

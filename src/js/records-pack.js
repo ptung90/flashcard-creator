@@ -5,7 +5,7 @@ function _fieldVal(record, fieldId) {
   return f ? (record.fields[f.key] ?? '') : '';
 }
 
-function generateRecord(record, { skipDispatch = false } = {}) {
+export function generateRecord(record, { skipDispatch = false } = {}) {
   if (!state.schema) return;
   const singleTemplates = state.schema.cardTemplates.filter(t => t.templateType === 'single');
   for (const template of singleTemplates) {
@@ -36,7 +36,7 @@ function generateRecord(record, { skipDispatch = false } = {}) {
   if (!skipDispatch) dispatch('CARD_LIST_CHANGED');
 }
 
-function syncRecord(recordId) {
+export function syncRecord(recordId) {
   const record = state.records.find(r => r.id === recordId);
   if (!record || !state.schema) return;
 
@@ -77,7 +77,7 @@ function syncRecord(recordId) {
   showToast(t('rec.toast.synced'));
 }
 
-function generateAll() {
+export function generateAll() {
   if (!state.schema) return;
   let count = 0;
   for (const record of state.records) {
@@ -125,7 +125,7 @@ function openPackDialog(templateId) {
   document.getElementById('pack-dialog').showModal();
 }
 
-function confirmPack() {
+export function confirmPack() {
   const template = state.schema?.cardTemplates.find(t => t.id === _packTemplateId);
   if (!template) return;
 
@@ -150,7 +150,7 @@ function confirmPack() {
   }
 }
 
-function packRecords(template, selectedRecords) {
+export function packRecords(template, selectedRecords) {
   const layout = template.layout;
   const isTxtGrid = layout === 'txtgrid';
   const fixedSlots = LAYOUT_SLOTS[layout] ?? 0;
@@ -227,7 +227,7 @@ function packRecords(template, selectedRecords) {
   setDirty();
 }
 
-function syncAllPacked() {
+export function syncAllPacked() {
   const templates = state.schema?.cardTemplates?.filter(t => t.templateType === 'compound') || [];
 
   // Group packed cards by templateId (in state.cards order)
@@ -406,7 +406,7 @@ function _consolidateSameLayout(layout) {
   }
 }
 
-function packAll() {
+export function packAll() {
   const templates = state.schema?.cardTemplates?.filter(t => t.templateType === 'compound') || [];
   if (!templates.length) { showToast(t('rec.toast.noTemplates')); return; }
   if (!state.records.length) { showToast(t('rec.toast.noRecords')); return; }

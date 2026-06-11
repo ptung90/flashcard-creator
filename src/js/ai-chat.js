@@ -260,7 +260,7 @@ const AI_CHAT_TEMPLATES = [
 
 // ── Dialog open / close ────────────────────────────────────────────
 
-function openAiChat(templateId) {
+export function openAiChat(templateId) {
   const panel = document.getElementById('ai-chat-panel');
   if (!panel) return;
   _populateChatTemplateSelect();
@@ -276,17 +276,17 @@ function openAiChat(templateId) {
   document.getElementById('ai-chat-input').focus();
 }
 
-function closeAiChat() {
+export function closeAiChat() {
   const panel = document.getElementById('ai-chat-panel');
   if (panel) panel.style.display = 'none';
 }
 
-function toggleAiChatMinimize() {
+export function toggleAiChatMinimize() {
   const panel = document.getElementById('ai-chat-panel');
   if (panel) panel.classList.toggle('minimized');
 }
 
-function _populateChatTemplateSelect() {
+export function _populateChatTemplateSelect() {
   const sel = document.getElementById('ai-chat-template-select');
   if (!sel || sel.dataset.ready) return;
   sel.innerHTML = AI_CHAT_TEMPLATES.map(function(t) {
@@ -295,7 +295,7 @@ function _populateChatTemplateSelect() {
   sel.dataset.ready = '1';
 }
 
-function onAiTemplateChange() {
+export function onAiTemplateChange() {
   const sel = document.getElementById('ai-chat-template-select');
   const inp = document.getElementById('ai-chat-input');
   if (!sel || !inp) return;
@@ -305,7 +305,7 @@ function onAiTemplateChange() {
 
 // ── Send ───────────────────────────────────────────────────────────
 
-async function sendAiChat() {
+export async function sendAiChat() {
   const inp  = document.getElementById('ai-chat-input');
   const sel  = document.getElementById('ai-chat-template-select');
   const text = inp ? inp.value.trim() : '';
@@ -358,7 +358,7 @@ function _setChatSending(on) {
 
 // ── Apply ops ──────────────────────────────────────────────────────
 
-function applyAiChatOps(msgId) {
+export function applyAiChatOps(msgId) {
   const ops = _chatOpsMap[msgId];
   if (!ops || !ops.length) return;
   delete _chatOpsMap[msgId];

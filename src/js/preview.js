@@ -38,7 +38,7 @@ function _capture(el) {
 }
 
 // ── Preview ────────────────────────────────────────────────────────
-function renderPreview() {
+export function renderPreview() {
   const wrap = document.getElementById("preview-card-wrap");
   const card = getActiveCard();
   if (!card) {
@@ -181,7 +181,7 @@ function attachPreviewDragHandlers(card) {
 }
 
 // ── Print ──────────────────────────────────────────────────────────
-function printAll() {
+export function printAll() {
   const wrap = document.getElementById("preview-card-wrap");
   const orig = wrap.innerHTML;
   const styleEl = mountPrintPageStyle();
@@ -205,7 +205,7 @@ function printAll() {
   renderPreview();
 }
 
-function printOne() {
+export function printOne() {
   const card = getActiveCard();
   if (!card) return;
   const wrap = document.getElementById("preview-card-wrap");
@@ -285,7 +285,7 @@ function _pdfName(label) {
   return `${slug}-${ts}.pdf`;
 }
 
-async function exportOnePDF() {
+export async function exportOnePDF() {
   const card = getActiveCard();
   if (!card) return alert("No card selected.");
   const s = state.settings;
@@ -312,12 +312,12 @@ async function exportOnePDF() {
 }
 
 // ── PDF Export ────────────────────────────────────────────────────
-function openExportPdfDialog() {
+export function openExportPdfDialog() {
   if (!state.cards.length) { showToast('No cards to export'); return; }
   document.getElementById('export-pdf-dialog').showModal();
 }
 
-function runExportPdf() {
+export function runExportPdf() {
   document.getElementById('export-pdf-dialog').close();
   const normalizeOrient = document.querySelector('#export-pdf-dialog input[name="pdf-orient"]:checked')?.value || '';
   exportPDF(normalizeOrient);

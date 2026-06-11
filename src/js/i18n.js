@@ -439,13 +439,13 @@ const STRINGS = {
 
 let _lang = localStorage.getItem('fc_lang') || 'en';
 
-function t(key) {
+export function t(key) {
   return (STRINGS[_lang] || STRINGS.en)[key] ?? STRINGS.en[key] ?? key;
 }
 
-function getLang() { return _lang; }
+export function getLang() { return _lang; }
 
-function setLang(lang) {
+export function setLang(lang) {
   if (!STRINGS[lang]) return;
   _lang = lang;
   localStorage.setItem('fc_lang', lang);
@@ -462,7 +462,7 @@ function setLang(lang) {
   }
 }
 
-function applyI18n() {
+export function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.dataset.i18n);
   });

@@ -70,7 +70,7 @@ function _linkedCardChips(recordId) {
   return chips.join('');
 }
 
-function renderRecordsPanel() {
+export function renderRecordsPanel() {
   const panel = document.getElementById('records-panel');
   if (!panel) return;
   if (!state.schema) {
@@ -164,7 +164,7 @@ function renderRecordsPanel() {
   panel.innerHTML = headerHtml + tableHtml + `<div id="record-detail" style="display:none"></div>`;
 }
 
-function getRecordStatus(record) {
+export function getRecordStatus(record) {
   if (!record.fieldsHash) return 'draft';
   if (_hashStr(JSON.stringify(record.fields)) !== record.fieldsHash) return 'draft';
   return 'synced';
@@ -208,7 +208,7 @@ document.addEventListener('click', () => {
   if (m) m.classList.remove('open');
 });
 
-function openRecordDetail(id) {
+export function openRecordDetail(id) {
   _destroyRecordTiptapInstances();
   const record = state.records.find(r => r.id === id);
   if (!record) return;

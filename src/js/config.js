@@ -67,3 +67,5 @@ window.FC_CONFIG = {
   // ── Custom CSS (inject vào mỗi session) ──────────────────────────
   customCss: "",
 };
+export const FC_VERSION = window.FC_VERSION;
+export const FC_CONFIG = window.FC_CONFIG;

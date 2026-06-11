@@ -1,10 +1,10 @@
 ﻿// ── Custom CSS Modal ───────────────────────────────────────────────
-function openCssModal() {
+export function openCssModal() {
   document.getElementById("custom-css-input").value =
     state.settings.customCss || "";
   document.getElementById("css-modal").showModal();
 }
-function closeCssModal() {
+export function closeCssModal() {
   document.getElementById("css-modal").close();
 }
 function applyCustomCss() {
@@ -26,7 +26,7 @@ function syncColorPicker(pickerId, hexId) {
   }
 }
 
-function openSettingsModal() {
+export function openSettingsModal() {
   const cfg = window.FC_CONFIG || {};
   const set = (id, val) => {
     const el = document.getElementById(id);
@@ -84,7 +84,7 @@ function openSettingsModal() {
   });
 }
 
-function closeSettingsModal() {
+export function closeSettingsModal() {
   document.getElementById("settings-modal").close();
 }
 
@@ -318,7 +318,7 @@ function resetUserConfig() {
 }
 
 // ── Image Search Modal ─────────────────────────────────────────────
-function openImgModal(slot) {
+export function openImgModal(slot) {
   uiState.imgModalSlot = slot;
   document.getElementById("modal-slot-num").textContent = slot;
   document.getElementById("img-modal").showModal();
@@ -333,11 +333,11 @@ function openImgModal(slot) {
   const gModel = document.getElementById("gemini-model");
   if (gModel) gModel.value = localStorage.getItem("gemini-model") || "gemini-2.0-flash";
 }
-function closeImgModal() {
+export function closeImgModal() {
   document.getElementById("img-modal").close();
 }
 
-function switchTab(el) {
+export function switchTab(el) {
   uiState.activeTab = el.dataset.tab;
   document
     .querySelectorAll(".search-tab")

@@ -129,7 +129,7 @@ function _syncToolbarSectionInputs() {
   contentInput.value = s?.fontSize || '';
 }
 
-function renderEditor() {
+export function renderEditor() {
   const card = getActiveCard();
   const empty = document.getElementById("editor-empty");
   const content = document.getElementById("editor-content");

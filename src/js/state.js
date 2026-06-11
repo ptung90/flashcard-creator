@@ -1,5 +1,5 @@
 ﻿// ── State ──────────────────────────────────────────────────────────
-const LAYOUTS = [
+export const LAYOUTS = [
   "2top-1bot",
   "1top-2bot",
   "1big-2small",
@@ -41,7 +41,7 @@ const LAYOUT_SPLIT_DEFAULTS = {
   "8img-8txt": { row: 50, col: 50, inner: 50 },
 };
 
-const LAYOUT_SLOTS = {
+export const LAYOUT_SLOTS = {
   "2top-1bot": 3,
   "1top-2bot": 3,
   "1big-2small": 3,
@@ -61,9 +61,9 @@ const LAYOUT_SLOTS = {
   "2img-4txt": 2,
   "8img-8txt": 8,
 };
-const HIDE_TITLE_LAYOUTS = new Set(['2img-2txt', '8img-8txt', 'img3-txt3', '6cell', 'txtgrid', 'fullimage', 'fulltext']);
+export const HIDE_TITLE_LAYOUTS = new Set(['2img-2txt', '8img-8txt', 'img3-txt3', '6cell', 'txtgrid', 'fullimage', 'fulltext']);
 
-const PAPER_MM = {
+export const PAPER_MM = {
   A4: { w: 210, h: 297 },
   A5: { w: 148, h: 210 },
   A6: { w: 105, h: 148 },
@@ -92,7 +92,7 @@ const PAPER_MM = {
 })();
 
 const _cfg = window.FC_CONFIG || {};
-let state = {
+export let state = {
   settings: {
     paperSize: _cfg.paperSize ?? "A5",
     orientation: _cfg.orientation ?? "portrait",
@@ -114,7 +114,7 @@ let state = {
   records: [],
 };
 
-const uiState = {
+export const uiState = {
   activeCardId: null,
   imgModalSlot: 0,
   activeTab: "wikimedia",
@@ -129,5 +129,5 @@ let _thumbRenderedVersion = 0;
 let _pendingThumbCardId = undefined; // undefined=idle, null=all, string=specific card
 let _thumbHashes = {};  // card.id → content hash, skip re-render if unchanged
 
-function getActiveCard() { return state.cards.find((c) => c.id === uiState.activeCardId); }
+export function getActiveCard() { return state.cards.find((c) => c.id === uiState.activeCardId); }
 function getCardOrientation(card) { return card?.orientation || state.settings.orientation; }

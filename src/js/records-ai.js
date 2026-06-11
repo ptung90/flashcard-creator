@@ -1,6 +1,6 @@
 ﻿// ── Records JSON Export / Import ───────────────────────────────────────────────
 
-function exportRecordsJson() {
+export function exportRecordsJson() {
   if (!state.schema || !state.records.length) { showToast('No records to export'); return; }
   const allFields = state.schema.fields;
   const out = {
@@ -23,7 +23,7 @@ function exportRecordsJson() {
   URL.revokeObjectURL(a.href);
 }
 
-function copyRecordsForAI() {
+export function copyRecordsForAI() {
   if (!state.schema) { showToast('No schema defined'); return; }
   // Pre-populate textarea with existing record names (first text field)
   const nameField = state.schema.fields.find(f => f.type !== 'image');
@@ -35,17 +35,17 @@ function copyRecordsForAI() {
   setTimeout(() => document.getElementById('records-ai-names').focus(), 50);
 }
 
-function closeRecordsAiModal() {
+export function closeRecordsAiModal() {
   document.getElementById('records-ai-modal').close();
 }
 
-function pasteRecordsAiNames() {
+export function pasteRecordsAiNames() {
   navigator.clipboard.readText()
     .then(text => { document.getElementById('records-ai-names').value = text.trim(); })
     .catch(() => showToast('Clipboard read failed'));
 }
 
-function executeRecordsAiCopy() {
+export function executeRecordsAiCopy() {
   if (!state.schema) return;
   const rawNames = document.getElementById('records-ai-names').value;
   const names = rawNames.split('\n').map(s => s.trim()).filter(Boolean);
@@ -119,17 +119,17 @@ ${JSON.stringify(out.records, null, 2)}`;
     .catch(() => showToast('Copy failed'));
 }
 
-function openGenerateRecordsDialog() {
+export function openGenerateRecordsDialog() {
   if (!state.schema) { showToast('No schema defined'); return; }
   document.getElementById('generate-records-dialog').showModal();
   setTimeout(() => document.getElementById('gen-records-count').focus(), 50);
 }
 
-function closeGenerateRecordsDialog() {
+export function closeGenerateRecordsDialog() {
   document.getElementById('generate-records-dialog').close();
 }
 
-async function executeGenerateRecords() {
+export async function executeGenerateRecords() {
   const n = parseInt(document.getElementById('gen-records-count').value, 10) || 5;
   const hint = document.getElementById('gen-records-hint').value.trim();
   const allFields = state.schema.fields;
@@ -205,7 +205,7 @@ async function executeGenerateRecords() {
   }
 }
 
-function importRecordsJsonClick() {
+export function importRecordsJsonClick() {
   document.getElementById('records-import-input')?.click();
 }
 
@@ -254,7 +254,7 @@ async function _applyImportedRecords(jsonText, append = false) {
   showToast(`Imported: ${updated} updated, ${added} added`);
 }
 
-function importRecordsJsonFile(input) {
+export function importRecordsJsonFile(input) {
   const file = input.files[0];
   if (!file) return;
   input.value = '';
@@ -263,7 +263,7 @@ function importRecordsJsonFile(input) {
   reader.readAsText(file);
 }
 
-function pasteRecordsJson(append = false) {
+export function pasteRecordsJson(append = false) {
   navigator.clipboard.readText()
     .then(text => {
       const stripped = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');

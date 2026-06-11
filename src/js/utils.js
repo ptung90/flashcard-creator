@@ -2,10 +2,10 @@
 marked.use({ breaks: true })
 
 // ── Helpers ────────────────────────────────────────────────────────
-function _show(id, display = "flex") { const el = document.getElementById(id); if (el) el.style.display = display; }
-function _hide(id) { const el = document.getElementById(id); if (el) el.style.display = "none"; }
+export function _show(id, display = "flex") { const el = document.getElementById(id); if (el) el.style.display = display; }
+export function _hide(id) { const el = document.getElementById(id); if (el) el.style.display = "none"; }
 
-function uid() {
+export function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
@@ -31,29 +31,29 @@ function mmToPx(mm) {
   return Math.round((mm / 25.4) * 96);
 }
 
-function mdParse(text) {
+export function mdParse(text) {
   return marked.parse((text || "").replace(/^ +/gm, (m) => " ".repeat(m.length)));
 }
 
 // Render section content: HTML passthrough or legacy markdown with breaks:false (preserves nested lists)
-function renderSectionContent(content) {
+export function renderSectionContent(content) {
   if (!content) return '';
   if (content.trimStart().startsWith('<')) return content;
   return marked.parse(content, { breaks: false });
 }
 
-function mdParseInline(text) {
+export function mdParseInline(text) {
   return marked.parseInline(text || "");
 }
 
-function esc(str) {
+export function esc(str) {
   return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 // ── Image compression ─────────────────────────────────────────────
 let MAX_IMG_PX = (window.FC_CONFIG || {}).maxImgPx ?? 1240;
 
-function _compressImage(dataURL, maxPx = MAX_IMG_PX, quality = 0.82) {
+export function _compressImage(dataURL, maxPx = MAX_IMG_PX, quality = 0.82) {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
@@ -72,7 +72,7 @@ function _compressImage(dataURL, maxPx = MAX_IMG_PX, quality = 0.82) {
   });
 }
 
-function _hashStr(s) {
+export function _hashStr(s) {
   let h = 5381;
   for (let i = 0; i < s.length; i++) {
     h = ((h << 5) + h) ^ s.charCodeAt(i);

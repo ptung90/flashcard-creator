@@ -4,7 +4,7 @@ function _imgItem(full, thumb) {
   return `<div class="search-result-item" onclick="insertImageUrl('${esc(full)}')"><img src="${esc(thumb)}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`;
 }
 
-async function _searchImages(inputId, resultId, fetchFn) {
+export async function _searchImages(inputId, resultId, fetchFn) {
   const q = document.getElementById(inputId).value.trim();
   if (!q) return;
   const res = document.getElementById(resultId);
@@ -176,7 +176,7 @@ async function _fetchImageByKeyword(query) {
   }
 }
 
-async function _callOpenAI(key, prompt) {
+export async function _callOpenAI(key, prompt) {
   const messages = Array.isArray(prompt) ? prompt : [{ role: "user", content: prompt }];
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -200,7 +200,7 @@ async function _callOpenAI(key, prompt) {
   return JSON.parse(content);
 }
 
-async function _callGemini(key, prompt) {
+export async function _callGemini(key, prompt) {
   const model = (document.getElementById("gemini-model")?.value.trim()
     || localStorage.getItem("gemini-model") || "gemini-2.0-flash");
   const r = await fetch(
