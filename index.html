@@ -1,0 +1,1563 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FlashCard Creator</title>
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAAAmCAYAAACoPemuAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAASCSURBVFhH5ZdfaJV1GMc/z++cnZ05dQU5UDCrZfRHu1BRbyKiUBg2Nd2WzhTdzNLAiPKimxoY/QEpSILldKBzemaQTvtjRLYbS0EjpFC68Q+Rtulobc7tnPN+u9jOevdOjvqeE0l94Fy83+d5fnz5PQ/veV74P/B8W8OYZW0NdwX1MLigEJblhxqn9CryXpTog8FYGPJibOWBbY86z/ZiNift+n8KxsOQs7Ga/dsf9nA7gLmIb1sWrO8K5oQhJ2OrP98+wYz3MWYKkjiOBnPCEt6YZMmkNmLMAzDoJK2fg2lhsaBwsyw7uG22kx00rBRA6BjRwnm7y5/rDuZWtm4dGy+OTSIdKQUieOr2Yl6HReJd/X/ErwFEi3ruc2jaQN+4tn1VVelwxiSradvxkRkv+LRE2ckLy+vr6z2AytaGklg8MsdkT4HmYlYmqQTMDPpluoL4DbPfEcKYAbTvrqhdTdgbW/Vp0z2piPeNwb1/q9rSXFH3amVra6wg3rPYyduAMQusyF+bFXmvNy9c+zZhZ8xzqRkmJvs1waVVR5riscLud5zUjNljt2aKLqEjmccowNJEoige737cuYJTStq1VMFAmZPNMlmZjKRJpyU7PjAw7sy+qqq0zKZnan30prq918CWyGgz1I/sAcE0MwoDuaMQ2l98UScyzwZQ2doaixX+mcA03eCqYLJhd4yohEuSEpaKvaVost4/XwKPwVsaa9Jxmc00MRtTKSI+OFZZkE6mnXt2z9NrfslIwwU1+xs3mrMPhpN9CDwTVwAndMgMB7ZiZJJOe1ijM14BJo2IZUHomJw2tCxYO3xb+GcsFrMWwZf+oB/BVRlfGdYjrBCRCsS/8/CaEXuFLvtj10NSB/ChHNVBU/iNNZXXdkTT7kXQHlCfP8nAmXG3SbM9+ALUKRjw52A6tnfh2kv9/eM2eaZyic2S2hHnhC4P/c5KapfY7ER52YnzL7csqDs34pwhRvV+aSJRVDSm9wnP88oxHkJWBHSCvpfnDrYsXnOqpq3xXcM2DReJlKQluxfVtfnPWnF4Z3HkanqCXGp8youIAq/bFcQ6m+ev7PXnXY9RxvwsTSSKzDoid3YV9H+8bl0yowfnUZDE0+Ldi+o+Gy7OkazvsU+qq/v2Vb3U4zcFgGPk8z9AVmP/Jv99Y+aUt7PIlzETJu8Gb/dbJC/GGLwxBbVcyJuxfJM3Y7dlK2VIZl5Qz4W8GAMw3QYzZoxqWwSz8QEtJ0IZE96IlWdo+5jj13IlnDG5X8Wo/8uqmrbGJwNaaIItuSmWH2qcYp59bXC/Xxc6a9IWh46kFZEcUxxMNfhxV0Vtuz/3RoQyBlBzYPubZrwR1If2/8sYQlZiRiHihKWj83c9s+qGm22GUK0E8Cy1FRixGDI8bzbBsNLhryNjoqHgx01WQhvbU7Gu01lkPag5uP9fhzPpeKQjKGYjdCszrDi8s1h9A9XmbI3QI2DFgxH1GlxAdtSkhl2L6n4I1mYjZ2MZKlsbSuKxyFQ5TZRnnqK6WOjc+aby2lu6qduevwCp09mrBTlqlQAAAABJRU5ErkJggg==" />
+
+    <script>
+window.FC_ENV = {
+  pexelsKey:   '7ZLq2vNnJanT8D8hdk2EZpJnycXybJ7Vz47FBdNohxm8gmdfPWuHsyeg',
+  unsplashKey: '',
+  pixabayKey:  '',
+  openaiKey:   '',
+  geminiKey:   '',
+};
+
+window.FC_VERSION = "3.1.11";
+
+window.FC_CONFIG = {
+  // ── Paper & Layout ────────────────────────────────────────────────
+  paperSize: "A5", // A4 | A5 | A6 | Letter
+  orientation: "portrait", // portrait | landscape
+  margin: 9,      // mm — khoảng cách từ mép giấy đến viền card
+  padding: 2,     // mm — text padding bên trong viền card
+  imgPadding: 0,  // mm — padding quanh image slot
+
+  // ── Border ────────────────────────────────────────────────────────
+  border: {
+    width: 4, // px
+    style: "double", // none | solid | dashed | dotted | double
+    color: "#3E9684", // hex
+    radius: 0, // px
+  },
+
+  // ── Image ─────────────────────────────────────────────────────────
+  image: {
+    backgroundSize: "cover", // cover | contain
+    backgroundPosition: "center", // center | top | bottom | left | right
+  },
+
+  // ── Title Font (global default for all cards) ────────────────────
+  titleFont: {
+    family: "sans-serif",
+    size: 14, // px
+    color: "#1a1a1a",
+    lineHeight: 1.0,
+    textAlign: "left", // left | center | right | justify
+  },
+
+  // ── Content Font (global default for all cards) ───────────────────
+  // Section label renders at 0.78em, content at 0.75em of this size
+  contentFont: {
+    family: "sans-serif",
+    size: 12, // px
+    color: "#1a1a1a",
+    lineHeight: 1.1,
+    textAlign: "left", // left | center | right | justify
+  },
+
+  // ── New Card Defaults ─────────────────────────────────────────────
+  newCard: {
+    layout: "2top-1bot", // 2top-1bot | 1top-2bot | 1big-2small | 2x2 | 1full | 1left-2right | 1left-3right | 1top-3bot | 1top-1bot
+    imageHeightPercent: 80, // 20–80
+    defaultSections: [
+      { label: "Feature", content: "" },
+      { label: "Habitat", content: "" },
+    ],
+  },
+
+  // ── Text vertical alignment ───────────────────────────────────────
+  textVAlign: "middle", // top | middle | bottom
+
+  // ── Paste block (false = hidden by default, click button to show) ──
+  pasteBlock: false,
+
+  // ── Max image size on paste/upload (px, longest edge) ────────────
+  // A4 @ 150 DPI = 1240 | A4 @ 200 DPI = 1654 | A4 @ 300 DPI = 2480
+  maxImgPx: 1240,
+
+  // ── Undo / Redo ───────────────────────────────────────────────────
+  undoMax: 50,          // max undo steps (1–200)
+
+  // ── Custom CSS (inject vào mỗi session) ──────────────────────────
+  customCss: "",
+};
+
+    </script>
+
+    <style id="fc-custom-css"></style>
+  </head>
+  <body>
+
+    <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-sidebar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M3 21v-5h5"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-folder" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5z"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-redo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h4"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .4 1.9l.1.1a2 2 0 1 1-2.9 2.9l-.1-.1a1.7 1.7 0 0 0-1.9-.4 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.4l-.1.1a2 2 0 1 1-2.9-2.9l.1-.1a1.7 1.7 0 0 0 .4-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.4-1.9l-.1-.1a2 2 0 1 1 2.9-2.9l.1.1a1.7 1.7 0 0 0 1.9.4h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.4l.1-.1a2 2 0 1 1 2.9 2.9l-.1.1a1.7 1.7 0 0 0-.4 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5"/><path d="M16 7l5 5-5 5"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-save-plus" viewBox="0 0 24 24"><path d="M19 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/><path d="M7 3v5h8"/><path d="M18 14v8M14 18h8"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-printer" viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="9" rx="2"/><rect x="6" y="14" width="12" height="7"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-braces" viewBox="0 0 24 24"><path d="M8 3H7a2 2 0 0 0-2 2v3a2 2 0 0 1-2 2 2 2 0 0 1 2 2v3a2 2 0 0 0 2 2h1"/><path d="M16 3h1a2 2 0 0 1 2 2v3a2 2 0 0 0 2 2 2 2 0 0 0-2 2v3a2 2 0 0 1-2 2h-1"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-type" viewBox="0 0 24 24"><path d="M4 7V5h16v2"/><path d="M9 20h6"/><path d="M12 5v15"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-border" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="4 3"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-maximize" viewBox="0 0 24 24"><path d="M3 9V5a2 2 0 0 1 2-2h4M21 9V5a2 2 0 0 0-2-2h-4M3 15v4a2 2 0 0 0 2 2h4M21 15v4a2 2 0 0 1-2 2h-4"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-clone" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-arrow-lr" viewBox="0 0 24 24"><path d="M7 7l-4 5 4 5M17 7l4 5-4 5M3 12h18"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-bug" viewBox="0 0 24 24"><rect x="8" y="6" width="8" height="14" rx="4"/><path d="M19 7l-3 3M5 7l3 3M19 13h-3M8 13H5M19 19l-3-3M5 19l3-3M12 6V3"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-image-search" viewBox="0 0 24 24"><rect x="3" y="3" width="14" height="14" rx="2"/><circle cx="8" cy="8" r="1.5"/><path d="M3 14l4-4 5 5"/><circle cx="17.5" cy="17.5" r="3.5"/><path d="M22 22l-2-2"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-eye-off" viewBox="0 0 24 24"><path d="M10.6 5.1A11 11 0 0 1 12 5c7 0 11 7 11 7a17 17 0 0 1-2.7 3.6M6.6 6.6A17 17 0 0 0 1 12s4 7 11 7a11 11 0 0 0 5.4-1.4M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M1 1l22 22"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-align-left" viewBox="0 0 24 24"><path d="M3 6h14M3 12h18M3 18h11"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-align-center" viewBox="0 0 24 24"><path d="M5 6h14M3 12h18M6 18h12"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-align-right" viewBox="0 0 24 24"><path d="M7 6h14M3 12h18M10 18h11"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-align-justify" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-valign-top" viewBox="0 0 24 24"><path d="M4 4h16"/><rect x="9" y="8" width="6" height="13" rx="1"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-valign-middle" viewBox="0 0 24 24"><path d="M4 12h5M15 12h5"/><rect x="9" y="5" width="6" height="14" rx="1"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-valign-bottom" viewBox="0 0 24 24"><path d="M4 20h16"/><rect x="9" y="3" width="6" height="13" rx="1"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-clear-format" viewBox="0 0 24 24"><path d="M6 3h13l-7 8"/><path d="M11 13l-5 8"/><path d="M3 21l18-18"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-arrow-tb" viewBox="0 0 24 24"><path d="M7 8l5-5 5 5M7 16l5 5 5-5M12 3v18"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-img-fit" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="6" y="7" width="12" height="10" rx="1"/></symbol>
+        <symbol fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" id="i-img-fill" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 8h18M3 16h18M8 3v18M16 3v18"/></symbol>
+      </defs>
+    </svg>
+    <!--
+      APP LAYOUT
+      ├── .fc-settings-bar       — global paper/font/border settings (collapsible)
+      ├── #fc-restore-banner     — permission restore prompt
+      ├── .fc-toolbar            — project name, card actions, view toggles
+      └── .fc-main               — 3-panel layout
+          ├── .fc-sidebar        — card list + reorder/clone/delete
+          ├── .fc-editor         — layout picker, image slots, title, sections
+          └── .fc-preview-panel  — live preview + records panel (tab-data)
+
+      MODALS (backdrop divs, line ~459)
+        img-modal, css-modal, json-modal, json-preview-modal,
+        load-modal, save-as-modal, settings-modal
+
+      DIALOGS (native <dialog>, line ~1337)
+        schema-editor-modal, pack-dialog, backup-modal, records-ai-modal
+    -->
+    <div class="fc-app">
+      <!-- Settings Bar (all page setup in one panel) -->
+      <div class="fc-settings-bar">
+        <!-- Row 1: Page · Spacing · Border · Image -->
+        <div class="setting-group">
+          <label data-i18n="set.paper">Paper</label>
+          <select id="set-paper">
+            <option value="A4">A4</option>
+            <option value="A5">A5</option>
+            <option value="A6">A6</option>
+            <option value="Letter">Letter</option>
+          </select>
+          <div class="btn-group" id="set-orient-group">
+            <button class="btn btn-secondary btn-sm orient-btn" data-val="portrait" onclick="setGlobalOrient('portrait')" data-i18n="orient.portrait">P</button>
+            <button class="btn btn-secondary btn-sm orient-btn" data-val="landscape" onclick="setGlobalOrient('landscape')" data-i18n="orient.landscape">L</button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label data-i18n="set.margin">Mg</label>
+          <input type="number" id="set-margin" value="15" min="0" max="40" title="Margin (mm)" style="width:38px"/>
+          <label data-i18n="set.textPad">Pd</label>
+          <input type="number" id="set-padding" value="12" min="0" max="40" title="Text Pad (mm)" style="width:38px"/>
+          <label data-i18n="set.imgPad">Ip</label>
+          <input type="number" id="set-img-padding" value="0" min="0" max="20" title="Img Pad (mm)" style="width:38px"/>
+          <label style="color:#9ca3af;font-size:10px">mm</label>
+        </div>
+        <div class="setting-group">
+          <label data-i18n="bd.width">Bd</label>
+          <input type="number" id="set-bw" value="2" min="0" max="10" title="Border width (px)" style="width:44px"/>
+          <select id="set-bs" style="width:68px">
+            <option value="dashed" selected>Dashed</option>
+            <option value="solid">Solid</option>
+            <option value="dotted">Dotted</option>
+            <option value="double">Double</option>
+            <option value="none">None</option>
+          </select>
+          <input type="color" id="set-bc" value="#6B21A8" title="Border color"/>
+          <label data-i18n="bd.radius">R</label>
+          <input type="number" id="set-br" value="0" min="0" max="40" title="Border radius (px)" style="width:44px"/>
+        </div>
+        <div class="setting-group">
+          <label data-i18n="img.fit">Img</label>
+          <select id="set-imgsize" style="width:72px">
+            <option value="cover">Cover</option>
+            <option value="contain">Contain</option>
+            <option value="auto">Auto</option>
+            <option value="100% 100%">Stretch</option>
+            <option value="100% auto">100% w</option>
+            <option value="auto 100%">100% h</option>
+            <option value="50%">50%</option>
+            <option value="75%">75%</option>
+          </select>
+          <input type="text" id="set-imgpos" value="center" style="width:60px" title="CSS background-position"/>
+        </div>
+        <!-- Row 2: Title font · Content font · V-Align · Load Font -->
+        <div class="setting-group set-row-break">
+          <label data-i18n="font.title">Title</label>
+          <select id="set-font-family" style="width:100px">
+            <option value="'Lexend',sans-serif">Lexend ★</option>
+            <option value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif">Modern Sans</option>
+            <option value="sans-serif">Sans-serif</option>
+            <option value="serif">Serif</option>
+            <option value="'Georgia',serif">Georgia</option>
+            <option value="'Times New Roman',serif">Times</option>
+            <option value="'Courier New',monospace">Mono</option>
+            <option value="'Be Vietnam Pro','Noto Sans','Segoe UI',sans-serif">Vietnamese Sans</option>
+            <option value="'Inter','Segoe UI',Roboto,Arial,sans-serif">Inter</option>
+            <option value="'SF Pro Display','SF Pro Text','Helvetica Neue',Arial,sans-serif">SF Pro</option>
+            <option value="'Segoe UI',Tahoma,Geneva,Verdana,sans-serif">Windows UI</option>
+            <option value="Roboto,'Helvetica Neue',Arial,sans-serif">Roboto</option>
+            <option value="'Helvetica Neue',Helvetica,Arial,sans-serif">Helvetica</option>
+            <option value="'Trebuchet MS',sans-serif">Trebuchet</option>
+            <option value="Verdana,Geneva,sans-serif">Verdana</option>
+            <option value="Tahoma,Geneva,sans-serif">Tahoma</option>
+            <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">Palatino</option>
+            <option value="'Lucida Console','Courier New',monospace">Lucida Console</option>
+          </select>
+          <input type="number" id="set-font-size" min="8" max="72" style="width:52px" title="Size (px)"/>
+          <input type="color" id="set-font-color" title="Text color"/>
+          <label data-i18n="font.lh">LH</label>
+          <input type="number" id="set-font-lh" min="1" max="3" step="0.1" style="width:56px" title="Line height"/>
+          <select id="set-font-fw" title="Font weight" style="width:72px">
+            <option value="300">Light</option>
+            <option value="400">Normal</option>
+            <option value="500">Medium</option>
+            <option value="600">SemiBold</option>
+            <option value="700">Bold</option>
+            <option value="900">Black</option>
+          </select>
+          <div class="align-btn-group">
+            <button class="align-btn" data-key="titleFont" data-align="left" onclick="setFontAlign('titleFont','left')" title="Left"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-left"/></svg></button>
+            <button class="align-btn" data-key="titleFont" data-align="center" onclick="setFontAlign('titleFont','center')" title="Center"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-center"/></svg></button>
+            <button class="align-btn" data-key="titleFont" data-align="right" onclick="setFontAlign('titleFont','right')" title="Right"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-right"/></svg></button>
+            <button class="align-btn" data-key="titleFont" data-align="justify" onclick="setFontAlign('titleFont','justify')" title="Justify"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-justify"/></svg></button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label data-i18n="font.content">Content</label>
+          <select id="set-cfont-family" style="width:100px">
+            <option value="'Lexend',sans-serif">Lexend ★</option>
+            <option value="Inter,'Be Vietnam Pro','SF Pro Display','Segoe UI',Roboto,Arial,sans-serif">Modern Sans</option>
+            <option value="sans-serif">Sans-serif</option>
+            <option value="serif">Serif</option>
+            <option value="'Georgia',serif">Georgia</option>
+            <option value="'Times New Roman',serif">Times</option>
+            <option value="'Courier New',monospace">Mono</option>
+            <option value="'Be Vietnam Pro','Noto Sans','Segoe UI',sans-serif">Vietnamese Sans</option>
+            <option value="'Inter','Segoe UI',Roboto,Arial,sans-serif">Inter</option>
+            <option value="'SF Pro Display','SF Pro Text','Helvetica Neue',Arial,sans-serif">SF Pro</option>
+            <option value="'Segoe UI',Tahoma,Geneva,Verdana,sans-serif">Windows UI</option>
+            <option value="Roboto,'Helvetica Neue',Arial,sans-serif">Roboto</option>
+            <option value="'Helvetica Neue',Helvetica,Arial,sans-serif">Helvetica</option>
+            <option value="'Trebuchet MS',sans-serif">Trebuchet</option>
+            <option value="Verdana,Geneva,sans-serif">Verdana</option>
+            <option value="Tahoma,Geneva,sans-serif">Tahoma</option>
+            <option value="'Palatino Linotype','Book Antiqua',Palatino,serif">Palatino</option>
+            <option value="'Lucida Console','Courier New',monospace">Lucida Console</option>
+          </select>
+          <input type="number" id="set-cfont-size" min="8" max="72" style="width:52px" title="Size (px)"/>
+          <input type="color" id="set-cfont-color" title="Text color"/>
+          <label data-i18n="font.lh">LH</label>
+          <input type="number" id="set-cfont-lh" min="1" max="3" step="0.1" style="width:56px" title="Line height"/>
+          <select id="set-cfont-fw" title="Font weight" style="width:72px">
+            <option value="300">Light</option>
+            <option value="400">Normal</option>
+            <option value="500">Medium</option>
+            <option value="600">SemiBold</option>
+            <option value="700">Bold</option>
+            <option value="900">Black</option>
+          </select>
+          <div class="align-btn-group">
+            <button class="align-btn" data-key="contentFont" data-align="left" onclick="setFontAlign('contentFont','left')" title="Left"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-left"/></svg></button>
+            <button class="align-btn" data-key="contentFont" data-align="center" onclick="setFontAlign('contentFont','center')" title="Center"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-center"/></svg></button>
+            <button class="align-btn" data-key="contentFont" data-align="right" onclick="setFontAlign('contentFont','right')" title="Right"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-right"/></svg></button>
+            <button class="align-btn" data-key="contentFont" data-align="justify" onclick="setFontAlign('contentFont','justify')" title="Justify"><svg class="icon" style="width:13px;height:13px"><use href="#i-align-justify"/></svg></button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label>VA</label>
+          <div class="align-btn-group">
+            <button class="valign-btn align-btn" data-valign="top" onclick="setTextVAlign('top')" title="Top"><svg class="icon" style="width:13px;height:13px"><use href="#i-valign-top"/></svg></button>
+            <button class="valign-btn align-btn" data-valign="middle" onclick="setTextVAlign('middle')" title="Middle"><svg class="icon" style="width:13px;height:13px"><use href="#i-valign-middle"/></svg></button>
+            <button class="valign-btn align-btn" data-valign="bottom" onclick="setTextVAlign('bottom')" title="Bottom"><svg class="icon" style="width:13px;height:13px"><use href="#i-valign-bottom"/></svg></button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label>Font+</label>
+          <input type="text" id="gfont-input" placeholder="Nunito, Pacifico…" style="width:110px" onkeydown="if(event.key==='Enter')addGoogleFont('google');"/>
+          <button class="btn btn-secondary btn-sm" onclick="addGoogleFont('google')" title="Load from Google Fonts CDN">Google</button>
+          <button class="btn btn-secondary btn-sm" onclick="addGoogleFont('custom')" title="Add name only (font defined in Custom CSS)">Custom</button>
+        </div>
+        <div id="gfont-tags" class="gfont-tags"></div>
+      </div>
+
+      <!-- Restore banner (shown when permission not yet granted) -->
+      <div id="fc-restore-banner" style="display: none">
+        <span id="fc-restore-label"></span>
+        <button
+          class="btn btn-primary btn-sm"
+          onclick="resumeLastProject()"
+          data-i18n="restore.resume"
+        >
+          Resume
+        </button>
+        <button
+          class="btn btn-secondary btn-sm"
+          onclick="dismissRestoreBanner()"
+          data-i18n="restore.dismiss"
+        >
+          Dismiss
+        </button>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="fc-toolbar">
+        <div class="tomoe-logo" title="FlashCard Creator">
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAAAmCAYAAACoPemuAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAFiUAABYlAUlSJPAAAASCSURBVFhH5ZdfaJV1GMc/z++cnZ05dQU5UDCrZfRHu1BRbyKiUBg2Nd2WzhTdzNLAiPKimxoY/QEpSILldKBzemaQTvtjRLYbS0EjpFC68Q+Rtulobc7tnPN+u9jOevdOjvqeE0l94Fy83+d5fnz5PQ/veV74P/B8W8OYZW0NdwX1MLigEJblhxqn9CryXpTog8FYGPJibOWBbY86z/ZiNift+n8KxsOQs7Ga/dsf9nA7gLmIb1sWrO8K5oQhJ2OrP98+wYz3MWYKkjiOBnPCEt6YZMmkNmLMAzDoJK2fg2lhsaBwsyw7uG22kx00rBRA6BjRwnm7y5/rDuZWtm4dGy+OTSIdKQUieOr2Yl6HReJd/X/ErwFEi3ruc2jaQN+4tn1VVelwxiSradvxkRkv+LRE2ckLy+vr6z2AytaGklg8MsdkT4HmYlYmqQTMDPpluoL4DbPfEcKYAbTvrqhdTdgbW/Vp0z2piPeNwb1/q9rSXFH3amVra6wg3rPYyduAMQusyF+bFXmvNy9c+zZhZ8xzqRkmJvs1waVVR5riscLud5zUjNljt2aKLqEjmccowNJEoige737cuYJTStq1VMFAmZPNMlmZjKRJpyU7PjAw7sy+qqq0zKZnan30prq918CWyGgz1I/sAcE0MwoDuaMQ2l98UScyzwZQ2doaixX+mcA03eCqYLJhd4yohEuSEpaKvaVost4/XwKPwVsaa9Jxmc00MRtTKSI+OFZZkE6mnXt2z9NrfslIwwU1+xs3mrMPhpN9CDwTVwAndMgMB7ZiZJJOe1ijM14BJo2IZUHomJw2tCxYO3xb+GcsFrMWwZf+oB/BVRlfGdYjrBCRCsS/8/CaEXuFLvtj10NSB/ChHNVBU/iNNZXXdkTT7kXQHlCfP8nAmXG3SbM9+ALUKRjw52A6tnfh2kv9/eM2eaZyic2S2hHnhC4P/c5KapfY7ER52YnzL7csqDs34pwhRvV+aSJRVDSm9wnP88oxHkJWBHSCvpfnDrYsXnOqpq3xXcM2DReJlKQluxfVtfnPWnF4Z3HkanqCXGp8youIAq/bFcQ6m+ev7PXnXY9RxvwsTSSKzDoid3YV9H+8bl0yowfnUZDE0+Ldi+o+Gy7OkazvsU+qq/v2Vb3U4zcFgGPk8z9AVmP/Jv99Y+aUt7PIlzETJu8Gb/dbJC/GGLwxBbVcyJuxfJM3Y7dlK2VIZl5Qz4W8GAMw3QYzZoxqWwSz8QEtJ0IZE96IlWdo+5jj13IlnDG5X8Wo/8uqmrbGJwNaaIItuSmWH2qcYp59bXC/Xxc6a9IWh46kFZEcUxxMNfhxV0Vtuz/3RoQyBlBzYPubZrwR1If2/8sYQlZiRiHihKWj83c9s+qGm22GUK0E8Cy1FRixGDI8bzbBsNLhryNjoqHgx01WQhvbU7Gu01lkPag5uP9fhzPpeKQjKGYjdCszrDi8s1h9A9XmbI3QI2DFgxH1GlxAdtSkhl2L6n4I1mYjZ2MZKlsbSuKxyFQ5TZRnnqK6WOjc+aby2lu6qduevwCp09mrBTlqlQAAAABJRU5ErkJggg==" alt="Tomoe" />
+          <span class="tomoe-logo-text">FLASHCARD<small>tomoe</small></span>
+        </div>
+        <button class="btn btn-secondary btn-sm btn-icon" id="sidebar-toggle-btn" onclick="toggleSidebar()" data-i18n-title="toolbar.toggleSidebar" title="Toggle sidebar">
+          <svg class="icon"><use href="#i-sidebar"/></svg>
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="addCard()" data-i18n-title="toolbar.newCard" title="New Card">
+          <svg class="icon"><use href="#i-plus"/></svg><span class="btn-label" data-i18n="toolbar.newCard">New Card</span>
+        </button>
+        <button id="records-btn" class="btn btn-secondary btn-sm" onclick="showRecordsPanel()" data-i18n="toolbar.records">Records</button>
+        <button class="btn btn-secondary btn-sm btn-icon" onclick="refreshAllThumbs()" title="Regenerate all thumbnails">
+          <svg class="icon"><use href="#i-refresh"/></svg>
+        </button>
+        <button class="btn btn-secondary btn-sm btn-icon" id="setup-toggle-btn" onclick="toggleSettingsBar()" title="Page setup (paper, margin, border, font, image)" aria-pressed="false">
+          <svg class="icon"><use href="#i-sliders"/></svg>
+        </button>
+
+        <div class="spacer"></div>
+
+        <div class="project-name-group">
+          <button id="project-icon-btn" class="btn-icon-picker" onclick="toggleEmojiPicker(event)" title="Set project icon">🗂️</button>
+          <input id="project-name-input" type="text" value="Untitled" title="Project name — click to rename" onfocus="pushUndo()" onchange="state.projectName = this.value.trim() || 'Untitled'; this.value = state.projectName; setDirty();" />
+          <div id="emoji-picker" class="emoji-picker" style="display: none" onclick="event.stopPropagation()"></div>
+          <button class="btn btn-secondary btn-sm" onclick="openLoadModal()" data-i18n-title="toolbar.load" title="Load project">
+            <svg class="icon"><use href="#i-folder"/></svg><span id="load-btn-label" class="btn-label">Load</span>
+          </button>
+          <input type="file" id="load-file" accept=".json" style="display: none" onchange="loadJSON(event)" />
+        </div>
+
+        <div class="spacer"></div>
+
+        <button id="undo-btn" class="btn btn-secondary btn-sm btn-icon" onclick="undo()" title="Undo (Ctrl+Z)" disabled>
+          <svg class="icon"><use href="#i-undo"/></svg>
+        </button>
+        <button id="redo-btn" class="btn btn-secondary btn-sm btn-icon" onclick="redo()" title="Redo (Ctrl+Y)" disabled>
+          <svg class="icon"><use href="#i-redo"/></svg>
+        </button>
+        <span id="readonly-badge" style="display:none">Read Only</span>
+        <button id="save-btn" class="btn btn-secondary btn-sm" onclick="saveJSON()" title="Save (Ctrl+S)">
+          <svg class="icon"><use href="#i-save"/></svg><span class="btn-label" data-i18n="toolbar.save">Save</span><span id="dirty-dot" style="display: none">●</span>
+        </button>
+        <button class="btn btn-secondary btn-sm btn-icon" onclick="saveJSONAs()" title="Save As">
+          <svg class="icon"><use href="#i-save-plus"/></svg>
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="printAll()" data-i18n-title="toolbar.printAll" title="Print all cards">
+          <svg class="icon"><use href="#i-printer"/></svg><span class="btn-label" data-i18n="toolbar.printAll">Print All</span>
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="openExportPdfDialog()" data-i18n-title="toolbar.pdfAll" title="Export PDF (all)">
+          <svg class="icon"><use href="#i-download"/></svg><span class="btn-label" data-i18n="toolbar.pdfAll">PDF All</span>
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="openAiChat()" title="AI Assistant">✦ AI</button>
+
+        <!-- More menu -->
+        <div class="toolbar-more-wrap">
+          <button class="btn btn-secondary btn-sm btn-icon" id="toolbar-more-btn" onclick="toggleMoreMenu(event)" title="More options" aria-pressed="false">
+            <svg class="icon"><use href="#i-more"/></svg>
+          </button>
+          <div class="toolbar-more-menu" id="toolbar-more-menu">
+            <button class="toolbar-more-item" onclick="openSettingsModal();closeMoreMenu()">
+              <svg class="icon"><use href="#i-settings"/></svg> Settings
+            </button>
+            <button class="toolbar-more-item" onclick="openCssModal();closeMoreMenu()">
+              <svg class="icon"><use href="#i-braces"/></svg> Custom CSS
+            </button>
+            <button class="toolbar-more-item" onclick="openJsonModal();closeMoreMenu()">
+              <svg class="icon"><use href="#i-code"/></svg> JSON
+            </button>
+            <button class="toolbar-more-item" onclick="openBackupModal();closeMoreMenu()">
+              <svg class="icon"><use href="#i-undo"/></svg> Backups
+            </button>
+            <div class="toolbar-more-sep"></div>
+            <div class="toolbar-more-lang">
+              <button class="btn btn-secondary btn-sm lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+              <button class="btn btn-secondary btn-sm lang-btn" data-lang="vi" onclick="setLang('vi')">VI</button>
+            </div>
+            <div class="toolbar-more-sep"></div>
+            <span id="app-version" class="toolbar-more-version"></span>
+          </div>
+        </div>
+
+        <span class="toolbar-meta">
+          <div class="btn-group">
+            <button class="btn btn-secondary btn-sm" onclick="changeUIZoom(-0.1)" data-i18n-title="set.zoom.dec" title="Decrease UI size">A−</button>
+            <button class="btn btn-secondary btn-sm" onclick="changeUIZoom(0.1)" data-i18n-title="set.zoom.inc" title="Increase UI size">A+</button>
+          </div>
+        </span>
+      </div>
+
+      <!-- Main 3-panel -->
+      <div class="fc-main">
+        <!-- Sidebar: Card List -->
+        <div class="fc-sidebar" id="fc-sidebar">
+          <div class="fc-sidebar-header">
+            <span>
+              <span data-i18n="sidebar.cards">Cards</span>
+              <span id="card-count" style="color: #9ca3af; font-weight: normal"
+                >0</span
+              >
+            </span>
+            <div class="view-toggle">
+              <button
+                class="view-toggle-btn"
+                id="view-list-btn"
+                onclick="setViewMode('list')"
+                data-i18n-title="sidebar.listView"
+                title="List view"
+              >
+                <svg width="16" height="16"><use href="#i-list"/></svg>
+              </button>
+              <button
+                class="view-toggle-btn"
+                id="view-grid-btn"
+                onclick="setViewMode('grid')"
+                data-i18n-title="sidebar.gridView"
+                title="Grid view"
+              >
+                <svg width="16" height="16"><use href="#i-grid"/></svg>
+              </button>
+            </div>
+            <!-- <div class="search-tab" data-tab="data" onclick="switchTab(this)">
+              Data
+            </div> -->
+          </div>
+          <div class="fc-card-list" id="card-list"></div>
+        </div>
+
+        <div class="fc-panel-divider" data-panel="fc-sidebar"></div>
+
+        <!-- Editor -->
+        <div class="fc-editor" id="fc-editor">
+          <div
+            class="fc-editor-empty"
+            id="editor-empty"
+            data-i18n="editor.empty"
+          >
+            Select a card to edit, or click "+ New Card"
+          </div>
+          <div id="editor-content" style="display: none"></div>
+        </div>
+
+        <div class="fc-panel-divider" data-panel="fc-preview-panel"></div>
+
+        <!-- Preview -->
+        <div class="fc-preview-panel" id="fc-preview-panel">
+          <div class="fc-preview-header">
+            <div style="display: flex; align-items: center; gap: 4px">
+              <div class="fc-preview-label" data-i18n="preview.label">Preview</div>
+              <button class="btn btn-secondary btn-sm btn-icon" onclick="changePreviewZoom(-0.25)" title="Zoom out"><svg class="icon"><use href="#i-minus"/></svg></button>
+              <span id="preview-zoom-label" onclick="changePreviewZoom(0)" title="Reset zoom" style="cursor:pointer;min-width:32px;text-align:center;font-size:11px;color:#374151;user-select:none">100%</span>
+              <button class="btn btn-secondary btn-sm btn-icon" onclick="changePreviewZoom(0.25)" title="Zoom in"><svg class="icon"><use href="#i-plus"/></svg></button>
+              <button class="btn btn-secondary btn-sm" onclick="setPhysicalZoom()" title="Actual print size (96dpi reference)" style="font-size:10px;font-weight:600">1:1</button>
+              <button class="btn btn-secondary btn-sm btn-icon" onclick="changePreviewZoom(0)" title="Fit to panel"><svg class="icon"><use href="#i-maximize"/></svg></button>
+            </div>
+            <div class="fc-preview-actions">
+              <button class="btn btn-secondary btn-sm" onclick="printOne()"><svg class="icon"><use href="#i-printer"/></svg> <span data-i18n="preview.print">Print</span></button>
+              <button class="btn btn-primary btn-sm" onclick="exportOnePDF()"><svg class="icon"><use href="#i-download"/></svg> <span data-i18n="preview.export">Export PDF</span></button>
+            </div>
+          </div>
+          <div class="fc-preview" id="fc-preview">
+            <div id="preview-card-wrap"></div>
+          </div>
+
+          <div id="tab-data" style="display: none">
+            <div class="url-input-area">
+              <label style="color: #888; font-size: 12px"
+                >Current Slot & Card Data:</label
+              >
+              <textarea
+                id="data-tab-content"
+                style="
+                  width: 100%;
+                  height: 250px;
+                  background: #f9fafb;
+                  border: 1px solid #d1d5db;
+                  color: #1a1a2e;
+                  border-radius: 5px;
+                  padding: 10px;
+                  font-family: monospace;
+                  font-size: 12px;
+                  resize: vertical;
+                "
+                readonly
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div id="records-panel" style="display:none;flex:1;flex-direction:column;overflow:auto;padding:16px;min-width:0;"></div>
+      </div>
+    </div>
+
+    <!-- Image Search Modal -->
+    <dialog id="img-modal">
+        <div class="modal-header">
+          <span>Search Image — Slot <span id="modal-slot-num">0</span></span>
+          <button class="modal-close" onclick="closeImgModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="search-tabs">
+            <div
+              class="search-tab active"
+              data-tab="unsplash"
+              onclick="switchTab(this)"
+            >
+              Unsplash
+            </div>
+            <div
+              class="search-tab"
+              data-tab="wikimedia"
+              onclick="switchTab(this)"
+            >
+              Wikimedia
+            </div>
+            <div
+              class="search-tab"
+              data-tab="inaturalist"
+              onclick="switchTab(this)"
+            >
+              iNaturalist
+            </div>
+            <div
+              class="search-tab"
+              data-tab="pixabay"
+              onclick="switchTab(this)"
+            >
+              Pixabay
+            </div>
+            <div class="search-tab" data-tab="upload" onclick="switchTab(this)">
+              📁 Upload
+            </div>
+            <div class="search-tab" data-tab="url" onclick="switchTab(this)">
+              URL
+            </div>
+          </div>
+
+          <div id="tab-wikimedia" style="display: none">
+            <div class="search-bar">
+              <input
+                type="text"
+                id="search-wikimedia"
+                placeholder="Search Wikimedia Commons..."
+                onkeydown="if (event.key === 'Enter') searchWikimedia();"
+              />
+              <button
+                class="btn btn-primary btn-sm"
+                onclick="searchWikimedia()"
+              >
+                Search
+              </button>
+            </div>
+            <div class="search-results" id="results-wikimedia">
+              <div class="search-status">Type a query and press Search</div>
+            </div>
+          </div>
+
+          <div id="tab-inaturalist" style="display: none">
+            <div class="search-bar">
+              <input
+                type="text"
+                id="search-inaturalist"
+                placeholder="Search iNaturalist (species, nature)..."
+                onkeydown="if (event.key === 'Enter') searchINaturalist();"
+              />
+              <button
+                class="btn btn-primary btn-sm"
+                onclick="searchINaturalist()"
+              >
+                Search
+              </button>
+            </div>
+            <div class="search-results" id="results-inaturalist">
+              <div class="search-status">Type a query and press Search</div>
+            </div>
+          </div>
+
+          <div id="tab-pixabay" style="display: none">
+            <div class="pixabay-key-row">
+              <span>API Key:</span>
+              <input
+                type="text"
+                id="pixabay-key"
+                placeholder="Enter Pixabay API key..."
+                value=""
+              />
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="savePixabayKey()"
+              >
+                Save
+              </button>
+            </div>
+            <div class="search-bar">
+              <input
+                type="text"
+                id="search-pixabay"
+                placeholder="Search Pixabay..."
+                onkeydown="if (event.key === 'Enter') searchPixabay();"
+              />
+              <button class="btn btn-primary btn-sm" onclick="searchPixabay()">
+                Search
+              </button>
+            </div>
+            <div class="search-results" id="results-pixabay">
+              <div class="search-status">Enter API key and search</div>
+            </div>
+          </div>
+
+          <div id="tab-unsplash">
+            <div class="pixabay-key-row">
+              <span>Access Key:</span>
+              <input
+                type="text"
+                id="unsplash-key"
+                placeholder="Enter Unsplash Access Key..."
+              />
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="saveUnsplashKey()"
+              >
+                Save
+              </button>
+            </div>
+            <div class="search-bar">
+              <input
+                type="text"
+                id="search-unsplash"
+                placeholder="Search Unsplash..."
+                onkeydown="if (event.key === 'Enter') searchUnsplash();"
+              />
+              <button class="btn btn-primary btn-sm" onclick="searchUnsplash()">
+                Search
+              </button>
+            </div>
+            <div class="search-results" id="results-unsplash">
+              <div class="search-status">Enter Access Key and search</div>
+            </div>
+          </div>
+
+          <div id="tab-upload" style="display: none">
+            <div
+              class="upload-drop-zone"
+              id="upload-drop-zone"
+              onclick="document.getElementById('upload-file-input').click()"
+            >
+              <div class="upload-drop-icon">📂</div>
+              <div>Click hoặc kéo thả ảnh vào đây</div>
+              <div style="font-size: 11px; color: #555; margin-top: 4px">
+                Chọn nhiều file cùng lúc (jpg, png, webp, gif)
+              </div>
+              <input
+                type="file"
+                id="upload-file-input"
+                accept="image/*"
+                multiple
+                style="display: none"
+                onchange="handleUploadFiles(this.files)"
+              />
+            </div>
+            <div
+              class="search-results"
+              id="results-upload"
+              style="display: none"
+            ></div>
+          </div>
+
+          <div id="tab-url" style="display: none">
+            <div class="url-input-area">
+              <label style="color: #888; font-size: 12px"
+                >Paste image URL:</label
+              >
+              <input
+                type="text"
+                id="url-input"
+                placeholder="https://example.com/image.jpg"
+                oninput="previewUrlInput()"
+              />
+              <img id="url-preview-img" class="url-preview" />
+              <button class="btn btn-primary" onclick="insertUrl()">
+                Insert Image
+              </button>
+            </div>
+          </div>
+
+          <div id="tab-data" style="display: none">
+            <div class="url-input-area">
+              <label style="color: #888; font-size: 12px"
+                >Current Slot & Card Data:</label
+              >
+              <textarea
+                id="data-tab-content"
+                style="
+                  width: 100%;
+                  height: 250px;
+                  background: #f9fafb;
+                  border: 1px solid #d1d5db;
+                  color: #1a1a2e;
+                  border-radius: 5px;
+                  padding: 10px;
+                  font-family: monospace;
+                  font-size: 12px;
+                  resize: vertical;
+                "
+                readonly
+              ></textarea>
+            </div>
+          </div>
+        </div>
+      </dialog>
+
+
+    <!-- Custom CSS Modal -->
+    <dialog id="css-modal">
+        <div class="modal-header">
+          <span>Custom CSS</span>
+          <button class="modal-close" onclick="closeCssModal()">×</button>
+        </div>
+        <div
+          class="modal-body"
+          style="padding: 12px; display: flex; flex-direction: column; gap: 8px"
+        >
+          <div style="font-size: 11px; color: #555">
+            CSS classes: .fc-card, .fc-image-area, .fc-image-slot,
+            .fc-image-slot-0...3, .fc-text-area, .fc-title, .fc-sections,
+            .fc-section, .fc-section__label, .fc-section__content
+          </div>
+          <textarea
+            id="custom-css-input"
+            placeholder=".fc-title { font-size: 16px; color: #333; }&#10;.fc-section__label { color: #6B21A8; }"
+          ></textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger btn-sm" onclick="resetCustomCss()">
+            Reset
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="closeCssModal()">
+            Cancel
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="applyCustomCss()">
+            Apply
+          </button>
+        </div>
+      </dialog>
+
+
+    <!-- JSON Export Modal -->
+    <dialog id="json-modal" style="max-width: 340px">
+        <div class="modal-header">
+          <span data-i18n="json.modalTitle">Export / Copy JSON</span>
+          <button class="modal-close" onclick="closeJsonModal()">×</button>
+        </div>
+        <div
+          class="modal-body"
+          style="padding: 12px; display: flex; flex-direction: column; gap: 8px"
+        >
+          <button
+            class="btn btn-secondary json-action-btn"
+            onclick="exportJsonFile()"
+          >
+            <span class="json-action-icon">⬇</span>
+            <span>
+              <span class="json-action-label" data-i18n="json.exportFile"
+                >Export to file</span
+              >
+              <span class="json-action-desc" data-i18n="json.exportFileDesc"
+                >Download as .json</span
+              >
+            </span>
+          </button>
+          <button
+            class="btn btn-secondary json-action-btn"
+            onclick="copyJsonFull()"
+          >
+            <span class="json-action-icon">⎘</span>
+            <span>
+              <span class="json-action-label" data-i18n="json.copyFull"
+                >Copy JSON</span
+              >
+              <span class="json-action-desc" data-i18n="json.copyFullDesc"
+                >Full project including images</span
+              >
+            </span>
+          </button>
+          <button
+            class="btn btn-secondary json-action-btn"
+            onclick="copyJsonNoImg()"
+          >
+            <span class="json-action-icon">⎘</span>
+            <span>
+              <span class="json-action-label" data-i18n="json.copyNoImg"
+                >Copy JSON (no images)</span
+              >
+              <span class="json-action-desc" data-i18n="json.copyNoImgDesc"
+                >Images replaced with placeholder URL</span
+              >
+            </span>
+          </button>
+          <button
+            class="btn btn-secondary json-action-btn"
+            onclick="copyJsonForAI()"
+          >
+            <span class="json-action-icon">✦</span>
+            <span>
+              <span class="json-action-label">Copy for AI</span>
+              <span class="json-action-desc">Prompt + JSON, paste vào AI Studio</span>
+            </span>
+          </button>
+          <button
+            class="btn btn-secondary json-action-btn"
+            onclick="openJsonEditor()"
+          >
+            <span class="json-action-icon">✏</span>
+            <span>
+              <span class="json-action-label">Edit JSON</span>
+              <span class="json-action-desc">Open current project in JSON editor</span>
+            </span>
+          </button>
+          <hr
+            style="border: none; border-top: 1px solid #e5e7eb; margin: 4px 0"
+          />
+          <button
+            class="btn btn-secondary json-action-btn"
+            onclick="pasteJsonLoad()"
+          >
+            <span class="json-action-icon">📋</span>
+            <span>
+              <span class="json-action-label" data-i18n="json.pasteLoad"
+                >Paste & Load</span
+              >
+              <span class="json-action-desc" data-i18n="json.pasteLoadDesc"
+                >Load project from clipboard JSON</span
+              >
+            </span>
+          </button>
+          <hr
+            style="border: none; border-top: 1px solid #e5e7eb; margin: 4px 0"
+          />
+          <div class="ai-section">
+            <div class="ai-section-header" onclick="toggleAiSection()">
+              <span>✦ AI Generate</span>
+              <span id="ai-section-chevron">▸</span>
+            </div>
+            <div id="ai-section-body" style="display: none">
+              <div class="ai-provider-row">
+                <button
+                  class="btn btn-secondary btn-sm ai-provider-btn active"
+                  data-provider="gemini"
+                  onclick="switchAiProvider('gemini')"
+                >
+                  Gemini
+                </button>
+                <button
+                  class="btn btn-secondary btn-sm ai-provider-btn"
+                  data-provider="openai"
+                  onclick="switchAiProvider('openai')"
+                >
+                  OpenAI
+                </button>
+              </div>
+              <div id="ai-key-gemini" class="pixabay-key-row">
+                <span>API Key:</span>
+                <input type="password" id="gemini-key" placeholder="AIza..." />
+                <input
+                  type="text"
+                  id="gemini-model"
+                  list="gemini-model-list"
+                  placeholder="gemini-2.0-flash"
+                  onchange="localStorage.setItem('gemini-model', this.value)"
+                  style="
+                    font-size: 11px;
+                    padding: 2px 6px;
+                    border: 1px solid #d1d5db;
+                    border-radius: 4px;
+                    background: #f9fafb;
+                    width: 160px;
+                  "
+                />
+                <datalist id="gemini-model-list">
+                  <option value="gemini-2.0-flash"></option>
+                  <option value="gemini-2.5-flash-preview-05-20"></option>
+                  <option value="gemini-2.5-pro-preview-05-06"></option>
+                </datalist>
+                <button
+                  class="btn btn-secondary btn-sm"
+                  onclick="saveAiKey('gemini')"
+                >
+                  Save
+                </button>
+              </div>
+              <div
+                id="ai-key-openai"
+                class="pixabay-key-row"
+                style="display: none"
+              >
+                <span>API Key:</span>
+                <input type="password" id="openai-key" placeholder="sk-..." />
+                <button
+                  class="btn btn-secondary btn-sm"
+                  onclick="saveAiKey('openai')"
+                >
+                  Save
+                </button>
+              </div>
+              <div style="display: flex; gap: 6px; align-items: center">
+                <input
+                  type="text"
+                  id="ai-subject"
+                  class="ai-subject-input"
+                  placeholder="New subject (e.g. Tiger, Blue whale...)"
+                  onkeydown="if (event.key === 'Enter') aiGenerateProject();"
+                />
+                <button
+                  class="btn btn-primary btn-sm"
+                  id="ai-generate-btn"
+                  onclick="aiGenerateProject()"
+                >
+                  ✦ Go
+                </button>
+              </div>
+              <div id="ai-status" class="ai-status"></div>
+            </div>
+          </div>
+        </div>
+      </dialog>
+
+
+    <!-- JSON Preview / Edit Modal -->
+    <dialog id="json-preview-modal">
+        <div class="modal-header">
+          <span>Preview &amp; Edit JSON</span>
+          <button class="modal-close" onclick="closeJsonPreview()">×</button>
+        </div>
+        <div class="modal-body" style="padding: 12px; display: flex; flex-direction: column; gap: 8px">
+          <div style="flex:1; display:flex; min-height:420px; border:1px solid #d1d5db; border-radius:5px; overflow:hidden; background:#f9fafb">
+            <div id="json-line-numbers" style="padding:10px 6px 10px 8px; background:#f3f4f6; border-right:1px solid #e5e7eb; font-family:'Courier New',monospace; font-size:12px; line-height:1.5; color:#9ca3af; text-align:right; user-select:none; overflow:hidden; white-space:pre; min-width:36px"></div>
+            <textarea
+              id="json-preview-textarea"
+              wrap="off"
+              style="flex:1; font-family:'Courier New',monospace; font-size:12px; line-height:1.5; background:transparent; border:none; padding:10px; resize:none; color:#1a1a2e; outline:none; overflow:auto; white-space:pre"
+              oninput="_syncJsonLineNums()"
+              onscroll="document.getElementById('json-line-numbers').scrollTop=this.scrollTop"
+            ></textarea>
+          </div>
+          <div id="json-preview-status" style="font-size:11px; min-height:16px"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" onclick="validateJsonPreview()">✓ Validate</button>
+          <button class="btn btn-secondary btn-sm" onclick="closeJsonPreview()">Cancel</button>
+          <button class="btn btn-primary btn-sm" onclick="applyJsonPreview()">Apply</button>
+        </div>
+    </dialog>
+
+    <dialog id="load-modal">
+        <div class="modal-header">
+          <span>Load</span>
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="modal-close" onclick="_renderFolderSection()" title="Refresh"><svg class="icon" style="width:15px;height:15px"><use href="#i-refresh"/></svg></button>
+            <button class="modal-close" onclick="closeLoadModal()">×</button>
+          </div>
+        </div>
+        <div class="modal-body load-modal-body">
+          <!-- 2-panel folder explorer -->
+          <div id="load-folder-section" style="display:none">
+            <div class="load-panel-left">
+              <div id="load-folder-tree" class="load-folder-tree"></div>
+              <button class="btn btn-secondary btn-sm load-new-folder-btn"
+                id="load-new-folder-btn" onclick="createSubfolder()">+ Folder</button>
+            </div>
+            <div class="load-panel-right">
+              <div id="load-folder-files"></div>
+            </div>
+          </div>
+          <!-- Recent -->
+          <div class="load-recent-section">
+            <div class="load-section-label">Recent</div>
+            <div id="load-recent-list"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" onclick="closeLoadModal()">Cancel</button>
+          <button class="btn btn-secondary btn-sm" onclick="newProject()">+ New Project</button>
+          <button class="btn btn-secondary btn-sm" onclick="setWorkDir()">📁 Set Folder</button>
+          <button class="btn btn-primary btn-sm" onclick="closeLoadModal();openFilePicker()">Browse file…</button>
+        </div>
+      </dialog>
+
+
+    <!-- Save As Modal -->
+    <dialog id="save-as-modal" style="max-width:340px;width:90%">
+        <div class="modal-header">
+          <span>Save As</span>
+          <button class="modal-close" onclick="closeSaveAsModal()">×</button>
+        </div>
+        <div class="modal-body" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="font-size:12px;font-weight:600;color:#374151">Folder</label>
+            <select id="save-as-folder" style="font-size:13px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;background:#fff"></select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="font-size:12px;font-weight:600;color:#374151">File name</label>
+            <input id="save-as-name" type="text" style="font-size:13px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px" onkeydown="if(event.key==='Enter')executeSaveAs()">
+          </div>
+        </div>
+        <div class="modal-footer" style="padding:10px 16px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #e5e7eb">
+          <button class="btn btn-secondary btn-sm" onclick="closeSaveAsModal()">Cancel</button>
+          <button class="btn btn-primary btn-sm" onclick="executeSaveAs()">Save</button>
+        </div>
+      </dialog>
+
+
+    <!-- Settings Modal -->
+    <dialog id="settings-modal">
+        <div class="modal-header">
+          <span>⚙️ Settings</span>
+          <button class="modal-close" onclick="closeSettingsModal()">×</button>
+        </div>
+        <div
+          class="modal-body"
+          style="
+            padding: 14px;
+            max-height: 70vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          "
+        >
+          <!-- App Behaviour -->
+          <div class="cfg-section" data-section="behaviour">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">App Behaviour</div>
+            <div class="cfg-row">
+              <label for="cfg-pasteBlock">Show Paste Block in editor</label>
+              <input type="checkbox" id="cfg-pasteBlock" />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-maxImgPx">Max image size khi paste</label>
+              <select id="cfg-maxImgPx">
+                <option value="800">Small — 800px (A6 @ 200dpi)</option>
+                <option value="1240">Medium — 1240px (A4 @ 150dpi)</option>
+                <option value="1654">Large — 1654px (A4 @ 200dpi)</option>
+                <option value="2480">Original — 2480px (A4 @ 300dpi)</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-undoMax">Undo steps</label>
+              <input type="number" id="cfg-undoMax" min="1" max="200" step="1">
+            </div>
+          </div>
+
+          <!-- New Card Defaults -->
+          <div class="cfg-section" data-section="newcard">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">New Card Defaults</div>
+            <div class="cfg-row">
+              <label for="cfg-newCard-layout">Default layout</label>
+              <select id="cfg-newCard-layout">
+                <option value="2top-1bot">2top-1bot</option>
+                <option value="1top-2bot">1top-2bot</option>
+                <option value="1big-2small">1big-2small</option>
+                <option value="2x2">2x2</option>
+                <option value="1full">1full</option>
+                <option value="1left-2right">1left-2right</option>
+                <option value="1left-3right">1left-3right</option>
+                <option value="1top-3bot">1top-3bot</option>
+                <option value="1top-1bot">1top-1bot</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-newCard-ihp">Image height % (20–80)</label>
+              <input
+                type="number"
+                id="cfg-newCard-ihp"
+                min="20"
+                max="80"
+                step="1"
+              />
+            </div>
+          </div>
+
+          <!-- Paper & Spacing -->
+          <div class="cfg-section" data-section="paper">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">Paper &amp; Spacing</div>
+            <div class="cfg-row">
+              <label for="cfg-paperSize">Paper size</label>
+              <select id="cfg-paperSize">
+                <option value="A4">A4</option>
+                <option value="A5">A5</option>
+                <option value="A6">A6</option>
+                <option value="Letter">Letter</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-orientation">Orientation</label>
+              <select id="cfg-orientation">
+                <option value="portrait">Portrait</option>
+                <option value="landscape">Landscape</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-margin">Margin (mm)</label>
+              <input type="number" id="cfg-margin" min="0" max="40" step="1" />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-padding">Padding (mm)</label>
+              <input type="number" id="cfg-padding" min="0" max="40" step="1" />
+            </div>
+          </div>
+
+          <!-- Default Border -->
+          <div class="cfg-section" data-section="border">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">Default Border</div>
+            <div class="cfg-row">
+              <label for="cfg-border-width">Width (px)</label>
+              <input
+                type="number"
+                id="cfg-border-width"
+                min="0"
+                max="10"
+                step="1"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-border-style">Style</label>
+              <select id="cfg-border-style">
+                <option value="none">none</option>
+                <option value="solid">solid</option>
+                <option value="dashed">dashed</option>
+                <option value="dotted">dotted</option>
+                <option value="double">double</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-border-color">Color</label>
+              <div class="cfg-color-row">
+                <input
+                  type="color"
+                  id="cfg-border-color"
+                  oninput="
+                    document.getElementById('cfg-border-color-hex').value =
+                      this.value
+                  "
+                />
+                <input
+                  type="text"
+                  id="cfg-border-color-hex"
+                  maxlength="7"
+                  placeholder="#6B21A8"
+                  oninput="
+                    syncColorPicker('cfg-border-color', 'cfg-border-color-hex')
+                  "
+                />
+              </div>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-border-radius">Radius (px)</label>
+              <input
+                type="number"
+                id="cfg-border-radius"
+                min="0"
+                max="40"
+                step="1"
+              />
+            </div>
+          </div>
+
+          <!-- Default Image -->
+          <div class="cfg-section" data-section="image">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">Default Image</div>
+            <div class="cfg-row">
+              <label for="cfg-img-size">Background-size</label>
+              <select id="cfg-img-size">
+                <option value="cover">cover</option>
+                <option value="contain">contain</option>
+                <option value="auto">auto</option>
+                <option value="100% 100%">stretch (100% 100%)</option>
+                <option value="100% auto">100% width</option>
+                <option value="auto 100%">100% height</option>
+                <option value="50%">50%</option>
+                <option value="75%">75%</option>
+              </select>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-img-pos">Background-position</label>
+              <input type="text" id="cfg-img-pos" placeholder="center" />
+            </div>
+          </div>
+
+          <!-- Title Font (global) -->
+          <div class="cfg-section" data-section="tfont">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">Title Font</div>
+            <div class="cfg-row">
+              <label for="cfg-font-family">Family</label>
+              <input
+                type="text"
+                id="cfg-font-family"
+                placeholder="sans-serif"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-font-size">Size (px)</label>
+              <input
+                type="number"
+                id="cfg-font-size"
+                min="8"
+                max="48"
+                step="1"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-font-color">Color</label>
+              <div class="cfg-color-row">
+                <input
+                  type="color"
+                  id="cfg-font-color"
+                  oninput="
+                    document.getElementById('cfg-font-color-hex').value =
+                      this.value
+                  "
+                />
+                <input
+                  type="text"
+                  id="cfg-font-color-hex"
+                  maxlength="7"
+                  placeholder="#1a1a1a"
+                  oninput="
+                    syncColorPicker('cfg-font-color', 'cfg-font-color-hex')
+                  "
+                />
+              </div>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-font-lh">Line-height</label>
+              <input
+                type="number"
+                id="cfg-font-lh"
+                min="0.8"
+                max="3"
+                step="0.1"
+              />
+            </div>
+          </div>
+
+          <!-- Content Font (global) -->
+          <div class="cfg-section" data-section="cfont">
+            <div class="cfg-section-title"><input type="checkbox" class="cfg-section-chk" onchange="toggleCfgSection(this)">Content Font</div>
+            <div class="cfg-row">
+              <label for="cfg-cfont-family">Family</label>
+              <input
+                type="text"
+                id="cfg-cfont-family"
+                placeholder="sans-serif"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-cfont-size">Size (px)</label>
+              <input
+                type="number"
+                id="cfg-cfont-size"
+                min="8"
+                max="48"
+                step="1"
+              />
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-cfont-color">Color</label>
+              <div class="cfg-color-row">
+                <input
+                  type="color"
+                  id="cfg-cfont-color"
+                  oninput="
+                    document.getElementById('cfg-cfont-color-hex').value =
+                      this.value
+                  "
+                />
+                <input
+                  type="text"
+                  id="cfg-cfont-color-hex"
+                  maxlength="7"
+                  placeholder="#1a1a1a"
+                  oninput="
+                    syncColorPicker('cfg-cfont-color', 'cfg-cfont-color-hex')
+                  "
+                />
+              </div>
+            </div>
+            <div class="cfg-row">
+              <label for="cfg-cfont-lh">Line-height</label>
+              <input
+                type="number"
+                id="cfg-cfont-lh"
+                min="0.8"
+                max="3"
+                step="0.1"
+              />
+            </div>
+          </div>
+
+          <!-- Style Export/Import -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Style</div>
+            <div class="cfg-row">
+              <label>Style library<br /><small style="color:#9ca3af">Save and reuse styles across projects</small></label>
+              <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+                <select id="style-library-select" style="width:130px;height:26px;font-size:12px"><option value="">— select —</option></select>
+                <button class="btn btn-secondary btn-sm" onclick="applyStyleFromLibrary()">Apply</button>
+                <button class="btn btn-secondary btn-sm" onclick="saveStyleToLibrary()">Save</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteStyleFromLibrary()">Delete</button>
+              </div>
+            </div>
+            <div class="cfg-row">
+              <label>Export style<br /><small style="color:#9ca3af">Download style settings as a file</small></label>
+              <button class="btn btn-secondary btn-sm" onclick="exportStyle()">Export</button>
+            </div>
+            <div class="cfg-row">
+              <label>Import style<br /><small style="color:#9ca3af">Apply style from a previously exported file</small></label>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('style-import-input').click()">Import</button>
+            </div>
+            <input type="file" id="style-import-input" accept=".json" style="display:none" onchange="importStyle(this)" />
+          </div>
+
+          <!-- Access Control -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Access Control</div>
+            <div class="cfg-row">
+              <label>My edit folders<br><small style="color:#9ca3af">Comma-separated folders I can edit. Leave empty to allow editing everywhere.</small></label>
+              <input id="set-edit-folders" type="text" style="width:160px;font-size:12px" placeholder="e.g. john, john/vocab"
+                onchange="const v=this.value.trim();const arr=v?v.split(',').map(s=>s.trim()).filter(Boolean):[];localStorage.setItem('fc_edit_folders',JSON.stringify(arr));_computeReadOnly();_updateLabels();">
+            </div>
+          </div>
+
+          <!-- Maintenance -->
+          <div class="cfg-section">
+            <div class="cfg-section-title">Maintenance</div>
+            <div class="cfg-row">
+              <label
+                >Compress all pasted images<br /><small style="color: #9ca3af"
+                  >Re-compress existing base64 images to current max size</small
+                ></label
+              >
+              <button
+                class="btn btn-secondary btn-sm"
+                onclick="migrateImages(this)"
+              >
+                Run
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger btn-sm" onclick="resetUserConfig()">
+            Reset to defaults
+          </button>
+          <button
+            class="btn btn-secondary btn-sm"
+            onclick="closeSettingsModal()"
+          >
+            Cancel
+          </button>
+          <button
+            class="btn btn-primary btn-sm"
+            onclick="applyAndSaveSettings()"
+          >
+            Apply &amp; Save
+          </button>
+        </div>
+    </dialog>
+
+
+    <!-- ══════════════════════════════════════════════════════════════
+         DIALOGS — native <dialog> (showModal / close)
+         ══════════════════════════════════════════════════════════════ -->
+
+    <!-- Schema Editor Modal -->
+    <dialog id="schema-editor-modal">
+      <div class="dialog-header">
+        <span class="dialog-title">Schema Editor</span>
+        <button class="btn btn-sm modal-close" onclick="closeSchemaEditor()">×</button>
+      </div>
+      <div class="dialog-body" id="schema-editor-content"></div>
+      <div class="dialog-footer">
+        <div style="display:flex;gap:4px;align-items:center;margin-right:auto">
+          <select id="schema-library-select" style="width:130px;height:26px;font-size:12px"><option value="">— library —</option></select>
+          <button class="btn btn-sm btn-secondary" onclick="applySchemaFromLibrary()">Load</button>
+          <button class="btn btn-sm btn-secondary" onclick="saveSchemaToLibrary()">Save</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteSchemaFromLibrary()">Delete</button>
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="saveSchema()">Save</button>
+        <button class="btn btn-sm btn-secondary" onclick="closeSchemaEditor()">Cancel</button>
+      </div>
+    </dialog>
+
+    <!-- Pack Dialog -->
+    <dialog id="pack-dialog">
+      <div class="dialog-header">
+        <span class="dialog-title">Pack into <span id="pack-dialog-layout" style="font-family:'SF Mono',Consolas,monospace;"></span></span>
+        <button class="btn btn-sm modal-close" onclick="closePackDialog()">×</button>
+      </div>
+      <div class="dialog-body">
+        <div id="pack-dialog-records"></div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-primary" onclick="confirmPack()">Pack</button>
+        <button class="btn btn-sm btn-secondary" onclick="closePackDialog()">Cancel</button>
+      </div>
+    </dialog>
+
+    <!-- Backup Modal -->
+    <dialog id="backup-modal">
+      <div class="dialog-header">
+        <span class="dialog-title" id="backup-modal-title">Backups</span>
+        <button class="btn btn-sm modal-close" onclick="closeBackupModal()">×</button>
+      </div>
+      <div class="dialog-body" id="backup-list" style="padding:0"></div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-primary" style="margin-right:auto" onclick="manualBackup(this)">Backup Now</button>
+        <button class="btn btn-sm btn-secondary" onclick="closeBackupModal()">Close</button>
+      </div>
+    </dialog>
+
+    <!-- Records AI (Copy for AI) Modal -->
+    <dialog id="records-ai-modal">
+      <div class="dialog-header">
+        <span class="dialog-title">✦ Copy Records for AI</span>
+        <button class="btn btn-sm modal-close" onclick="closeRecordsAiModal()">×</button>
+      </div>
+      <div class="dialog-body" style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:12px;color:var(--ink-500)">Enter names (one per line). AI will fill all other fields.</span>
+          <button class="btn btn-sm btn-secondary" onclick="pasteRecordsAiNames()">Paste</button>
+        </div>
+        <textarea id="records-ai-names" rows="12" style="width:100%;font-family:monospace;font-size:13px;resize:vertical;box-sizing:border-box;padding:8px;border:1px solid var(--border);border-radius:4px" placeholder="Name 1&#10;Name 2&#10;Name 3..."></textarea>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-secondary" onclick="closeRecordsAiModal()">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="executeRecordsAiCopy()">✦ Copy for AI</button>
+      </div>
+    </dialog>
+
+    <!-- Generate Records Dialog -->
+    <dialog id="generate-records-dialog">
+      <div class="dialog-header">
+        <span class="dialog-title">✦ Generate Records</span>
+        <button class="btn btn-sm modal-close" onclick="closeGenerateRecordsDialog()">×</button>
+      </div>
+      <div class="dialog-body" style="display:flex;flex-direction:column;gap:10px;min-width:300px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <label style="font-size:13px;white-space:nowrap">How many?</label>
+          <input id="gen-records-count" type="number" min="1" max="50" value="5"
+            style="width:70px;height:28px;font-size:13px;border:1px solid var(--line-strong);border-radius:4px;padding:0 6px">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;color:var(--ink-500)">Topic / hint (optional)</label>
+          <input id="gen-records-hint" type="text" placeholder='e.g. "Birds of Southeast Asia"'
+            style="height:30px;font-size:13px;border:1px solid var(--line-strong);border-radius:4px;padding:0 8px"
+            onkeydown="if(event.key==='Enter')executeGenerateRecords()">
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-secondary" onclick="closeGenerateRecordsDialog()">Cancel</button>
+        <button id="gen-records-btn" class="btn btn-sm btn-primary" onclick="executeGenerateRecords()">✦ Generate</button>
+      </div>
+    </dialog>
+
+    <!-- AI Chat Panel (Messenger-style floating) -->
+    <div id="ai-chat-panel" class="ai-chat-panel" style="display:none">
+      <div class="ai-chat-panel-header" onclick="toggleAiChatMinimize(event)">
+        <span class="ai-chat-panel-title">✦ AI Assistant</span>
+        <div class="ai-chat-panel-actions">
+          <button class="ai-chat-hdr-btn" onclick="event.stopPropagation();toggleAiChatMinimize()" title="Minimize">–</button>
+          <button class="ai-chat-hdr-btn" onclick="event.stopPropagation();closeAiChat()" title="Close">×</button>
+        </div>
+      </div>
+      <div class="ai-chat-panel-body">
+        <div id="ai-chat-messages" class="ai-chat-messages"></div>
+        <div class="ai-chat-footer">
+          <div class="ai-chat-footer-top">
+            <select id="ai-chat-template-select" onchange="onAiTemplateChange()"></select>
+            <select id="ai-chat-model-select" onchange="localStorage.setItem('openai-model',this.value)" title="OpenAI model">
+              <option value="gpt-4o-mini">4o-mini</option>
+              <option value="gpt-4o">4o</option>
+            </select>
+          </div>
+          <div class="ai-chat-input-row">
+            <textarea id="ai-chat-input" rows="2"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiChat();}"></textarea>
+            <button id="ai-chat-send-btn" class="btn btn-primary btn-sm" onclick="sendAiChat()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export PDF Dialog -->
+    <dialog id="export-pdf-dialog">
+      <div class="dialog-header">
+        <span class="dialog-title">Export PDF</span>
+        <button class="btn btn-sm modal-close" onclick="document.getElementById('export-pdf-dialog').close()">×</button>
+      </div>
+      <div class="dialog-body" style="display:flex;flex-direction:column;gap:14px;min-width:280px">
+        <div class="dialog-section">
+          <div class="dialog-section-title">Page Orientation</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="radio" name="pdf-orient" value="" checked> ↕↔ Mixed <span style="font-size:11px;color:var(--ink-400)">(keep each card's orientation)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="radio" name="pdf-orient" value="portrait"> ↕ All Portrait <span style="font-size:11px;color:var(--ink-400)">(rotate landscape cards)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="radio" name="pdf-orient" value="landscape"> ↔ All Landscape <span style="font-size:11px;color:var(--ink-400)">(rotate portrait cards)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('export-pdf-dialog').close()">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="runExportPdf()">
+          <svg class="icon" style="width:13px;height:13px"><use href="#i-download"/></svg> Export PDF
+        </button>
+      </div>
+    </dialog>
+
+
+    <div id="fc-toast"></div>
+  <script type="module" src="/src/js/main.js"></script>
+  </body>
+</html>
