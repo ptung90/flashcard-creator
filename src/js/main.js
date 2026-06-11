@@ -37,14 +37,24 @@ import './records/schema-editor.js'
 import './records/ai.js'
 import './ai/chat.js'
 // Layer 8
-import './app.js'
+import './app/settings.js'
+import './app/cards.js'
+import './app/app.js'
 
 // ── Window globals for HTML onclick handlers ─────────────────────────
-import { addCard, dispatch, renderSidebar, newCard,
-         addGoogleFont, setGlobalOrient, setViewMode, showRecordsPanel,
-         toggleSettingsBar, changeUIZoom, setPhysicalZoom,
+import { dispatch, showCardPanel, showRecordsPanel, toggleSettingsBar,
          toggleEmojiPicker, toggleMoreMenu, openJsonModal, closeJsonModal,
-         refreshAllThumbs, scheduleThumbRefresh, changePreviewZoom } from './app.js'
+         openJsonEditor, openJsonPreview, closeJsonPreview,
+         validateJsonPreview, applyJsonPreview, exportJsonFile,
+         copyJsonFull, copyJsonNoImg, copyJsonForAI, pasteJsonLoad,
+         _syncJsonLineNums, selectProjectIcon } from './app/app.js'
+import { addGoogleFont, removeGoogleFont, setGlobalOrient, changeUIZoom,
+         setPhysicalZoom, changePreviewZoom } from './app/settings.js'
+import { addCard, renderSidebar, newCard, refreshAllThumbs,
+         scheduleThumbRefresh, setViewMode,
+         cloneCard, closeCardMenu, copyCardStyle, pasteCardStyle,
+         setTwoUpRatio, openCardMenu, setActive, moveCard,
+         deleteCard } from './app/cards.js'
 import { saveJSON, saveJSONAs, dismissRestoreBanner, resumeLastProject,
          toggleSidebar } from './storage/storage.js'
 import { openLoadModal, openBackupModal, closeBackupModal,
@@ -72,12 +82,18 @@ import { state, uiState, LAYOUTS, PAPER_MM, HIDE_TITLE_LAYOUTS } from './core/st
 import { FC_CONFIG, FC_VERSION } from './core/config.js'
 
 Object.assign(window, {
-  // app.js
+  // app/app.js + app/settings.js + app/cards.js
   addCard, dispatch, renderSidebar, newCard,
-  addGoogleFont, setGlobalOrient, setViewMode, showRecordsPanel,
-  toggleSettingsBar, changeUIZoom, setPhysicalZoom,
+  addGoogleFont, removeGoogleFont, setGlobalOrient, setViewMode, showRecordsPanel,
+  showCardPanel, toggleSettingsBar, changeUIZoom, setPhysicalZoom,
   toggleEmojiPicker, toggleMoreMenu, openJsonModal, closeJsonModal,
+  openJsonEditor, openJsonPreview, closeJsonPreview,
+  validateJsonPreview, applyJsonPreview, exportJsonFile,
+  copyJsonFull, copyJsonNoImg, copyJsonForAI, pasteJsonLoad,
+  _syncJsonLineNums, selectProjectIcon,
   refreshAllThumbs, scheduleThumbRefresh, changePreviewZoom,
+  cloneCard, closeCardMenu, copyCardStyle, pasteCardStyle,
+  setTwoUpRatio, openCardMenu, setActive, moveCard, deleteCard,
   // storage/storage.js
   saveJSON, saveJSONAs, dismissRestoreBanner, resumeLastProject, toggleSidebar,
   // storage/file-modals.js
