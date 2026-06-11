@@ -15,7 +15,8 @@ import './core/config.js'
 import './core/state.js'
 import './core/utils.js'
 // Layer 2
-import './storage.js'
+import './storage/storage.js'
+import './storage/file-modals.js'
 import './api.js'
 import './i18n.js'
 // Layer 3
@@ -44,9 +45,10 @@ import { addCard, dispatch, renderSidebar, newCard,
          toggleSettingsBar, changeUIZoom, setPhysicalZoom,
          toggleEmojiPicker, toggleMoreMenu, openJsonModal, closeJsonModal,
          refreshAllThumbs, scheduleThumbRefresh, changePreviewZoom } from './app.js'
-import { saveJSON, saveJSONAs, openLoadModal, openBackupModal, closeBackupModal,
-         manualBackup, setWorkDir, dismissRestoreBanner, resumeLastProject,
-         toggleSidebar } from './storage.js'
+import { saveJSON, saveJSONAs, dismissRestoreBanner, resumeLastProject,
+         toggleSidebar } from './storage/storage.js'
+import { openLoadModal, openBackupModal, closeBackupModal,
+         manualBackup, setWorkDir } from './storage/file-modals.js'
 import { printOne, printAll, exportOnePDF,
          openExportPdfDialog, runExportPdf } from './preview.js'
 import { openCssModal, closeCssModal, openSettingsModal, closeSettingsModal,
@@ -76,10 +78,10 @@ Object.assign(window, {
   toggleSettingsBar, changeUIZoom, setPhysicalZoom,
   toggleEmojiPicker, toggleMoreMenu, openJsonModal, closeJsonModal,
   refreshAllThumbs, scheduleThumbRefresh, changePreviewZoom,
-  // storage.js
-  saveJSON, saveJSONAs, openLoadModal, openBackupModal, closeBackupModal,
-  manualBackup, setWorkDir, dismissRestoreBanner, resumeLastProject,
-  toggleSidebar,
+  // storage/storage.js
+  saveJSON, saveJSONAs, dismissRestoreBanner, resumeLastProject, toggleSidebar,
+  // storage/file-modals.js
+  openLoadModal, openBackupModal, closeBackupModal, manualBackup, setWorkDir,
   // preview.js
   printOne, printAll, exportOnePDF,
   openExportPdfDialog, runExportPdf,

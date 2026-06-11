@@ -1,5 +1,5 @@
 ﻿import html2canvas from 'html2canvas'
-import { setCurrentFileName, setCurrentSubfolder } from './storage.js'
+import { setCurrentFileName, setCurrentSubfolder } from './storage/storage.js'
 
 marked.use({
   extensions: [{
