@@ -10,7 +10,6 @@ function generateRecord(record, { skipDispatch = false } = {}) {
   const singleTemplates = state.schema.cardTemplates.filter(t => t.templateType === 'single');
   for (const template of singleTemplates) {
     let card = state.cards.find(c => c.recordId === record.id && c.templateId === template.id);
-    const isNewCard = !card;
     if (!card) {
       card = newCard();
       card.recordId = record.id;
@@ -18,7 +17,8 @@ function generateRecord(record, { skipDispatch = false } = {}) {
       state.cards.push(card);
     }
     card.layout = template.layout;
-    if (isNewCard) card.hideTitle = HIDE_TITLE_LAYOUTS.has(template.layout);
+    card.hideTitle = template.hideTitle ?? HIDE_TITLE_LAYOUTS.has(template.layout);
+    card.hideSectionLabels = template.hideSectionLabels ?? false;
     card.orientation = 'portrait';
     card.paperSize = template.size || null;
     card.cssClass = template.cardClass || null;
@@ -54,6 +54,8 @@ function syncRecord(recordId) {
     const records = card.packedRecordIds.map(id => state.records.find(r => r.id === id)).filter(Boolean);
     if (!records.length) return;
     card.cssClass = template.cardClass || null;
+    card.hideTitle = template.hideTitle ?? false;
+    card.hideSectionLabels = template.hideSectionLabels ?? false;
     const slotCount = isTxtGrid ? records.length : fixedSlots;
     if (!isTxtGrid) {
       card.images = records.map((rec, slot) => ({
@@ -192,12 +194,15 @@ function packRecords(template, selectedRecords) {
       card.paperSize = template.size || null;
       card.imageGridSplit = { ...(LAYOUT_SPLIT_DEFAULTS[layout] || LAYOUT_SPLIT_DEFAULTS['1full']) };
       card.title = `${layout} · ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
-      card.hideTitle = HIDE_TITLE_LAYOUTS.has(layout);
+      card.hideTitle = template.hideTitle ?? HIDE_TITLE_LAYOUTS.has(layout);
+      card.hideSectionLabels = template.hideSectionLabels ?? false;
       state.cards.push(card);
     }
 
     card.templateId = template.id;
     card.packedRecordIds = recordIds;
+    card.hideTitle = template.hideTitle ?? HIDE_TITLE_LAYOUTS.has(layout);
+    card.hideSectionLabels = template.hideSectionLabels ?? false;
     card.cssClass = template.cardClass || null;
     if (template.cardConfig) Object.assign(card, template.cardConfig);
 

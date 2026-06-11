@@ -126,27 +126,65 @@ Project JSON:
 ${JSON.stringify(snapshot, null, 2)}`;
 }
 
-async function _wikimediaFirstResult(query) {
-  const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(query)}&gsrlimit=5&prop=imageinfo&iiprop=url&iiurlwidth=900&format=json&origin=*`;
-  const r = await fetch(url);
-  if (!r.ok) return null;
-  const data = await r.json();
-  const pages = Object.values(data.query?.pages || {});
-  for (const p of pages) {
-    const u = p.imageinfo?.[0]?.url;
-    if (u) return u;
+const _NOISE_WORDS = /\b(icon|logo|image|photo|picture|img|svg|png|jpg)\b/gi;
+
+function savePexelsKey() {
+  const key = document.getElementById('pexels-key').value.trim();
+  localStorage.setItem('pexels-key', key);
+}
+
+async function _fetchPexelsUrl(query, key) {
+  try {
+    const params = new URLSearchParams({ query, per_page: '5', orientation: 'landscape' });
+    const r = await fetch(`https://api.pexels.com/v1/search?${params}`, {
+      headers: { Authorization: key },
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return data.photos?.[0]?.src?.large ?? data.photos?.[0]?.src?.medium ?? null;
+  } catch {
+    return null;
   }
-  return null;
+}
+
+async function _fetchImageByKeyword(query) {
+  const pexelsKey = localStorage.getItem('pexels-key') || '';
+  if (pexelsKey) {
+    const url = await _fetchPexelsUrl(query, pexelsKey);
+    if (url) return url;
+  }
+
+  const cleaned = query.replace(_NOISE_WORDS, '').replace(/\s+/g, ' ').trim() || query;
+  const _search = async (q) => {
+    const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=20&prop=imageinfo&iiprop=url|mime&iiurlwidth=900&format=json&origin=*`;
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const data = await r.json();
+    const pages = Object.values(data.query?.pages || {});
+    const page = pages.find(p => /image\/(jpeg|png|webp)/.test(p.imageinfo?.[0]?.mime || ''));
+    return page?.imageinfo?.[0]?.url || null;
+  };
+
+  try {
+    const url = await _search(cleaned);
+    if (url) return url;
+    const firstWord = cleaned.split(' ')[0];
+    if (firstWord && firstWord !== cleaned) return await _search(firstWord);
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 async function _callOpenAI(key, prompt) {
+  const messages = Array.isArray(prompt) ? prompt : [{ role: "user", content: prompt }];
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: localStorage.getItem('openai-model') || 'gpt-4o-mini',
       response_format: { type: "json_object" },
-      messages: [{ role: "user", content: prompt }]
+      messages,
     })
   });
   if (r.status === 401) throw Object.assign(new Error(t('ai.badKey')), { handled: true });

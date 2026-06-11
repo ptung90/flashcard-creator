@@ -17,6 +17,11 @@ function toggleColMenu(event) {
   const menu = document.getElementById('col-menu');
   if (menu) menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
 }
+function toggleRecordsMoreMenu(event) {
+  event.stopPropagation();
+  const menu = document.getElementById('records-more-menu');
+  if (menu) menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+}
 function _linkedCardChips(recordId) {
   const chips = [];
   state.cards.forEach((c, i) => {
@@ -75,11 +80,17 @@ function renderRecordsPanel() {
         <div id="col-menu" style="display:none">${colMenuItems}</div>
       </div>
       <button class="btn btn-sm btn-secondary" onclick="openSchemaEditor()">${t('rec.schema')}</button>
-      <button class="btn btn-sm btn-secondary" onclick="exportRecordsJson()" title="Export records as JSON file">Export JSON</button>
-      <button class="btn btn-sm btn-secondary" onclick="copyRecordsForAI()" title="Copy records as AI prompt">✦ Copy for AI</button>
-      <button class="btn btn-sm btn-secondary" onclick="importRecordsJsonClick()" title="Import records from JSON file">Import JSON</button>
-      <button class="btn btn-sm btn-secondary" onclick="pasteRecordsJson()" title="Paste JSON — update existing records by ID">Paste JSON</button>
-      <button class="btn btn-sm btn-secondary" onclick="pasteRecordsJson(true)" title="Paste JSON — append all as new records">Append JSON</button>
+      <button class="btn btn-sm btn-primary" onclick="openAiChat('generate_records')" title="Generate new records with AI">✦ AI</button>
+      <div class="records-pack-wrap">
+        <button class="btn btn-sm btn-secondary" onclick="toggleRecordsMoreMenu(event)" title="More options">•••</button>
+        <div id="records-more-menu" style="display:none;flex-direction:column;min-width:160px">
+          <button onclick="exportRecordsJson();toggleRecordsMoreMenu(event)">Export JSON</button>
+          <button onclick="copyRecordsForAI();toggleRecordsMoreMenu(event)">✦ Copy for AI</button>
+          <button onclick="importRecordsJsonClick();toggleRecordsMoreMenu(event)">Import JSON</button>
+          <button onclick="pasteRecordsJson();toggleRecordsMoreMenu(event)">Paste JSON (update)</button>
+          <button onclick="pasteRecordsJson(true);toggleRecordsMoreMenu(event)">Append JSON</button>
+        </div>
+      </div>
       <input type="file" id="records-import-input" accept=".json" style="display:none" onchange="importRecordsJsonFile(this)">
     </div>`;
 

@@ -205,6 +205,17 @@ const STRINGS = {
     'rec.schema.addField': '+ Add Field',
     'rec.schema.templatesTitle': 'Card Templates',
     'rec.schema.addTemplate': '+ Add Template',
+    // AI Chat templates
+    'ai.tpl.rewrite.label': '🔄 Rewrite for subject (gpt-4o)',
+    'ai.tpl.rewrite.ph': 'New subject (e.g. "Freshwater fish of Vietnam")',
+    'ai.tpl.add.label': '➕ Add cards',
+    'ai.tpl.add.ph': 'What to add? (e.g. "5 cards about predatory birds")',
+    'ai.tpl.editAll.label': '✏️ Edit all cards',
+    'ai.tpl.editAll.ph': 'What to change? (e.g. "Make all content shorter")',
+    'ai.tpl.editActive.label': '🎯 Edit active card',
+    'ai.tpl.editActive.ph': 'What to change on this card? (e.g. "Add more detail")',
+    'ai.tpl.genRecords.label': '🗂️ Generate records',
+    'ai.tpl.genRecords.ph': 'Count + topic (e.g. "10 freshwater fish")',
   },
 
   vi: {
@@ -412,6 +423,17 @@ const STRINGS = {
     'rec.schema.addField': '+ Thêm trường',
     'rec.schema.templatesTitle': 'Mẫu thẻ',
     'rec.schema.addTemplate': '+ Thêm mẫu',
+    // AI Chat templates
+    'ai.tpl.rewrite.label': '🔄 Viết lại theo chủ đề (gpt-4o)',
+    'ai.tpl.rewrite.ph': 'Chủ đề mới (vd: "Cá nước ngọt Việt Nam")',
+    'ai.tpl.add.label': '➕ Thêm thẻ',
+    'ai.tpl.add.ph': 'Thêm gì? (vd: "5 thẻ về chim săn mồi")',
+    'ai.tpl.editAll.label': '✏️ Sửa tất cả thẻ',
+    'ai.tpl.editAll.ph': 'Sửa gì? (vd: "Rút gọn nội dung, tối đa 2 câu")',
+    'ai.tpl.editActive.label': '🎯 Sửa thẻ đang chọn',
+    'ai.tpl.editActive.ph': 'Sửa gì trên thẻ này? (vd: "Thêm chi tiết về môi trường sống")',
+    'ai.tpl.genRecords.label': '🗂️ Tạo record',
+    'ai.tpl.genRecords.ph': 'Số lượng + chủ đề (vd: "10 loài cá nước ngọt Việt Nam")',
   },
 };
 
@@ -434,6 +456,10 @@ function setLang(lang) {
   renderEditor();
   renderSidebar();
   renderRecordsPanel();
+  if (typeof _populateChatTemplateSelect === 'function') {
+    _populateChatTemplateSelect();
+    if (typeof onAiTemplateChange === 'function') onAiTemplateChange();
+  }
 }
 
 function applyI18n() {

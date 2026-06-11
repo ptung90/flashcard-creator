@@ -105,6 +105,20 @@ function _renderSchemaEditor() {
       <button class="btn btn-sm" onclick="_removeSchemaField(${i})">✕</button>
     </div>`).join('');
 
+  const _checkboxRow = (i, tmpl) =>
+    `<div style="font-size:12px;display:flex;gap:14px;margin-bottom:8px;">
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+        <input type="checkbox" ${tmpl.hideTitle ? 'checked' : ''}
+          onchange="_schemaTemplateChange(${i},'hideTitle',this.checked)">
+        Hide title
+      </label>
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
+        <input type="checkbox" ${tmpl.hideSectionLabels ? 'checked' : ''}
+          onchange="_schemaTemplateChange(${i},'hideSectionLabels',this.checked)">
+        Hide section labels
+      </label>
+    </div>`;
+
   const templatesHtml = s.cardTemplates.map((tmpl, i) => {
     const isCompound = tmpl.templateType === 'compound';
     const typeToggle = `
@@ -143,6 +157,7 @@ function _renderSchemaEditor() {
             style="flex:1;font-family:monospace;font-size:11px;"
             oninput="_schemaTemplateChange(${i},'cardClass',this.value)">
         </div>
+        ${_checkboxRow(i, tmpl)}
         <div class="schema-template-slots">
           ${tmpl.layout === 'txtgrid' ? `
             <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -232,6 +247,7 @@ function _renderSchemaEditor() {
             style="flex:1;font-family:monospace;font-size:11px;"
             oninput="_schemaTemplateChange(${i},'cardClass',this.value)">
         </div>
+        ${_checkboxRow(i, tmpl)}
         <div style="font-size:12px;">
           <div>${t('rec.schema.imageSlots')} ${imgSlotSelects}</div>
           <div style="margin-top:4px;">${t('rec.schema.sections')} ${secSelects}
@@ -317,6 +333,9 @@ function _schemaTemplateChange(i, prop, value) {
     t.size = value;
   } else if (prop === 'orientation') {
     t.orientation = value;
+  } else if (prop === 'hideTitle' || prop === 'hideSectionLabels') {
+    t[prop] = value;
+    return;
   } else if (prop === 'cardClass') {
     t.cardClass = value;
     return;
@@ -359,6 +378,23 @@ function closePackDialog() {
 function saveSchema() {
   state.schema = _editingSchema;
   if (!Array.isArray(state.records)) state.records = [];
+
+  // Build a map of templateId → template for fast lookup
+  const allTemplates = state.schema.cardTemplates || [];
+  const templateMap = Object.fromEntries(allTemplates.map(t => [t.id, t]));
+  const singleTemplates = allTemplates.filter(t => t.templateType === 'single');
+
+  // Patch all record-linked cards directly (handles legacy cards without templateId)
+  state.cards.forEach(card => {
+    if (!card.recordId && !card.packedRecordIds) return;
+    const tmpl = templateMap[card.templateId] ||
+      (singleTemplates.length === 1 ? singleTemplates[0] : null);
+    if (!tmpl) return;
+    card.hideTitle = tmpl.hideTitle ?? false;
+    card.hideSectionLabels = tmpl.hideSectionLabels ?? false;
+  });
+
+  if (state.cards.some(c => c.recordId || c.packedRecordIds)) dispatch('CARD_LIST_CHANGED');
   setDirty();
   closeSchemaEditor();
   renderRecordsPanel();

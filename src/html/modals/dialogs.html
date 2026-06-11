@@ -68,6 +68,59 @@
       </div>
     </dialog>
 
+    <!-- Generate Records Dialog -->
+    <dialog id="generate-records-dialog">
+      <div class="dialog-header">
+        <span class="dialog-title">✦ Generate Records</span>
+        <button class="btn btn-sm modal-close" onclick="closeGenerateRecordsDialog()">×</button>
+      </div>
+      <div class="dialog-body" style="display:flex;flex-direction:column;gap:10px;min-width:300px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <label style="font-size:13px;white-space:nowrap">How many?</label>
+          <input id="gen-records-count" type="number" min="1" max="50" value="5"
+            style="width:70px;height:28px;font-size:13px;border:1px solid var(--line-strong);border-radius:4px;padding:0 6px">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;color:var(--ink-500)">Topic / hint (optional)</label>
+          <input id="gen-records-hint" type="text" placeholder='e.g. "Birds of Southeast Asia"'
+            style="height:30px;font-size:13px;border:1px solid var(--line-strong);border-radius:4px;padding:0 8px"
+            onkeydown="if(event.key==='Enter')executeGenerateRecords()">
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-secondary" onclick="closeGenerateRecordsDialog()">Cancel</button>
+        <button id="gen-records-btn" class="btn btn-sm btn-primary" onclick="executeGenerateRecords()">✦ Generate</button>
+      </div>
+    </dialog>
+
+    <!-- AI Chat Panel (Messenger-style floating) -->
+    <div id="ai-chat-panel" class="ai-chat-panel" style="display:none">
+      <div class="ai-chat-panel-header" onclick="toggleAiChatMinimize(event)">
+        <span class="ai-chat-panel-title">✦ AI Assistant</span>
+        <div class="ai-chat-panel-actions">
+          <button class="ai-chat-hdr-btn" onclick="event.stopPropagation();toggleAiChatMinimize()" title="Minimize">–</button>
+          <button class="ai-chat-hdr-btn" onclick="event.stopPropagation();closeAiChat()" title="Close">×</button>
+        </div>
+      </div>
+      <div class="ai-chat-panel-body">
+        <div id="ai-chat-messages" class="ai-chat-messages"></div>
+        <div class="ai-chat-footer">
+          <div class="ai-chat-footer-top">
+            <select id="ai-chat-template-select" onchange="onAiTemplateChange()"></select>
+            <select id="ai-chat-model-select" onchange="localStorage.setItem('openai-model',this.value)" title="OpenAI model">
+              <option value="gpt-4o-mini">4o-mini</option>
+              <option value="gpt-4o">4o</option>
+            </select>
+          </div>
+          <div class="ai-chat-input-row">
+            <textarea id="ai-chat-input" rows="2"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiChat();}"></textarea>
+            <button id="ai-chat-send-btn" class="btn btn-primary btn-sm" onclick="sendAiChat()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Export PDF Dialog -->
     <dialog id="export-pdf-dialog">
       <div class="dialog-header">

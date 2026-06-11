@@ -37,6 +37,7 @@ const modalsHtml = [
 // Each file may only call functions defined in files loaded BEFORE it.
 //
 // LAYER 0 — pure config, no dependencies
+const env     = readJs("env.js");       // window.FC_ENV — local keys, gitignored (see env.example.js)
 const config  = readJs("config.js");    // window.FC_CONFIG, FC_VERSION — no deps
 
 // LAYER 1 — data + pure helpers, no DOM
@@ -69,6 +70,9 @@ const recordsPack   = readJs("records-pack.js");  // generate, sync, pack, conso
 const schemaEditor  = readJs("schema-editor.js"); // schema editor modal, library             ← state, utils, storage, i18n, records
 const recordsAi     = readJs("records-ai.js");    // export/import/AI copy for records        ← state, utils, storage, records
 
+// LAYER 7b — AI chat (depends on api, state, storage)
+const aiChat  = readJs("ai-chat.js");   // chat dialog, prompt templates, apply ops           ← state, utils, api
+
 // LAYER 8 — app shell (wires everything together, must load last)
 const app     = readJs("app.js");       // init, dispatch, sidebar, toolbar, event wiring    ← all layers
 
@@ -94,11 +98,12 @@ const allJs = [
   preview, modals,
   undo,
   records, recordsPack, schemaEditor, recordsAi,
+  aiChat,
   app,
 ].filter(Boolean).join("\n\n");
 
 const output = template
-  .replace("    <!-- BUILD:CONFIG -->", `    <script>\n${config}\n    </script>`)
+  .replace("    <!-- BUILD:CONFIG -->", `    <script>\n${env}\n${config}\n    </script>`)
   .replace("    <!-- BUILD:CSS -->",    `    <style>\n${css}\n    </style>`)
   .replace("    <!-- BUILD:VENDOR -->", vendorBlock)
   .replace("    <!-- BUILD:SVG -->",    svgHtml)

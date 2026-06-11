@@ -119,6 +119,92 @@ ${JSON.stringify(out.records, null, 2)}`;
     .catch(() => showToast('Copy failed'));
 }
 
+function openGenerateRecordsDialog() {
+  if (!state.schema) { showToast('No schema defined'); return; }
+  document.getElementById('generate-records-dialog').showModal();
+  setTimeout(() => document.getElementById('gen-records-count').focus(), 50);
+}
+
+function closeGenerateRecordsDialog() {
+  document.getElementById('generate-records-dialog').close();
+}
+
+async function executeGenerateRecords() {
+  const n = parseInt(document.getElementById('gen-records-count').value, 10) || 5;
+  const hint = document.getElementById('gen-records-hint').value.trim();
+  const allFields = state.schema.fields;
+  const imageFields = allFields.filter(f => f.type === 'image');
+  const textFields = allFields.filter(f => f.type !== 'image');
+
+  const schemaLines = allFields.map(function(f) { return '- ' + f.key + ' (' + f.type + '): ' + f.label; }).join('\n');
+  const imgNote = imageFields.length
+    ? '\n- image fields: set value to a concise English Wikimedia search keyword (e.g. species name, landmark) — NOT a URL'
+    : '';
+
+  // Pick up to 3 records with the most filled text fields as samples
+  const samples = state.records.slice().sort(function(a, b) {
+    const scoreA = textFields.filter(function(f) { return (a.fields[f.key] || '').trim(); }).length;
+    const scoreB = textFields.filter(function(f) { return (b.fields[f.key] || '').trim(); }).length;
+    return scoreB - scoreA;
+  }).slice(0, 3).map(function(r) {
+    const obj = {};
+    allFields.forEach(function(f) {
+      const v = r.fields[f.key] || '';
+      obj[f.key] = (f.type === 'image' && v.startsWith('data:')) ? '' : v;
+    });
+    return obj;
+  });
+
+  const systemContent = [
+    'You are a record data generator. Generate new records matching a schema and return valid JSON.',
+    '',
+    'Schema:',
+    schemaLines,
+    '',
+    'Rules:',
+    '1. Return ONLY a JSON array of exactly ' + n + ' records — no wrapper, no explanation, no markdown fences.',
+    '2. Each record: { ' + allFields.map(function(f) { return '"' + f.key + '": "..."'; }).join(', ') + ' }',
+    '3. text/text-long fields: 2–4 sentences of specific, accurate, interesting facts. Use Markdown (**bold**, - lists). No HTML.',
+    '4. All records must be distinct — avoid duplicates with each other.' + imgNote,
+  ].join('\n');
+
+  const userLines = [];
+  if (samples.length) {
+    userLines.push('Sample records (match this style, language, and depth — do NOT repeat them):');
+    userLines.push(JSON.stringify(samples, null, 2));
+    userLines.push('');
+  }
+  userLines.push('Generate ' + n + ' new records' + (hint ? ' about: "' + hint + '"' : '') + '.');
+
+  const key = localStorage.getItem(_aiProvider + '-key') || '';
+  if (!key) { showToast('No ' + _aiProvider + ' key set'); return; }
+
+  const btn = document.getElementById('gen-records-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
+  try {
+    const messages = [
+      { role: 'system', content: systemContent },
+      { role: 'user',   content: userLines.join('\n') },
+    ];
+    const result = _aiProvider === 'gemini'
+      ? await _callGemini(key, messages[0].content + '\n\n' + messages[1].content)
+      : await _callOpenAI(key, messages);
+
+    // _callOpenAI returns parsed JSON — but we expect an array, not {ops}
+    // The AI should return a raw array; if it wrapped it, unwrap
+    const arr = Array.isArray(result) ? result : (result.records || Object.values(result)[0]);
+    if (!Array.isArray(arr) || !arr.length) { showToast('No records returned'); return; }
+
+    closeGenerateRecordsDialog();
+    await _applyImportedRecords(JSON.stringify(arr), true);
+  } catch (e) {
+    showToast('Error: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✦ Generate'; }
+  }
+}
+
 function importRecordsJsonClick() {
   document.getElementById('records-import-input')?.click();
 }
@@ -156,7 +242,7 @@ async function _applyImportedRecords(jsonText, append = false) {
         target.fields[f.key] = val;
       } else {
         try {
-          const url = await _wikimediaFirstResult(val);
+          const url = await _fetchImageByKeyword(val);
           if (url) target.fields[f.key] = url;
         } catch (_) {}
       }

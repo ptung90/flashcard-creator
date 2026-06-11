@@ -1006,7 +1006,7 @@ async function _autoFetchImages() {
   let filled = 0;
   await Promise.all(pending.map(async img => {
     try {
-      const url = await _wikimediaFirstResult(img.search_query);
+      const url = await _fetchImageByKeyword(img.search_query);
       if (url) { img.url = url; filled++; }
     } catch {}
   }));
@@ -1032,6 +1032,14 @@ async function pasteJsonLoad() {
 
 // ── Init ───────────────────────────────────────────────────────────
 async function init() {
+  // Seed localStorage from FC_ENV (env.js — local only, not committed)
+  const _env = window.FC_ENV || {};
+  if (_env.pexelsKey)   localStorage.setItem('pexels-key',   _env.pexelsKey);
+  if (_env.unsplashKey) localStorage.setItem('unsplash-key', _env.unsplashKey);
+  if (_env.pixabayKey)  localStorage.setItem('pixabay-key',  _env.pixabayKey);
+  if (_env.openaiKey)   localStorage.setItem('openai-key',   _env.openaiKey);
+  if (_env.geminiKey)   localStorage.setItem('gemini-key',   _env.geminiKey);
+
   const vEl = document.getElementById("app-version");
   if (vEl) vEl.textContent = "v" + (window.FC_VERSION || "?");
   await restoreWorkDir();

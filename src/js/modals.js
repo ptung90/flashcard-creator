@@ -72,6 +72,8 @@ function openSettingsModal() {
   set("cfg-cfont-color-hex", cf.color || "#1a1a1a");
   set("cfg-cfont-lh", cf.lineHeight ?? 1.1);
 
+  const pexelsKeyEl = document.getElementById('pexels-key');
+  if (pexelsKeyEl) pexelsKeyEl.value = localStorage.getItem('pexels-key') || '';
   document.getElementById("settings-modal").showModal();
   document.querySelectorAll('.cfg-section-chk').forEach(cb => toggleCfgSection(cb));
   listLibrary('styles').then(names => {
