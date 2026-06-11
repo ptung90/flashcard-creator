@@ -437,7 +437,7 @@ function _destroyTipTapInstances() {
 }
 
 // Shared Tiptap config used by both card editor and record editor
-function _tiptapBaseConfig(placeholder) {
+export function tiptapBaseConfig(placeholder) {
   let _editorRef = null;
   return {
     extensions: [
@@ -467,11 +467,10 @@ function _tiptapBaseConfig(placeholder) {
     },
   };
 }
-window._tiptapBaseConfig = _tiptapBaseConfig;
 
 // Single-line config for label editors: Enter blurs, Tab moves to content
 function _tiptapLabelConfig(placeholder) {
-  const base = _tiptapBaseConfig(placeholder);
+  const base = tiptapBaseConfig(placeholder);
   const origKeyDown = base.editorProps.handleKeyDown;
   return {
     ...base,
@@ -506,7 +505,7 @@ function _initTipTapInstances(card) {
 
     const editor = new Editor({
       element: el,
-      ...(_tiptapBaseConfig(t('editor.contentPh') || 'Write something...')),
+      ...(tiptapBaseConfig(t('editor.contentPh') || 'Write something...')),
       content: _contentToHtml(s.content),
     });
 

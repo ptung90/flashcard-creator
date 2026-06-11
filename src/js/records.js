@@ -1,5 +1,6 @@
 ﻿import TurndownService from 'turndown'
 import { Editor } from '@tiptap/core'
+import { tiptapBaseConfig } from './editor.js'
 
 // ── TurndownService (local instance for record editor) ─────────────────
 let _turndownService = null;
@@ -465,7 +466,7 @@ function _initRecordTiptapInstances(record) {
     const val = record.fields[f.key] ?? '';
     const editor = new Editor({
       element: el,
-      ...(window._tiptapBaseConfig(t('rec.tiptapPh'))),
+      ...(tiptapBaseConfig(t('rec.tiptapPh'))),
       content: mdParse(val),
     });
     editor.on('update', () => {
