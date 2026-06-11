@@ -7,16 +7,21 @@ Vanilla JS + CSS, libraries loaded from CDN.
 
 ## Build System
 
-**Edit source files in `src/`, then run `node build.js` to regenerate `index.html`.**
+**Dev:** `npm run dev` — Vite dev server with hot reload at http://localhost:5173
+
+**Build:** `npm run build` — produces `dist/index.html` (single file, offline-ready), also copies to `FlashCardApp2/FlashCard Creator.html`
+
+Source files live in `src/`. Edit there, Vite handles bundling.
 
 ```
 src/
 ├── html/
-│   ├── template.html  — HTML shell + app layout (BUILD:CONFIG, BUILD:CSS, BUILD:SVG, BUILD:MODALS, BUILD:JS)
-│   ├── svg.html       — SVG icon sprite (<symbol> definitions)
-│   └── modals.html    — all modals (backdrop-style) + dialogs (native <dialog>) + toast
+│   ├── template.html  — not used by Vite build (kept for reference)
+│   ├── svg.html       — SVG icon sprite (inlined in root index.html)
+│   └── modals.html    — modals and dialogs (inlined in root index.html)
 ├── js/
-│   ├── config.js      — window.FC_VERSION + window.FC_CONFIG
+│   ├── main.js        — Vite entry point: imports all CSS + JS modules, exposes window globals
+│   ├── config.js      — FC_VERSION + FC_CONFIG
 │   ├── state.js       — state shape, LAYOUTS, uiState, getActiveCard()
 │   ├── utils.js       — uid, mdParse, esc, _show/_hide, _compressImage, _hashStr
 │   ├── storage.js     — File System Access API, IndexedDB, autosave, backup, read-only
@@ -24,36 +29,32 @@ src/
 │   ├── i18n.js        — translation strings + t() helper
 │   ├── render.js      — buildCardHTML, getGridTemplateStyle, buildHandles
 │   ├── editor.js      — card editor UI, TipTap instances, section controls
+│   ├── editor-controls.js — font/border/image controls
+│   ├── editor-sections.js — section add/remove/reorder controls
 │   ├── preview.js     — live preview rendering, PDF/print export
 │   ├── modals.js      — image search modal logic, settings modal logic
 │   ├── undo.js        — undo/redo stack
 │   ├── records.js     — schema editor, records panel, pack/sync, AI export/import
+│   ├── records-pack.js — pack/sync records into cards
+│   ├── schema-editor.js — schema editor modal
+│   ├── records-ai.js  — AI-assisted record generation
+│   ├── ai-chat.js     — AI chat panel
 │   └── app.js         — init, dispatch, sidebar, toolbar, event wiring
 └── css/
+    ├── lexend-embedded.css — Lexend font (base64, offline)
     ├── base.css       — reset, variables, typography
     ├── sidebar.css    — card list sidebar
     ├── editor.css     — editor panel
     ├── preview.css    — preview panel
     ├── modal.css      — shared modal styles
     └── tomoe.css      — records, schema, dialogs, misc feature styles
-build.js            — assembles src/ → index.html, copies to FlashCardApp2/
-watch.js            — watches src/ and auto-runs build.js (150ms debounce)
-index.html          — GENERATED — do not edit directly
+index.html          — Vite entry point (hand-authored HTML shell + app layout)
+vite.config.js      — Vite config with vite-plugin-singlefile
+scripts/postbuild.js — copies dist/index.html to FlashCardApp2/ after build
+dist/               — GENERATED — do not edit directly (gitignored)
 FlashCardApp2/
-└── FlashCard Creator.html  — copy of index.html for distribution
+└── FlashCard Creator.html  — copy of dist/index.html for distribution
 ```
-
-**IMPORTANT:** Always edit `src/` files, never edit `index.html` directly. Run `node build.js` before sharing or testing. `watch.js` handles auto-rebuild during development.
-
-### Build markers (in `src/html/template.html`)
-
-- `<!-- BUILD:CONFIG -->` — replaced with `<script>src/js/config.js</script>` contents
-- `<!-- BUILD:CSS -->` — replaced with `<style>` + all `src/css/*.css` concatenated
-- `<!-- BUILD:SVG -->` — replaced with `src/html/svg.html` contents
-- `<!-- BUILD:MODALS -->` — replaced with `src/html/modals.html` contents
-- `<!-- BUILD:JS -->` — replaced with `<script>` + all `src/js/*.js` concatenated in order
-
-**IMPORTANT:** The CONFIG marker must not appear inside any HTML comment. Stray `<!--` above it will swallow the entire config block, making `FC_VERSION` undefined.
 
 ## Key Rules
 
