@@ -9,6 +9,8 @@ backup-*/
 
 # Local data files
 *.json
+!package.json
+!package-lock.json
 *.pdf
 sessions/
 docs/
@@ -28,3 +30,4 @@ src/js/env.js
 
 # Node
 node_modules/
+dist/
