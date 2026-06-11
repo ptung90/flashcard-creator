@@ -1,4 +1,37 @@
-﻿import { Editor } from '@tiptap/core'
+﻿import TurndownService from 'turndown'
+import { Editor } from '@tiptap/core'
+
+// ── TurndownService (local instance for record editor) ─────────────────
+let _turndownService = null;
+
+function _ensureTurndown() {
+  if (!_turndownService) {
+    _turndownService = new TurndownService({ headingStyle: 'atx', bulletListMarker: '-' });
+    _turndownService.addRule('tightListItem', {
+      filter: 'li',
+      replacement: (content, node, options) => {
+        const parent = node.parentNode;
+        let prefix;
+        if (parent.nodeName === 'OL') {
+          const start = parent.getAttribute('start');
+          const index = Array.prototype.indexOf.call(parent.children, node);
+          prefix = (start ? Number(start) + index : index + 1) + '. ';
+        } else {
+          prefix = options.bulletListMarker + ' ';
+        }
+        const indent = ' '.repeat(prefix.length);
+        const body = content.trim().replace(/\n{3,}/g, '\n\n').replace(/\n/g, '\n' + indent);
+        return prefix + body + '\n';
+      },
+    });
+    _turndownService.addRule('alignedParagraph', {
+      filter: (node) => node.nodeName === 'P' && node.style && node.style.textAlign,
+      replacement: (content, node) => {
+        return '\n\n<p style="text-align:' + node.style.textAlign + '">' + content + '</p>\n\n';
+      },
+    });
+  }
+}
 
 // ── Records ──────────────────────────────────────────────────────────
 let _hiddenRecCols = new Set(JSON.parse(localStorage.getItem('fc_hidden_rec_cols') || '[]'));
