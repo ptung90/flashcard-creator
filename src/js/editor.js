@@ -1,4 +1,10 @@
-﻿// ── Editor ─────────────────────────────────────────────────────────
+﻿import TurndownService from 'turndown'
+import { Editor } from '@tiptap/core'
+import StarterKit from '@tiptap/starter-kit'
+import Underline from '@tiptap/extension-underline'
+import TextAlign from '@tiptap/extension-text-align'
+
+// ── Editor ─────────────────────────────────────────────────────────
 
 let _tiptapInstances = {}; // sectionId → TipTap Editor instance
 let _activeEditor = null;  // currently focused TipTap instance
@@ -6,8 +12,8 @@ let _activeSectionId = null;
 let _turndownService = null;
 
 function _ensureTurndown() {
-  if (!_turndownService && window.TurndownService) {
-    _turndownService = new window.TurndownService({ headingStyle: 'atx', bulletListMarker: '-' });
+  if (!_turndownService) {
+    _turndownService = new TurndownService({ headingStyle: 'atx', bulletListMarker: '-' });
     // Force tight list items — strip blank lines so nested lists render correctly
     _turndownService.addRule('tightListItem', {
       filter: 'li',
@@ -222,10 +228,7 @@ function renderEditor() {
                   <div class="section-label-input section-tiptap-editor section-label-tiptap" id="tiptap-label-${s.id}"${card.hideSectionLabels ? ' data-hidden-label="1"' : ''}></div>
                       <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
                 </div>
-                ${window.tiptapReady === true
-            ? `<div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}" style="${contentFontStyle}"></div>`
-            : `<textarea class="section-content-input" rows="4" placeholder="${t('editor.pairedPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)" style="${contentFontStyle}">${esc(s.content)}</textarea>`
-          }
+                <div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}" style="${contentFontStyle}"></div>
               </div>
             </div>`;
       }
@@ -235,10 +238,7 @@ function renderEditor() {
               <div class="section-label-input section-tiptap-editor section-label-tiptap" id="tiptap-label-${s.id}"${card.hideSectionLabels ? ' data-hidden-label="1"' : ''}></div>
               <button class="icon-btn section-more-btn" onclick="event.stopPropagation();openSectionMenu('${s.id}',this)" title="More"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
             </div>
-            ${window.tiptapReady === true
-          ? `<div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}" style="${contentFontStyle}"></div>`
-          : `<textarea class="section-content-input" rows="${sectionRows}" placeholder="${t('editor.contentPh')}" onfocus="pushUndo()" oninput="updateSection('${s.id}','content',this.value)" style="${contentFontStyle}">${esc(s.content)}</textarea>`
-        }
+            <div class="section-tiptap-editor" id="tiptap-${s.id}" data-section-id="${s.id}" style="${contentFontStyle}"></div>
           </div>`;
     })
     .join("");
@@ -424,7 +424,7 @@ function renderEditor() {
       </div>
     </div>`;
   attachSlotDragHandlers();
-  if (window.tiptapReady === true) _initTipTapInstances(card);
+  _initTipTapInstances(card);
   // apply initial paste-block visibility from config
   const pba = document.getElementById("paste-block-area");
   if (pba) pba.style.display = (window.FC_CONFIG || {}).pasteBlock ? "" : "none";
@@ -441,9 +441,9 @@ function _tiptapBaseConfig(placeholder) {
   let _editorRef = null;
   return {
     extensions: [
-      window.TipTapStarterKit,
-      window.TipTapUnderline,
-      window.TipTapTextAlign?.configure({ types: ['paragraph', 'heading'] }),
+      StarterKit,
+      Underline,
+      TextAlign.configure({ types: ['paragraph', 'heading'] }),
     ].filter(Boolean),
     onCreate({ editor }) { _editorRef = editor; },
     onDestroy() { _editorRef = null; },
@@ -504,7 +504,7 @@ function _initTipTapInstances(card) {
     const el = document.getElementById('tiptap-' + s.id);
     if (!el || _tiptapInstances[s.id]) return;
 
-    const editor = new window.TipTapEditor({
+    const editor = new Editor({
       element: el,
       ...(_tiptapBaseConfig(t('editor.contentPh') || 'Write something...')),
       content: _contentToHtml(s.content),
@@ -553,7 +553,7 @@ function _initTipTapInstances(card) {
     // Label editor (single-line)
     const labelEl = document.getElementById('tiptap-label-' + s.id);
     if (labelEl && !_tiptapInstances['label:' + s.id]) {
-      const labelEditor = new window.TipTapEditor({
+      const labelEditor = new Editor({
         element: labelEl,
         ...(_tiptapLabelConfig(t('editor.labelPh') || 'Label')),
         content: mdParse(s.label || ''),
@@ -590,6 +590,3 @@ function _initTipTapInstances(card) {
   });
 }
 
-document.addEventListener('tiptap-ready', () => {
-  if (getActiveCard()) renderEditor();
-});

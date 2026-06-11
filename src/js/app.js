@@ -1,6 +1,6 @@
-﻿
+﻿import html2canvas from 'html2canvas'
+
 marked.use({
-  breaks: true,
   extensions: [{
     name: "underline",
     level: "inline",

@@ -1,4 +1,6 @@
-﻿// ── Records ──────────────────────────────────────────────────────────
+﻿import { Editor } from '@tiptap/core'
+
+// ── Records ──────────────────────────────────────────────────────────
 let _hiddenRecCols = new Set(JSON.parse(localStorage.getItem('fc_hidden_rec_cols') || '[]'));
 
 function _saveHiddenRecCols() {
@@ -202,11 +204,7 @@ function openRecordDetail(id) {
       </div>`;
     } else {
       const longCls = f.type === 'text-long' ? ' rec-tiptap--long' : '';
-      input = window.tiptapReady === true
-        ? `<div class="section-tiptap-editor${longCls}" id="rec-tiptap-${f.key}" style="${contentFontStyle}"></div>`
-        : `<textarea rows="${f.type === 'text-long' ? 4 : 1}" style="${contentFontStyle}"
-            onchange="_setRecordField('${record.id}','${f.key}',this.value)"
-            >${esc(val)}</textarea>`;
+      input = `<div class="section-tiptap-editor${longCls}" id="rec-tiptap-${f.key}" style="${contentFontStyle}"></div>`;
     }
     return `<div class="record-field-group">
       <label class="record-field-label">${esc(f.label)}</label>
@@ -249,7 +247,7 @@ function openRecordDetail(id) {
        </div>`
     : '';
 
-  const recToolbar = window.tiptapReady === true ? `
+  const recToolbar = `
     <div class="editor-toolbar editor-toolbar-format" id="rec-editor-toolbar" style="padding:4px 0;margin-bottom:8px;">
       <div class="editor-toolbar-group">
         <button class="editor-toolbar-btn" data-cmd="bold"        onclick="_recToolbarCmd('bold')"       ><strong>B</strong></button>
@@ -271,7 +269,7 @@ function openRecordDetail(id) {
       <div class="editor-toolbar-group">
         <button class="editor-toolbar-btn" data-cmd="clearFormat" onclick="_recToolbarCmd('clearFormat')" title="${t('rec.toolbar.clearFormat')}"><svg class="icon" style="width:13px;height:13px"><use href="#i-clear-format"/></svg></button>
       </div>
-    </div>` : '';
+    </div>`;
 
   const linkedChips = _linkedCardChips(record.id);
 
@@ -295,7 +293,7 @@ function openRecordDetail(id) {
       ${previewSection}
     </div>
   `;
-  if (window.tiptapReady === true) _initRecordTiptapInstances(record);
+  _initRecordTiptapInstances(record);
 }
 
 function _setRecordField(recordId, key, value) {
@@ -432,7 +430,7 @@ function _initRecordTiptapInstances(record) {
     const el = document.getElementById('rec-tiptap-' + f.key);
     if (!el || _recordTiptapInstances[f.key]) return;
     const val = record.fields[f.key] ?? '';
-    const editor = new window.TipTapEditor({
+    const editor = new Editor({
       element: el,
       ...(window._tiptapBaseConfig(t('rec.tiptapPh'))),
       content: mdParse(val),

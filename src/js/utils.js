@@ -1,4 +1,7 @@
-﻿// ── Helpers ────────────────────────────────────────────────────────
+﻿import { marked } from 'marked'
+marked.use({ breaks: true })
+
+// ── Helpers ────────────────────────────────────────────────────────
 function _show(id, display = "flex") { const el = document.getElementById(id); if (el) el.style.display = display; }
 function _hide(id) { const el = document.getElementById(id); if (el) el.style.display = "none"; }
 

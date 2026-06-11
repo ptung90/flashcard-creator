@@ -1,4 +1,7 @@
-﻿const _PAIRED_LAYOUTS = new Set(['2img-2txt', '3img-3txt', 'img3-txt3', '6cell', '8img-8txt', 'txtgrid']);
+﻿import html2canvas from 'html2canvas'
+import { jsPDF } from 'jspdf'
+
+const _PAIRED_LAYOUTS = new Set(['2img-2txt', '3img-3txt', 'img3-txt3', '6cell', '8img-8txt', 'txtgrid']);
 
 function _cardForExport(card) {
   if (_PAIRED_LAYOUTS.has(card.layout)) return card;
@@ -285,7 +288,6 @@ function _pdfName(label) {
 async function exportOnePDF() {
   const card = getActiveCard();
   if (!card) return alert("No card selected.");
-  const { jsPDF } = window.jspdf;
   const s = state.settings;
   const orientation = getCardOrientation(card);
   const { w: pw, h: ph } = getPaperMm(card.paperSize || s.paperSize, orientation);
@@ -323,7 +325,6 @@ function runExportPdf() {
 
 async function exportPDF(normalizeOrient = '') {
   if (!state.cards.length) return alert("No cards to export.");
-  const { jsPDF } = window.jspdf;
   const s = state.settings;
   const firstOrientation = normalizeOrient || getCardOrientation(state.cards[0]);
   const firstPage = getPaperMm(s.paperSize, firstOrientation);
