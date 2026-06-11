@@ -48,7 +48,7 @@ import { addCard, dispatch, renderSidebar, newCard,
 import { saveJSON, saveJSONAs, dismissRestoreBanner, resumeLastProject,
          toggleSidebar } from './storage/storage.js'
 import { openLoadModal, openBackupModal, closeBackupModal,
-         manualBackup, setWorkDir } from './storage/file-modals.js'
+         manualBackup, setWorkDir, openSaveAsModal } from './storage/file-modals.js'
 import { printOne, printAll, exportOnePDF,
          openExportPdfDialog, runExportPdf } from './preview.js'
 import { openCssModal, closeCssModal, openSettingsModal, closeSettingsModal,
@@ -81,7 +81,7 @@ Object.assign(window, {
   // storage/storage.js
   saveJSON, saveJSONAs, dismissRestoreBanner, resumeLastProject, toggleSidebar,
   // storage/file-modals.js
-  openLoadModal, openBackupModal, closeBackupModal, manualBackup, setWorkDir,
+  openLoadModal, openBackupModal, closeBackupModal, manualBackup, setWorkDir, openSaveAsModal,
   // preview.js
   printOne, printAll, exportOnePDF,
   openExportPdfDialog, runExportPdf,

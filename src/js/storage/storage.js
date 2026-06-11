@@ -1,4 +1,3 @@
-import { openSaveAsModal } from './file-modals.js';
 
 // ── IndexedDB helpers ──────────────────────────────────────────────
 let _idb = null;
@@ -337,7 +336,7 @@ export async function saveJSON() {
 
 export async function saveJSONAs() {
   if (workDirHandle) {
-    await openSaveAsModal();
+    await window.openSaveAsModal();
     return;
   }
   const dataObj = _buildDataObj();
