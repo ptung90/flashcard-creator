@@ -1,6 +1,6 @@
 ﻿import TurndownService from 'turndown'
 import { Editor } from '@tiptap/core'
-import { tiptapBaseConfig } from './editor.js'
+import { tiptapBaseConfig } from '../editor/editor.js'
 
 // ── TurndownService (local instance for record editor) ─────────────────
 let _turndownService = null;
