@@ -1,6 +1,7 @@
-window.FC_VERSION = "3.1.11";
+export const FC_VERSION = "3.1.11";
+window.FC_VERSION = FC_VERSION;
 
-window.FC_CONFIG = {
+export const FC_CONFIG = {
   // ── Paper & Layout ────────────────────────────────────────────────
   paperSize: "A5", // A4 | A5 | A6 | Letter
   orientation: "portrait", // portrait | landscape
@@ -67,5 +68,4 @@ window.FC_CONFIG = {
   // ── Custom CSS (inject vào mỗi session) ──────────────────────────
   customCss: "",
 };
-export const FC_VERSION = window.FC_VERSION;
-export const FC_CONFIG = window.FC_CONFIG;
+window.FC_CONFIG = FC_CONFIG;

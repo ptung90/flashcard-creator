@@ -1025,3 +1025,6 @@ function loadJSON(event) {
   reader.readAsText(file);
   event.target.value = "";
 }
+
+export function setCurrentFileName(val) { currentFileName = val; }
+export function setCurrentSubfolder(val) { currentSubfolder = val; }

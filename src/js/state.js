@@ -92,7 +92,7 @@ export const PAPER_MM = {
 })();
 
 const _cfg = window.FC_CONFIG || {};
-export let state = {
+export const state = {
   settings: {
     paperSize: _cfg.paperSize ?? "A5",
     orientation: _cfg.orientation ?? "portrait",

@@ -1,4 +1,5 @@
 ﻿import html2canvas from 'html2canvas'
+import { setCurrentFileName, setCurrentSubfolder } from './storage.js'
 
 marked.use({
   extensions: [{
@@ -987,7 +988,7 @@ function applyJsonPreview() {
     return;
   }
   closeJsonPreview();
-  currentFileName = null;
+  setCurrentFileName(null);
   applyLoadedData(data);
   showToast(t('toast.jsonLoaded'));
   _autoFetchImages();
