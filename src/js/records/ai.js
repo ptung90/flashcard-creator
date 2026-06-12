@@ -168,8 +168,9 @@ export async function executeGenerateRecords() {
     .map(r => getLocaleValue(r.fields['name'] ?? '', state.activeLocale).trim())
     .filter(Boolean);
 
+  const exampleRecord = '{ ' + allFields.map(f => '"' + f.key + '": "..."').join(', ') + ' }';
   const systemContent = [
-    'You are a record data generator. Generate new records matching a schema and return valid JSON.',
+    'You are a record data generator. Generate new records matching a schema.',
     '',
     'Schema:',
     schemaLines,
@@ -179,11 +180,18 @@ export async function executeGenerateRecords() {
       existingNames.map(name => `- ${name}`).join('\n'),
     ] : []),
     '',
-    'Rules:',
-    `1. Return ONLY a JSON array of exactly ${n} records — no wrapper, no explanation, no markdown fences.`,
-    '2. Each record: { ' + allFields.map(f => '"' + f.key + '": "..."').join(', ') + ' }',
-    '3. text/text-long fields: 2–4 sentences of specific, accurate, interesting facts. Use Markdown (**bold**, - lists). No HTML.',
-    `4. All records must be distinct — avoid duplicates with each other.${imgNote}`,
+    'Content rules:',
+    '1. text/text-long fields: 2–4 sentences of specific, accurate, interesting facts. Use Markdown (**bold**, - lists). No HTML.',
+    `2. All records must be distinct.${imgNote}`,
+    '',
+    'OUTPUT FORMAT (mandatory):',
+    `- Your ENTIRE response must be a raw JSON array. Start with [ and end with ]. Nothing else.`,
+    `- Each record: ${exampleRecord}`,
+    '- Keys go DIRECTLY in the record object. Do NOT nest them under a "fields" key.',
+    '- Do NOT wrap the array in any object (no "result", "records", "array", or any other key).',
+    '',
+    `CORRECT example: [${exampleRecord}]`,
+    `WRONG examples: {"result":[...]}  |  {"records":[...]}  |  [{"id":"...","fields":{...}}]`,
   ].join('\n');
 
   const userLines = [];
