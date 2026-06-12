@@ -431,7 +431,7 @@ export function scheduleThumbRefresh(cardId = null) {
 // ── Upload (local files → base64) ─────────────────────────────────
 export let uploadedImages = []; // session cache: [{name, dataURL}]
 
-function handleUploadFiles(files) {
+export function handleUploadFiles(files) {
   if (!files.length) return;
   const zone = document.getElementById("upload-drop-zone");
   const results = document.getElementById("results-upload");

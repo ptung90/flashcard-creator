@@ -9,7 +9,7 @@ Vanilla JS + CSS, libraries loaded from CDN.
 
 **Dev:** `npm run dev` — Vite dev server with hot reload at http://localhost:5173
 
-**Build:** `npm run build` — produces `dist/index.html` (single file, offline-ready), also copies to `FlashCardApp2/FlashCard Creator.html`
+**Build:** `npm run build` — produces `dist/index.html` (single file, offline-ready), also copies to `FlashCardApp/FlashCard Creator.html`
 
 Source files live in `src/`. Edit there, Vite handles bundling.
 
@@ -21,25 +21,36 @@ src/
 │   └── modals.html    — modals and dialogs (inlined in root index.html)
 ├── js/
 │   ├── main.js        — Vite entry point: imports all CSS + JS modules, exposes window globals
-│   ├── config.js      — FC_VERSION + FC_CONFIG
-│   ├── state.js       — state shape, LAYOUTS, uiState, getActiveCard()
-│   ├── utils.js       — uid, mdParse, esc, _show/_hide, _compressImage, _hashStr
-│   ├── storage.js     — File System Access API, IndexedDB, autosave, backup, read-only
+│   ├── env.js         — local API keys (gitignored); copy from env.example.js
+│   ├── env.example.js — template for env.js
+│   ├── core/
+│   │   ├── config.js        — FC_VERSION + FC_CONFIG
+│   │   ├── state.js         — state shape, LAYOUTS, uiState, getActiveCard()
+│   │   ├── undo.js          — undo/redo stack
+│   │   └── utils.js         — uid, mdParse, esc, _show/_hide, _compressImage, _hashStr
+│   ├── storage/
+│   │   ├── storage.js       — File System Access API, IndexedDB, autosave, backup, read-only
+│   │   └── file-modals.js   — load modal, save-as modal, backup modal, folder tree
+│   ├── editor/
+│   │   ├── editor.js        — card editor UI, TipTap instances, section controls
+│   │   ├── controls.js      — font/border/image controls
+│   │   └── sections.js      — section add/remove/reorder controls
+│   ├── records/
+│   │   ├── records.js       — records panel, AI export/import
+│   │   ├── pack.js          — pack/sync records into cards
+│   │   ├── schema-editor.js — schema editor modal
+│   │   └── ai.js            — AI-assisted record generation
+│   ├── ai/
+│   │   └── chat.js          — AI chat panel
+│   ├── app/
+│   │   ├── app.js           — init, dispatch, sidebar, toolbar, event wiring
+│   │   ├── cards.js         — card list, sidebar render, thumbnail system
+│   │   └── settings.js      — settings bar, Google Fonts, zoom, orientation
 │   ├── api.js         — image search (Wikimedia, iNaturalist, Pixabay, Unsplash), AI generate
 │   ├── i18n.js        — translation strings + t() helper
 │   ├── render.js      — buildCardHTML, getGridTemplateStyle, buildHandles
-│   ├── editor.js      — card editor UI, TipTap instances, section controls
-│   ├── editor-controls.js — font/border/image controls
-│   ├── editor-sections.js — section add/remove/reorder controls
 │   ├── preview.js     — live preview rendering, PDF/print export
-│   ├── modals.js      — image search modal logic, settings modal logic
-│   ├── undo.js        — undo/redo stack
-│   ├── records.js     — schema editor, records panel, pack/sync, AI export/import
-│   ├── records-pack.js — pack/sync records into cards
-│   ├── schema-editor.js — schema editor modal
-│   ├── records-ai.js  — AI-assisted record generation
-│   ├── ai-chat.js     — AI chat panel
-│   └── app.js         — init, dispatch, sidebar, toolbar, event wiring
+│   └── modals.js      — image search modal logic, settings modal logic
 └── css/
     ├── lexend-embedded.css — Lexend font (base64, offline)
     ├── base.css       — reset, variables, typography
@@ -50,28 +61,28 @@ src/
     └── tomoe.css      — records, schema, dialogs, misc feature styles
 index.html          — Vite entry point (hand-authored HTML shell + app layout)
 vite.config.js      — Vite config with vite-plugin-singlefile
-scripts/postbuild.js — copies dist/index.html to FlashCardApp2/ after build
+scripts/postbuild.js — copies dist/index.html to FlashCardApp/ after build
 dist/               — GENERATED — do not edit directly (gitignored)
-FlashCardApp2/
+FlashCardApp/
 └── FlashCard Creator.html  — copy of dist/index.html for distribution
 ```
 
 ## Key Rules
 
 - **No framework** — plain DOM APIs only.
-- **Config** lives in `src/config.js` as `window.FC_CONFIG`. Never hardcode defaults in `app.js`; always read from config or state.
+- **Config** lives in `src/js/core/config.js` as `window.FC_CONFIG`. Never hardcode defaults; always read from config or state.
 - **User settings** — saved to `localStorage` key `fc_user_config`, and optionally to `user-config.json` in the work folder.
+- **`_show(id)` / `_hide(id)`** helpers in `utils.js` — use these instead of `getElementById(...).style.display` directly.
+- **Native `<dialog>`** — use `showModal()` / `close()`, not `_show()`/`_hide()`. `window.confirm()` is blocked when a `<dialog>` is open — use inline two-click confirmation instead.
 
 ## Architecture
 
 ```
-src/html/template.html
+index.html (Vite entry)
 ├── <head>
-│   ├── <!-- BUILD:CONFIG --> → js/config.js inlined
-│   ├── CDN scripts: marked.js, html2canvas, jsPDF
-│   └── <!-- BUILD:CSS --> → css/*.css concatenated
+│   └── CDN scripts: marked.js, html2canvas, jsPDF
 └── <body>
-    ├── <!-- BUILD:SVG --> → html/svg.html (icon sprite)
+    ├── SVG icon sprite (inlined from html/svg.html)
     ├── .fc-app
     │   ├── .fc-settings-bar — global paper/font/border settings
     │   ├── .fc-toolbar — project name, card actions, view toggles
@@ -79,11 +90,10 @@ src/html/template.html
     │       ├── .fc-sidebar — card list with reorder/clone/delete
     │       ├── .fc-editor — layout picker, image slots, title, sections
     │       └── .fc-preview-panel — live preview + zoom controls
-    ├── <!-- BUILD:MODALS --> → html/modals.html
-    │   ├── Backdrop modals: img-modal, css-modal, json-modal, json-preview-modal,
-    │   │                    load-modal, save-as-modal, settings-modal
-    │   └── Native dialogs: schema-editor-modal, pack-dialog, backup-modal, records-ai-modal
-    └── <!-- BUILD:JS --> → js/*.js concatenated in order
+    └── Modals (inlined from html/modals.html)
+        ├── Backdrop modals: img-modal, css-modal, json-modal, json-preview-modal,
+        │                    load-modal, save-as-modal, settings-modal
+        └── Native dialogs: schema-editor-modal, pack-dialog, backup-modal, records-ai-modal
 ```
 
 ## Layouts
@@ -102,10 +112,16 @@ src/html/template.html
 | `fullimage`    | 1     | Image only, inner padding wrapper                             |
 | `fulltext`     | 0     | Text only, no image area                                      |
 | `2img-2txt`    | 2     | 2 images + 2 text cells in compound grid, draggable row split |
+| `3img-3txt`    | 3     | 3 cols: img top + text bottom per column                      |
+| `img3-txt3`    | 3     | 2-col interleaved (img left, text right); supports `rowBorders` |
+| `6cell`        | 6     | 6 cells (2×3 portrait / 3×2 landscape); each has img + title + text |
+| `txtgrid`      | 0     | Pure text grid; `textCols`/`textRows`/`gridFontSize` per-card |
 | `2img-4txt`    | 2     | Disabled (commented out in LAYOUTS array)                     |
 | `8img-8txt`    | 8     | 8 img+text pairs; portrait 2×8, landscape 4×4                 |
 
-**Compound layouts** (`2img-2txt`, `8img-8txt`): rendered by dedicated early-return branches in `buildCardHTML()`, not the normal image-area + text-area path. Each cell has its own border/padding. Inter-cell gap = `marginPx`.
+**Compound layouts** (`2img-2txt`, `3img-3txt`, `img3-txt3`, `6cell`, `8img-8txt`, `txtgrid`): rendered by dedicated early-return branches in `buildCardHTML()`. Each cell has its own border/padding. Inter-cell gap = `marginPx`.
+
+**`img3-txt3` rowBorders mode:** `card.imageGridSplit.rowBorders = true` — img+txt cells in the same row share a border edge (img has `border-right:0`, txt has `border-left:0`), directional border-radius applied.
 
 **`8img-8txt` grid structure:**
 
@@ -120,14 +136,17 @@ Use `grid-row: 1 / span N` (not `1 / -1`) for explicit row spanning.
 
 ## File / Storage
 
-- **Work folder** (`workDirHandle`) — a `FileSystemDirectoryHandle` picked once via `showDirectoryPicker`, persisted in IndexedDB as `"_work_dir"`. All JSON reads/writes go through this — **no OS dialog**.
+- **Work folder** (`workDirHandle`) — a `FileSystemDirectoryHandle` picked once via `showDirectoryPicker`, persisted in IndexedDB as `"_work_dir"`. All JSON reads/writes go through this — **no OS dialog**. Requires Chrome/Edge (Firefox does not support `showDirectoryPicker`).
 - **Auto-save** — file-system based, 1.5s debounce from any `setDirty()` call. Writes to `currentFileName` in the work folder. Filename auto-derived from `state.projectName` via `_defaultFileName()` (slug + `.json`). Stores `localStorage.fc_last_file` after each write.
 - **Auto-restore** — `_autoRestore()` runs at init: reads `localStorage.fc_last_file` + `workDirHandle`, requests permission, loads the file. No prompt needed if permission already granted.
-- **Save As** — `prompt()` for filename, writes to work folder.
-- **Load modal** — lists `.json` files from work folder (filters out `user-config.json`). Shows filename + relative date as subtitle. Highlights current file. Footer has "📁 Set Folder" button (calls `setWorkDir()`). Folder section header has "Open folder" button (also `setWorkDir()`). Non-AbortError failures show an alert.
+- **Save As** — native `<dialog>` (`save-as-modal`) with dropdown to select subfolder (root or up to 2 levels deep) + filename input. Writes to work folder.
+- **Load modal** — folder tree (L1+L2, collapsible) on left, file list on right. Lists `.json` files (filters out `user-config.json`). Highlights current file. Footer has "📁 Set Folder" button. Move/Clone/Delete per file.
+- **Read-only folders** — `fc_edit_folders` localStorage key (CSV list of editable subfolder paths). `_computeReadOnly()` called after every file load/move/save-as/new-project. Files outside edit folders are read-only.
+- **Recent files** — metadata in `localStorage` key `fc_recent` (max 5); full data in IndexedDB `fc_db/recents`.
 - **PDF export** — uses `pdf.save(...)` → browser download dialog. PDF filename: `slug-YYYYMMDD-HHmm.pdf`.
 - **Paste block** — textarea for bulk-pasting text into sections. Controlled by `FC_CONFIG.pasteBlock`. Hidden for `isImgPairedLayout` layouts.
 - **New Project** — `newProject()` resets state and closes modal.
+- **Backup** — `_silentBackup()` writes to `_backups/` subfolder inside the active dir. `backup-modal` (native `<dialog>`) lists backups, restore uses two-click confirm pattern.
 
 ## Init Sequence
 
@@ -136,10 +155,14 @@ init()
   restoreWorkDir()     ← restores FileSystemDirectoryHandle from IndexedDB
   _autoRestore()       ← loads last file from work folder if available
   bindSettings()       ← attaches input listeners to settings bar
+  applyGoogleFonts()
   applySettingsToUI()  ← syncs DOM to state.settings
-  renderSidebar()
-  renderEditor()
-  renderPreview()
+  applyUIZoom()
+  applyI18n()
+  initPanelResize()
+  initPreviewPan()
+  dispatch('INIT_LOAD')
+  initUploadDropZone()
 ```
 
 (No `setupAutoSave` — autosave triggered by `setDirty()`, not a timer.)
@@ -149,15 +172,17 @@ init()
 ```js
 state = {
   settings: {
-    paperSize,
-    orientation,
-    margin,
-    padding,
+    paperSize,        // "A4" | "A5" | "A6" | "Letter"
+    orientation,      // "portrait" | "landscape"
+    margin,           // mm
+    padding,          // mm — card inner padding
+    imgPadding,       // mm — image area padding (default 0)
+    textVAlign,       // "top" | "middle" | "bottom"
+    googleFonts: [],
     border: { width, style, color, radius },
     image: { backgroundSize, backgroundPosition },
-    font: { family, size, color, lineHeight },
-    titleFont: { size, color, lineHeight },
-    contentFont: { size, color, lineHeight },
+    titleFont: { family, size, weight, color, lineHeight },
+    contentFont: { family, size, weight, color, lineHeight },
     customCss,
   },
   cards: [
@@ -165,49 +190,56 @@ state = {
       id,
       layout,
       imageHeightPercent,
-      imageGridSplit,
-      images,
+      imageGridSplit,       // { row, col, inner, rowBorders? }
+      images,               // [{ slot, url, size?, color?, attribution?, search_query? }]
       title,
-      sections,
-      orientation, // null = inherit global; "portrait" | "landscape" = override
-      hideTitle, // bool — hides title in preview/print/PDF, keeps it for editor
-      titleFont, // null = inherit global titleFont; per-card override
-      contentFont, // null = inherit global contentFont; per-card override
+      sections,             // [{ id, label, content, customClass?, fontSize?, textAlign?, labelSize? }]
+      orientation,          // null = inherit global; "portrait" | "landscape" = override
+      hideTitle,            // bool — hides title in preview/print/PDF, keeps it for editor
+      hideSectionLabels,    // bool
+      inlineSections,       // bool — render sections inline (no block breaks)
+      titleFont,            // null = inherit global; per-card override
+      contentFont,          // null = inherit global; per-card override
+      customCss,            // per-card CSS (scoped to .fc-card[data-id="..."])
+      cssClass,             // extra class on .fc-card
+      labelSize,            // px — global label size for this card
+      contentSize,          // px — global content size for this card
+      // txtgrid-only:
+      textCols, textRows, gridFontSize, textCardHeight,
     },
   ],
   projectName: "Untitled",
+  projectIcon: "🗂️",
+  schema: null,
+  records: [],
 };
 ```
 
-**Saved JSON** also includes `project_name` at the top level (loaded into `state.projectName`).
+**Saved JSON** also includes `project_name` and `project_icon` at the top level.
 
 ## Font System (3 tiers, global + per-card)
 
-1. **`state.settings.font`** — base: family, size, color, lineHeight
-2. **`state.settings.titleFont`** — global override for card title (`null` fields inherit from `font`)
-3. **`state.settings.contentFont`** — global override for sections (`null` fields inherit)
-   - Section label renders at `0.78em` of contentFont effective size
-   - Section content renders at `0.75em` of contentFont effective size
-
-**Per-card override:** `card.titleFont` / `card.contentFont` — merged in `buildCardHTML()`:
+1. **`state.settings.titleFont`** — global title font: family, size, weight, color, lineHeight
+2. **`state.settings.contentFont`** — global sections font
+3. **Per-card override:** `card.titleFont` / `card.contentFont` — merged in `buildCardHTML()`:
 
 ```js
 const titleF = { ...s.titleFont, ...(card.titleFont || {}) };
 ```
 
-`fontControls(key)` renders size/color/lineHeight inputs with computed hint next to size.
+Section label renders at smaller size via `font-size` in CSS rule. Section content can have per-section `fontSize`/`textAlign` overrides.
 
 ## Thumbnail System
 
 - **Auto-generation disabled** — `setDirty()` no longer triggers thumb refresh.
 - **Manual refresh** — `↻ Thumbs` button in toolbar calls `refreshAllThumbs()`.
 - `setLayout()` calls `refreshAllThumbs()` automatically after layout change.
-- `scheduleThumbRefresh(cardId)` — still exists for targeted refresh; `_pendingThumbCardId` tracks specific vs all.
+- `scheduleThumbRefresh(cardId)` — targeted refresh; `_pendingThumbCardId` tracks specific vs all.
 - Existing `<img>` thumbs are updated silently (no `thumb-loading` flash) if already rendered.
 
 ## UI State
 
-All transient UI state lives in `uiState` object (defined in `state.js`):
+All transient UI state lives in `uiState` object (defined in `core/state.js`):
 
 ```js
 uiState = { activeCardId, imgModalSlot, activeTab, sidebarView, previewZoom }
@@ -226,6 +258,10 @@ Never use bare `activeCardId` etc. — always `uiState.activeCardId`.
 ## Markdown
 
 `marked.use({ breaks: true })` — single newline in section content renders as `<br>`.
+
+Section content also supports HTML passthrough: if `content.trimStart().startsWith('<')`, rendered as-is (no markdown parsing). Otherwise parsed with `breaks: false` to preserve nested lists.
+
+Custom `++text++` extension → `<u>text</u>` (underline).
 
 ## Image Compression
 
@@ -273,20 +309,9 @@ _autoSaveToFile(); // writes to work folder, updates fc_last_file, calls clearDi
 ## Known Pitfalls
 
 - Card action buttons use `display:none`/`display:flex` (not `visibility:hidden`). `min-height:34px` on `.fc-card-item` prevents jumping.
-- `<!-- BUILD:CONFIG -->` must not be preceded by unclosed `<!--` — would swallow the entire config block.
 - Compound layout (`2img-2txt`, `8img-8txt`) row track sizes use `fr` units so proportions are maintained without gap arithmetic.
 - `2img-4txt` is commented out in the `LAYOUTS` array (disabled from picker) but all rendering/drag code remains intact.
 - Backdrop-click auto-close is disabled for all modals — intentional, do not re-enable without testing scroll lock.
-- Native `<dialog>` elements: use `showModal()` / `close()`, not `_show()`/`_hide()`. `window.confirm()` is blocked when a `<dialog>` is open — use inline two-click confirmation instead.
 - `onclick` attributes in innerHTML strings: always use single-quote outer (`onclick='fn(...)'`) when the argument is a `JSON.stringify`-ed string — double quotes inside will break the HTML attribute.
 - `_autoSaveToFile`: snapshot `currentFileName`/`currentSubfolder` into locals before any `await` — globals can change mid-save if user opens another file.
-
-## Session Notes (2026-05-29) - Refactoring
-
-- **src/ reorganized** into `html/`, `js/`, `css/` subfolders. Build markers added: `BUILD:SVG`, `BUILD:MODALS`.
-- **uiState object**: `activeCardId`, `imgModalSlot`, `activeTab`, `sidebarView`, `previewZoom` moved from loose globals into `const uiState = {}` in `state.js`.
-- **`_show(id)` / `_hide(id)` helpers** added to `utils.js`; replace `document.getElementById(id).style.display` patterns.
-- **API helpers**: `_fetchJson(url)` (checks `r.ok`), `_searchImages()`, `_imgItem()` unify Wikimedia/iNaturalist/Pixabay/Unsplash search boilerplate.
-- **Records AI flow**: `copyRecordsForAI()` dialog, `exportRecordsJson()`, `pasteRecordsJson()`, `appendRecordsJson()`, `importRecordsJsonFile()` — all in `records.js`.
-- **Read-only folder mode**: `fc_edit_folders` localStorage key (CSV). `_computeReadOnly()` called after every file load/move/save-as/new-project.
-- **Backup modal**: native `<dialog>`, restore uses two-click confirm pattern (avoids `window.confirm` inside dialog). Backup files stored in `_backups/` subfolder.
+- `window.confirm()` is blocked when a native `<dialog>` is open — use inline two-click confirmation instead.

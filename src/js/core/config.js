@@ -1,4 +1,4 @@
-export const FC_VERSION = "3.1.11";
+export const FC_VERSION = __APP_VERSION__;
 window.FC_VERSION = FC_VERSION;
 
 export const FC_CONFIG = {

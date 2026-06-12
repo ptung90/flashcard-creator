@@ -26,6 +26,8 @@ export default [
         performance: 'readonly',
         Image: 'readonly', TextEncoder: 'readonly', event: 'readonly',
         location: 'readonly',
+        // Vite injected at build time
+        __APP_VERSION__: 'readonly',
         // CDN globals loaded at runtime
         jspdf: 'readonly', html2canvas: 'readonly',
       },
