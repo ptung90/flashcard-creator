@@ -112,6 +112,8 @@ export const state = {
   projectIcon: "🗂️",
   schema: null,
   records: [],
+  activeLocale: 'en',
+  locales: ['en', 'vi'],
 };
 
 export const uiState = {
@@ -124,3 +126,38 @@ export const uiState = {
 
 export function getActiveCard() { return state.cards.find((c) => c.id === uiState.activeCardId); }
 export function getCardOrientation(card) { return card?.orientation || state.settings.orientation; }
+
+export function getLocaleValue(val, locale) {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'object' && !Array.isArray(val)) {
+    return val[locale] ?? '';
+  }
+  return val; // plain string — backward compat
+}
+
+export function setActiveLocale(locale) {
+  if (!state.locales.includes(locale)) return;
+  state.activeLocale = locale;
+  document.querySelectorAll('.locale-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.locale === locale);
+  });
+  window.renderRecordsPanel?.();
+  window.renderPreview?.();
+}
+
+export function addLocale(code) {
+  const clean = code.trim().toLowerCase();
+  if (!clean || state.locales.includes(clean)) return;
+  state.locales.push(clean);
+  // migrate existing records: add empty value for new locale to multilingual fields
+  if (state.schema) {
+    state.schema.fields.filter(f => f.multilingual).forEach(f => {
+      state.records.forEach(rec => {
+        if (rec.fields[f.key] && typeof rec.fields[f.key] === 'object') {
+          rec.fields[f.key][clean] = rec.fields[f.key][clean] ?? '';
+        }
+      });
+    });
+  }
+  window.renderRecordsPanel?.();
+}
