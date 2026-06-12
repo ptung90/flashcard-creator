@@ -259,7 +259,15 @@ export async function _applyImportedRecords(jsonText, append = false) {
     const target = existing || (() => {
       if (!state.schema) return null;
       const rec = { id: `rec_${uid()}`, fieldsHash: '', fields: {} };
-      state.schema.fields.forEach(f => { rec.fields[f.key] = ''; });
+      state.schema.fields.forEach(f => {
+        if (f.multilingual !== false && f.type !== 'image') {
+          const empty = {};
+          state.locales.forEach(l => { empty[l] = ''; });
+          rec.fields[f.key] = empty;
+        } else {
+          rec.fields[f.key] = '';
+        }
+      });
       state.records.push(rec);
       added++;
       return rec;
