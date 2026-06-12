@@ -38,6 +38,7 @@ export function dispatch(action) {
     case 'INIT_LOAD':
       clearThumbHashes();  // new project — invalidate all cached hashes
       if (document.getElementById('records-panel')?.style.display === 'flex') renderRecordsPanel();
+      renderLocaleSwitch();
       // fall through
     case 'ACTIVE_CARD_CHANGED':
     case 'CARD_LIST_CHANGED':
@@ -45,6 +46,7 @@ export function dispatch(action) {
       renderSidebar();
       renderEditor();
       renderPreview();
+      renderLocaleSwitch();
       break;
     case 'CARD_MOVED':
     case 'VIEW_MODE_CHANGED':
@@ -355,6 +357,21 @@ export async function pasteJsonLoad() {
   if (!text?.trim()) { showToast(t('toast.jsonInvalid')); return; }
   closeJsonModal();
   openJsonPreview(text.trim());
+}
+
+// ── Locale Switcher ────────────────────────────────────────────────
+export function renderLocaleSwitch() {
+  const el = document.getElementById('locale-switcher');
+  if (!el) return;
+  if (!state.locales || state.locales.length < 2) {
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = 'flex';
+  el.innerHTML = state.locales.map(l =>
+    `<button class="btn btn-sm locale-btn${state.activeLocale === l ? ' active' : ''}"
+      data-locale="${l}" onclick="setActiveLocale('${l}')">${l.toUpperCase()}</button>`
+  ).join('');
 }
 
 // ── Init ───────────────────────────────────────────────────────────

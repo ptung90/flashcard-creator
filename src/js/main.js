@@ -95,7 +95,7 @@ import { dispatch, showCardPanel, showRecordsPanel, toggleSettingsBar,
          openJsonEditor, openJsonPreview, closeJsonPreview,
          validateJsonPreview, applyJsonPreview, exportJsonFile,
          copyJsonFull, copyJsonNoImg, copyJsonForAI, pasteJsonLoad,
-         _syncJsonLineNums, selectProjectIcon } from './app/app.js'
+         _syncJsonLineNums, selectProjectIcon, renderLocaleSwitch } from './app/app.js'
 
 // ── Window globals for HTML onclick handlers ─────────────────────────
 Object.assign(window, {
@@ -105,7 +105,7 @@ Object.assign(window, {
   openJsonEditor, openJsonPreview, closeJsonPreview,
   validateJsonPreview, applyJsonPreview, exportJsonFile,
   copyJsonFull, copyJsonNoImg, copyJsonForAI, pasteJsonLoad,
-  _syncJsonLineNums, selectProjectIcon,
+  _syncJsonLineNums, selectProjectIcon, renderLocaleSwitch,
   // app/settings.js
   addGoogleFont, removeGoogleFont, setGlobalOrient, changeUIZoom, setPhysicalZoom,
   changePreviewZoom, applyGoogleFonts, applySettingsToUI, bindSettings,

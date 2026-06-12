@@ -1154,3 +1154,8 @@ input[type="range"].mint-fill::-webkit-slider-runnable-track {
   border-color: var(--mint-500);
   box-shadow: 0 0 0 2px var(--mint-100);
 }
+
+/* ── Locale switcher ───────────────────────────────────────────────── */
+.locale-switcher { display: flex; gap: 2px; align-items: center; }
+.locale-btn { min-width: 32px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-400); }
+.locale-btn.active { color: var(--c-brand); background: color-mix(in srgb, var(--c-brand) 10%, transparent); }
