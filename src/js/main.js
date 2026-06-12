@@ -65,7 +65,7 @@ import { renderRecordsPanel, openRecordDetail, addRecord, deleteRecord,
          _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
          toggleRecCol, toggleRecordsMoreMenu, toggleSort,
          toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected,
-         toggleBilingualView,
+         toggleBilingualView, toggleTranslateMenu, _getSelectedSet,
          _migrateRecordFields } from './records/records.js'
 import { confirmPack, packAll, generateRecord, generateAll,
          syncRecord, syncAllPacked, openPackDialog } from './records/pack.js'
@@ -80,7 +80,7 @@ import { copyRecordsForAI, closeRecordsAiModal, executeRecordsAiCopy,
          pasteRecordsAiNames, openGenerateRecordsDialog,
          closeGenerateRecordsDialog, executeGenerateRecords,
          exportRecordsJson, importRecordsJsonClick, importRecordsJsonFile,
-         pasteRecordsJson } from './records/ai.js'
+         pasteRecordsJson, translateRecords } from './records/ai.js'
 import { openAiChat, closeAiChat, toggleAiChatMinimize, sendAiChat,
          applyAiChatOps, onAiTemplateChange, onAiChatModelChange } from './ai/chat.js'
 // Layer 8
@@ -161,7 +161,7 @@ Object.assign(window, {
   _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
   toggleRecCol, toggleRecordsMoreMenu, toggleSort,
   toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected,
-  toggleBilingualView,
+  toggleBilingualView, toggleTranslateMenu, _getSelectedSet,
   _migrateRecordFields,
   // records/pack.js
   confirmPack, packAll, generateRecord, generateAll,
@@ -178,7 +178,7 @@ Object.assign(window, {
   pasteRecordsAiNames, openGenerateRecordsDialog,
   closeGenerateRecordsDialog, executeGenerateRecords,
   exportRecordsJson, importRecordsJsonClick, importRecordsJsonFile,
-  pasteRecordsJson,
+  pasteRecordsJson, translateRecords,
   // ai/chat.js
   openAiChat, closeAiChat, toggleAiChatMinimize, sendAiChat,
   applyAiChatOps, onAiTemplateChange, onAiChatModelChange,

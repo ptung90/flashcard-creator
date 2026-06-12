@@ -298,3 +298,68 @@ export function pasteRecordsJson(append = false) {
     })
     .catch(err => alert('Paste failed: ' + (err.message || err)));
 }
+
+export async function translateRecords(sourceLocale, targetLocale, ids = null, force = false) {
+  if (!state.schema) return;
+  const provider = getAiProvider();
+  const key = localStorage.getItem(`${provider}-key`) || '';
+  if (!key) { showToast(`No ${provider} key set. Add it in Settings → AI`); return; }
+
+  const mlFields = state.schema.fields.filter(f => f.multilingual !== false && f.type !== 'image');
+  if (!mlFields.length) { showToast('No multilingual fields in schema'); return; }
+
+  const scope = ids
+    ? state.records.filter(r => ids.has(r.id))
+    : state.records;
+
+  const toTranslate = scope.map(rec => {
+    const fields = {};
+    mlFields.forEach(f => {
+      const val = rec.fields[f.key];
+      if (!val || typeof val !== 'object') return;
+      const src = val[sourceLocale]?.trim();
+      const tgt = val[targetLocale]?.trim();
+      if (src && (force || !tgt)) fields[f.key] = src;
+    });
+    return Object.keys(fields).length ? { id: rec.id, fields } : null;
+  }).filter(Boolean);
+
+  if (!toTranslate.length) { showToast('Nothing to translate'); return; }
+
+  const systemPrompt = `You are a translation engine. Translate the given field values from ${sourceLocale.toUpperCase()} to ${targetLocale.toUpperCase()}.
+Return ONLY a JSON array with the same structure — same ids, same field keys, values replaced with ${targetLocale.toUpperCase()} translations.
+Preserve HTML/Markdown formatting. No explanation, no markdown fences.`;
+
+  const userPrompt = JSON.stringify(toTranslate, null, 2);
+
+  showToast(`Translating ${toTranslate.length} record(s)…`);
+
+  try {
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ];
+    const result = provider === 'gemini'
+      ? await _callGemini(key, systemPrompt + '\n\n' + userPrompt)
+      : await _callOpenAI(key, messages);
+
+    const arr = Array.isArray(result) ? result : null;
+    if (!arr) { showToast('Invalid response from AI'); return; }
+
+    arr.forEach(item => {
+      const rec = state.records.find(r => r.id === item.id);
+      if (!rec) return;
+      Object.entries(item.fields).forEach(([fieldKey, translated]) => {
+        if (rec.fields[fieldKey] && typeof rec.fields[fieldKey] === 'object') {
+          rec.fields[fieldKey][targetLocale] = translated;
+        }
+      });
+    });
+
+    setDirty();
+    window.renderRecordsPanel();
+    showToast(`Translated ${arr.length} record(s) → ${targetLocale.toUpperCase()}`);
+  } catch (e) {
+    showToast('Translation error: ' + e.message);
+  }
+}

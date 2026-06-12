@@ -176,11 +176,26 @@ export function renderRecordsPanel() {
     ? `<button class="btn btn-sm btn-secondary${_bilingualView ? ' active' : ''}" onclick="toggleBilingualView()" title="Toggle bilingual columns">⊞ ${_bilingualView ? 'Bilingual' : state.activeLocale.toUpperCase()}</button>`
     : '';
 
+  const translateBtn = state.locales.length > 1 && state.schema?.fields.some(f => f.multilingual !== false && f.type !== 'image')
+    ? `<div class="records-pack-wrap">
+        <button class="btn btn-sm btn-secondary" onclick="toggleTranslateMenu(event)" title="AI translate fields">✦ Translate</button>
+        <div id="translate-menu" style="display:none;flex-direction:column;">
+          ${state.locales.flatMap(src =>
+            state.locales.filter(tgt => tgt !== src).map(tgt =>
+              `<button class="records-pack-item" onclick="translateRecords('${src}','${tgt}',${selCount ? 'window._getSelectedSet()' : 'null'},false);toggleTranslateMenu(event)">${src.toUpperCase()} → ${tgt.toUpperCase()}</button>
+               <button class="records-pack-item records-pack-item--sub" onclick="translateRecords('${src}','${tgt}',${selCount ? 'window._getSelectedSet()' : 'null'},true);toggleTranslateMenu(event)" title="Overwrite existing translations">${src.toUpperCase()} → ${tgt.toUpperCase()} (force)</button>`
+            )
+          ).join('')}
+        </div>
+      </div>`
+    : '';
+
   const headerHtml = `
     <div class="records-header">
       <span class="records-header-title">${t('rec.title')}</span>
       ${selectionBtns}
       ${bilingualBtn}
+      ${translateBtn}
       <button class="btn btn-sm btn-secondary" onclick="addRecord()">${t('rec.add')}</button>
       <button class="btn btn-sm btn-secondary" onclick="generateAll()">${t('rec.generateAll')}</button>
       <button class="btn btn-sm btn-secondary" onclick="syncAllPacked()" title="${t('rec.syncAllTitle')}">${t('rec.syncAll')}</button>
@@ -348,6 +363,16 @@ export function togglePackMenu(e) {
   e.stopPropagation();
   const menu = document.getElementById('pack-menu');
   if (menu) menu.classList.toggle('open');
+}
+
+export function toggleTranslateMenu(event) {
+  event.stopPropagation();
+  const menu = document.getElementById('translate-menu');
+  if (menu) menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+}
+
+export function _getSelectedSet() {
+  return _selectedIds.size > 0 ? new Set(_selectedIds) : null;
 }
 
 // Close pack menu on outside click
