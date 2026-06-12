@@ -281,6 +281,55 @@ _autoSaveToFile(); // writes to work folder, updates fc_last_file, calls clearDi
 - `onclick` attributes in innerHTML strings: always use single-quote outer (`onclick='fn(...)'`) when the argument is a `JSON.stringify`-ed string — double quotes inside will break the HTML attribute.
 - `_autoSaveToFile`: snapshot `currentFileName`/`currentSubfolder` into locals before any `await` — globals can change mid-save if user opens another file.
 
+## ESM Module Rules (2026-06-12)
+
+Migration từ concatenated JS sang Vite + ESM modules hoàn tất. Quy tắc bắt buộc:
+
+**KHÔNG bao giờ import** các hàm này — luôn dùng `window.xxx()` để tránh circular dep:
+- `dispatch`, `renderEditor`, `renderPreview`, `renderSidebar`, `renderRecordsPanel`, `refreshAllThumbs`
+
+**Mutable `let` exports** — bắt buộc dùng getter:
+```js
+let _foo = x;
+export function getFoo() { return _foo; }  // KHÔNG export let trực tiếp
+```
+
+**HTML onclick globals** — phải khai báo trong `Object.assign(window, {...})` ở `main.js`.
+
+**ESLint:** `npx eslint src/js` — 0 errors (chỉ có warnings unused vars).
+
+## AI Chat Architecture (src/js/ai/chat.js + src/js/api.js)
+
+**Providers hiện tại:** `gemini` | `openai` — stored in `localStorage("ai-provider")`, getter `getAiProvider()` từ `api.js`.
+
+**API functions** (exported từ `api.js`):
+- `_callOpenAI(key, prompt)` — messages array, returns parsed JSON
+- `_callGemini(key, prompt)` — string prompt, returns parsed JSON
+- `getAiProvider()` — getter cho `_aiProvider` let
+
+**Chat templates** (`AI_CHAT_TEMPLATES` trong `chat.js`):
+| id | Mô tả |
+|---|---|
+| `rewrite` | Viết lại toàn bộ project cho chủ đề mới |
+| `add_cards` | Thêm card mới vào project |
+| `edit_all` | Sửa nội dung tất cả cards |
+| `edit_active` | Sửa card đang active |
+| `generate_records` | Generate records từ schema |
+
+**Op types** (AI trả về JSON `{ summary, ops: [...] }`):
+- `SET_PROJECT` — replace toàn bộ project
+- `ADD_CARD` — thêm card
+- `UPDATE_CARD` — patch card theo id
+- `DELETE_CARD` — xóa card
+- `GENERATE_RECORDS` — import records mới
+
+**Next feature:** Thêm Claude (Anthropic) làm provider thứ 3.
+- Cần thêm `_callClaude(key, prompt)` vào `api.js`
+- Anthropic API endpoint: `https://api.anthropic.com/v1/messages`
+- Cần header `x-api-key` + `anthropic-version: 2023-06-01`
+- Thêm `claude` vào `switchAiProvider()` và UI settings (ai-key-claude div)
+- Thêm `claudeKey` vào `env.js`
+
 ## Session Notes (2026-05-29) - Refactoring
 
 - **src/ reorganized** into `html/`, `js/`, `css/` subfolders. Build markers added: `BUILD:SVG`, `BUILD:MODALS`.
