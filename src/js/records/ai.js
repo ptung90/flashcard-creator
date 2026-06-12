@@ -240,7 +240,9 @@ function _isDuplicateRecord(row, textFields) {
 
 export async function _applyImportedRecords(jsonText, append = false) {
   let parsed = JSON.parse(jsonText);
-  const incoming = Array.isArray(parsed) ? parsed : (parsed.records || parsed.result || []);
+  const vals = !Array.isArray(parsed) ? Object.values(parsed) : null;
+  const incoming = Array.isArray(parsed) ? parsed
+    : (vals && vals.length === 1 && Array.isArray(vals[0]) ? vals[0] : []);
   if (!incoming.length) { showToast('No records found'); return; }
 
   const allFields = state.schema?.fields || [];
