@@ -142,7 +142,8 @@ function buildCompoundImageSlots(card, imgStyle, cellOptions, sections, forPrint
   return Array.from({ length: slotCount }, (_, i) => {
     const img = card.images.find((im) => im.slot === i);
     const section = sections ? sections[i] : null;
-    const label = section && !card.hideSectionLabels && getLocaleValue(section.label, state.activeLocale) ? getLocaleValue(section.label, state.activeLocale) : null;
+    const _labelLv = getLocaleValue(section.label, state.activeLocale);
+    const label = section && !card.hideSectionLabels && _labelLv ? _labelLv : null;
     const hasImg = !!(img && img.url);
     const effectiveCellOptions = (forPrint && !hasImg) ? { ...cellOptions, borderWidth: 0 } : cellOptions;
     const slotStyle = buildCompoundCellStyle(
@@ -171,7 +172,10 @@ function buildCompoundImageSlots(card, imgStyle, cellOptions, sections, forPrint
 function buildSectionCellsHtml(sections, count, contentStyle, cellOptions, hideLabels, forPrint = false) {
   return Array.from({ length: count }, (_, i) => {
     const sec = sections[i];
-    const isEmpty = !sec || (!(sec.content || '').trim() && !((sec.label || '').trim() && !hideLabels));
+    const isEmpty = !sec || (
+      !(getLocaleValue(sec.content, state.activeLocale) || '').trim() &&
+      !((getLocaleValue(sec.label, state.activeLocale) || '').trim() && !hideLabels)
+    );
     const opts = (forPrint && isEmpty) ? { ...cellOptions, borderWidth: 0 } : cellOptions;
     return (
       '<div class="fc-sections" style="' +
@@ -448,10 +452,11 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
         : forPrint
           ? '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;background:transparent;"></div>'
           : '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden;"><span class="empty-placeholder">📷</span></div>';
-      const label = sec && !card.hideSectionLabels && getLocaleValue(sec.label, state.activeLocale) ? getLocaleValue(sec.label, state.activeLocale) : null;
+      const _labelLv = getLocaleValue(sec.label, state.activeLocale);
+      const label = sec && !card.hideSectionLabels && _labelLv ? _labelLv : null;
       const labelHtml = label ? '<div class="fc-img-label"' + (sec.labelSize ? ' style="font-size:' + sec.labelSize + 'px"' : '') + '>' + mdParseInline(label) + '</div>' : '';
       const isImgEmpty = !(img && img.url);
-      const isTxtEmpty = !((sec.content || '').trim() || (sec.label || '').trim());
+      const isTxtEmpty = !((getLocaleValue(sec.content, state.activeLocale) || '').trim() || (getLocaleValue(sec.label, state.activeLocale) || '').trim());
       // rowBorders mode: merge img+txt into one visual row — remove the shared border edge and set directional radius
       const imgExtra = rowBorders ? 'border-right:0;border-radius:' + r + 'px 0 0 ' + r + 'px;' : '';
       const txtExtra = rowBorders ? 'border-left:0;border-radius:0 ' + r + 'px ' + r + 'px 0;' : '';
