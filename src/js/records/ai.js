@@ -185,13 +185,12 @@ export async function executeGenerateRecords() {
     `2. All records must be distinct.${imgNote}`,
     '',
     'OUTPUT FORMAT (mandatory):',
-    `- Your ENTIRE response must be a raw JSON array. Start with [ and end with ]. Nothing else.`,
-    `- Each record: ${exampleRecord}`,
-    '- Keys go DIRECTLY in the record object. Do NOT nest them under a "fields" key.',
-    '- Do NOT wrap the array in any object (no "result", "records", "array", or any other key).',
+    '- Return a JSON object with exactly one key: "records", whose value is the array.',
+    `- Each record in the array: ${exampleRecord}`,
+    '- Field keys go DIRECTLY in the record object. Do NOT nest them under a "fields" sub-object.',
     '',
-    `CORRECT example: [${exampleRecord}]`,
-    `WRONG examples: {"result":[...]}  |  {"records":[...]}  |  [{"id":"...","fields":{...}}]`,
+    `CORRECT: {"records":[${exampleRecord}]}`,
+    `WRONG: {"records":[{"fields":{"name":"..."}}]}  |  any other top-level key`,
   ].join('\n');
 
   const userLines = [];
@@ -218,8 +217,6 @@ export async function executeGenerateRecords() {
       ? await _callGemini(key, messages[0].content + '\n\n' + messages[1].content)
       : await _callOpenAI(key, messages);
 
-    // _callOpenAI returns parsed JSON — but we expect an array, not {ops}
-    // The AI should return a raw array; if it wrapped it, unwrap
     const arr = Array.isArray(result) ? result : (result.records || Object.values(result)[0]);
     if (!Array.isArray(arr) || !arr.length) { showToast('No records returned'); return; }
 
