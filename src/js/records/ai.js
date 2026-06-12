@@ -259,7 +259,14 @@ export async function _applyImportedRecords(jsonText, append = false) {
     if (existing) { existing.fieldsHash = ''; updated++; }
 
     allFields.filter(f => f.type !== 'image').forEach(f => {
-      if (f.key in row) target.fields[f.key] = row[f.key];
+      if (!(f.key in row)) return;
+      const incoming = row[f.key];
+      const existing = target.fields[f.key];
+      if (incoming && typeof incoming === 'object' && existing && typeof existing === 'object') {
+        Object.assign(existing, incoming);
+      } else {
+        target.fields[f.key] = incoming;
+      }
     });
 
     for (const f of imageFields) {

@@ -1,4 +1,4 @@
-﻿import { LAYOUT_SLOTS, LAYOUT_SPLIT_DEFAULTS, getCardOrientation } from './core/state.js'
+﻿import { LAYOUT_SLOTS, LAYOUT_SPLIT_DEFAULTS, getCardOrientation, getLocaleValue, state } from './core/state.js'
 import { esc, getPaperPx, mmToPx, mdParseInline, renderSectionContent, mdParse } from './core/utils.js'
 
 // ── Card Render (HTML) ─────────────────────────────────────────────
@@ -96,11 +96,13 @@ function buildSectionContentStyle(sec, inline) {
 
 function buildSectionCellHtml(section, hideLabels) {
   if (!section) return '<div class="fc-section fc-section--empty"></div>';
+  const _label = getLocaleValue(section.label, state.activeLocale);
+  const _content = getLocaleValue(section.content, state.activeLocale);
   return (
     `<div class="fc-section${section.customClass ? ` ${esc(section.customClass)}` : ''}">` +
-    (!hideLabels && section.label ? '<span class="fc-section__label"' + (section.labelSize ? ` style="font-size:${section.labelSize}px"` : '') + '>• ' + mdParseInline(section.label) + ': </span>' : '') +
+    (!hideLabels && _label ? '<span class="fc-section__label"' + (section.labelSize ? ` style="font-size:${section.labelSize}px"` : '') + '>• ' + mdParseInline(_label) + ': </span>' : '') +
     '<div class="fc-section__content"' + ((section.fontSize || section.textAlign) ? ` style="${section.fontSize ? `font-size:${section.fontSize}px;` : ''}${section.textAlign ? `text-align:${section.textAlign};` : ''}"` : '') + '>' +
-    renderSectionContent(section.content) +
+    renderSectionContent(_content) +
     "</div></div>"
   );
 }
@@ -140,7 +142,7 @@ function buildCompoundImageSlots(card, imgStyle, cellOptions, sections, forPrint
   return Array.from({ length: slotCount }, (_, i) => {
     const img = card.images.find((im) => im.slot === i);
     const section = sections ? sections[i] : null;
-    const label = section && !card.hideSectionLabels && section.label ? section.label : null;
+    const label = section && !card.hideSectionLabels && getLocaleValue(section.label, state.activeLocale) ? getLocaleValue(section.label, state.activeLocale) : null;
     const hasImg = !!(img && img.url);
     const effectiveCellOptions = (forPrint && !hasImg) ? { ...cellOptions, borderWidth: 0 } : cellOptions;
     const slotStyle = buildCompoundCellStyle(
@@ -309,6 +311,7 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
     marginPx +
     "px auto;background:white;padding:0;border:none;";
   const gridStyle = getGridTemplateStyle(card.layout, split);
+  const resolvedTitle = getLocaleValue(card.title, state.activeLocale);
   const titleF = { ...s.titleFont, ...(card.titleFont || {}) };
   const contentF = { ...s.contentFont, ...(card.contentFont || {}) };
   const titleStyle = buildFontOverride(titleF);
@@ -326,7 +329,7 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
     : '';
   const _imgLabelFontRule = contentStyle ? `${_cs} .fc-img-label{${contentStyle}}` : '';
   const cardStyleTag = '<style>' + _h1Rule + _labelSizeRule + _contentSizeRule + _imgLabelFontRule + (card.customCss ? _scopeCardCss(card.customCss, card.id) : '') + '</style>';
-  const showTitle = !!card.title && !card.hideTitle;
+  const showTitle = !!resolvedTitle && !card.hideTitle;
   const borderCss = s.border.style + " " + s.border.color;
   const compoundCellOptions = {
     paddingPx,
@@ -377,7 +380,7 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
       compoundWrapperStyle +
       '">' +
       (showTitle
-        ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + "</div>"
+        ? '<div class="fc-title" style="' + titleStyle + '">' + resolvedTitle + "</div>"
         : "") +
       '<div class="fc-image-area" style="flex:1;position:relative;display:grid;overflow:hidden;gap:' +
       marginPx +
@@ -417,7 +420,7 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
       compoundWrapperStyle +
       '">' +
       (showTitle
-        ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + "</div>"
+        ? '<div class="fc-title" style="' + titleStyle + '">' + resolvedTitle + "</div>"
         : "") +
       '<div class="fc-image-area" style="flex:1;position:relative;display:grid;overflow:hidden;gap:' +
       marginPx +
@@ -445,7 +448,7 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
         : forPrint
           ? '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;background:transparent;"></div>'
           : '<div class="fc-compound-cell-inner" style="flex:1;width:100%;height:100%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden;"><span class="empty-placeholder">📷</span></div>';
-      const label = sec && !card.hideSectionLabels && sec.label ? sec.label : null;
+      const label = sec && !card.hideSectionLabels && getLocaleValue(sec.label, state.activeLocale) ? getLocaleValue(sec.label, state.activeLocale) : null;
       const labelHtml = label ? '<div class="fc-img-label"' + (sec.labelSize ? ' style="font-size:' + sec.labelSize + 'px"' : '') + '>' + mdParseInline(label) + '</div>' : '';
       const isImgEmpty = !(img && img.url);
       const isTxtEmpty = !((sec.content || '').trim() || (sec.label || '').trim());
@@ -465,7 +468,7 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
     return (
       cardStyleTag +
       '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id + '" style="' + compoundWrapperStyle + '">' +
-      (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + '</div>' : '') +
+      (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + resolvedTitle + '</div>' : '') +
       '<div class="fc-image-area" style="flex:1;position:relative;display:grid;overflow:hidden;' + gapStyle + compoundGridStyle + '">' +
       cells + handles +
       '</div></div>'
@@ -483,15 +486,17 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
       const img = card.images.find(im => im.slot === i);
       const section = card.sections[i] || { id: '', label: '', content: '' };
       const hasImg = !!(img && img.url);
-      const hasTitle = !!(section.label && !hideLabels);
-      const hasContent = !!section.content;
+      const _6cellLabel = getLocaleValue(section.label, state.activeLocale);
+      const _6cellContent = getLocaleValue(section.content, state.activeLocale);
+      const hasTitle = !!(_6cellLabel && !hideLabels);
+      const hasContent = !!_6cellContent;
       const imgAreaHtml = hasImg
         ? '<div style="flex:' + imgFlex + ';min-height:0;overflow:hidden;box-sizing:border-box;padding:' + imgPaddingPx + 'px;">' +
         '<div class="img-bg" style="background-image:url(\'' + esc(img.url) + '\');' + resolveImgStyle(img, imgStyle) + 'background-repeat:no-repeat;width:100%;height:100%;"></div>' +
         '</div>'
         : '';
       const cellTitleHtml = hasTitle
-        ? '<div class="fc-6cell-title" style="' + titleStyle + '">' + mdParseInline(section.label) + '</div>'
+        ? '<div class="fc-6cell-title" style="' + titleStyle + '">' + mdParseInline(_6cellLabel) + '</div>'
         : '';
       const textHtml = hasContent
         ? '<div class="fc-sections" style="flex:' + txtFlex + ';min-height:0;overflow:auto;padding:' + paddingPx + 'px;' + compoundTextBase + contentStyle + '">' +
@@ -515,7 +520,7 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
     return (
       cardStyleTag +
       '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id + '" style="' + compoundWrapperStyle + '">' +
-      (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + '</div>' : '') +
+      (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + resolvedTitle + '</div>' : '') +
       '<div style="flex:1;overflow:hidden;display:grid;grid-template-columns:repeat(' + cols + ',1fr);grid-template-rows:repeat(' + rows + ',1fr);gap:' + marginPx + 'px;">' +
       cells +
       '</div></div>'
@@ -536,7 +541,7 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
       compoundWrapperStyle +
       '">' +
       (showTitle
-        ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + "</div>"
+        ? '<div class="fc-title" style="' + titleStyle + '">' + resolvedTitle + "</div>"
         : "") +
       '<div class="fc-image-area" style="flex:1;position:relative;display:grid;overflow:hidden;gap:' +
       marginPx +
@@ -612,7 +617,7 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
       cardStyleTag +
       '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id +
       '" style="' + compoundWrapperStyle + '">' +
-      (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + '</div>' : '') +
+      (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + resolvedTitle + '</div>' : '') +
       '<div style="flex:1;overflow:auto;display:grid;gap:' + marginPx + 'px;' + gridStyle3 + '">' +
       buildSectionCellsHtml(card.sections, cellCount, compoundTextBase + gridContentStyle, compoundCellOptions, hideLabels, forPrint) +
       '</div></div>'
@@ -626,7 +631,7 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
       '<div class="' + cls + '" data-layout="' + card.layout + '" data-id="' + card.id +
       '" style="' + sizeStyle + borderStyle + '">' +
       '<div class="fc-text-area" style="height:' + cardH + 'px;overflow:auto;' + textVAlignStyle + '">' +
-      (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + '</div>' : '') +
+      (showTitle ? '<div class="fc-title" style="' + titleStyle + '">' + resolvedTitle + '</div>' : '') +
       '<div class="fc-sections" style="' + contentStyle + sectionsFlexOverride + '">' + sectionsHtml + '</div>' +
       '</div></div>'
     );
@@ -654,7 +659,7 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
     "</div>" +
     '<div class="fc-text-area" style="' + textVAlignStyle + '">' +
     (showTitle
-      ? '<div class="fc-title" style="' + titleStyle + '">' + card.title + "</div>"
+      ? '<div class="fc-title" style="' + titleStyle + '">' + resolvedTitle + "</div>"
       : "") +
     '<div class="fc-sections" style="' + contentStyle + sectionsFlexOverride + '">' +
     sectionsHtml +
