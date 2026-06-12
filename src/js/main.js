@@ -12,7 +12,7 @@ import '../css/tomoe.css'
 import './env.js'
 import { FC_CONFIG, FC_VERSION } from './core/config.js'
 // Layer 1
-import { state, uiState, LAYOUTS, PAPER_MM, HIDE_TITLE_LAYOUTS } from './core/state.js'
+import { state, uiState, LAYOUTS, PAPER_MM, HIDE_TITLE_LAYOUTS, getLocaleValue, setActiveLocale, addLocale } from './core/state.js'
 import './core/utils.js'
 // Layer 2
 import { saveJSON, saveJSONAs, loadJSON, dismissRestoreBanner, resumeLastProject,
@@ -182,6 +182,7 @@ Object.assign(window, {
   setLang,
   // core/state.js
   state, uiState, LAYOUTS, PAPER_MM, HIDE_TITLE_LAYOUTS,
+  getLocaleValue, setActiveLocale, addLocale,
   // core/config.js
   FC_CONFIG, FC_VERSION,
 })

@@ -473,6 +473,14 @@ export function applyLoadedData(data) {
     fieldsHash: r.fieldsHash ?? '',
     fields:     r.fields ?? {}
   }));
+  if (Array.isArray(data.locales) && data.locales.length) {
+    state.locales = data.locales;
+  } else {
+    state.locales = ['en', 'vi'];
+  }
+  state.activeLocale = data.activeLocale && state.locales.includes(data.activeLocale)
+    ? data.activeLocale
+    : state.locales[0];
   uiState.activeCardId = state.cards.length ? state.cards[0].id : null;
   if (!state.settings.googleFonts) state.settings.googleFonts = [];
   window.applyGoogleFonts(); window.applySettingsToUI();
