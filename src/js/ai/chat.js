@@ -3,7 +3,7 @@ import { esc, uid } from '../core/utils.js'
 import { FC_CONFIG } from '../core/config.js'
 import { setDirty, showToast } from '../storage/storage.js'
 import { t } from '../i18n.js'
-import { getAiProvider, _callGemini, _callOpenAI, _fetchImageByKeyword } from '../api.js'
+import { getAiProvider, switchAiProvider, _callGemini, _callOpenAI, _fetchImageByKeyword } from '../api.js'
 import { _applyImportedRecords } from '../records/ai.js'
 import { pushUndo } from '../core/undo.js'
 
@@ -17,8 +17,8 @@ function _chatProjectSnapshot() {
   const snap = JSON.parse(JSON.stringify({
     project_name: state.projectName, settings: state.settings, cards: state.cards,
   }));
-  snap.cards.forEach(function(card) {
-    card.images = (card.images || []).map(function(img) {
+  snap.cards.forEach(function (card) {
+    card.images = (card.images || []).map(function (img) {
       return (img && img.url && img.url.startsWith('data:')) ? Object.assign({}, img, { url: '' }) : img;
     });
   });
@@ -26,10 +26,10 @@ function _chatProjectSnapshot() {
 }
 
 function _chatCompactCards() {
-  return state.cards.map(function(c) {
+  return state.cards.map(function (c) {
     return {
       id: c.id, layout: c.layout, title: c.title,
-      sections: c.sections.map(function(s) {
+      sections: c.sections.map(function (s) {
         return { id: s.id, label: s.label, content: s.content };
       }),
     };
@@ -40,11 +40,11 @@ function _chatCompactCards() {
 function _chatRewriteSnapshot() {
   return {
     project_name: state.projectName,
-    settings: (function() {
+    settings: (function () {
       var s = state.settings;
       return { paperSize: s.paperSize, orientation: s.orientation, customCss: s.customCss || '' };
     })(),
-    cards: state.cards.map(function(c) {
+    cards: state.cards.map(function (c) {
       return {
         id: c.id,
         layout: c.layout,
@@ -54,10 +54,10 @@ function _chatRewriteSnapshot() {
         titleFont: c.titleFont || null,
         contentFont: c.contentFont || null,
         customCss: c.customCss || null,
-        images: (c.images || []).map(function(img) {
+        images: (c.images || []).map(function (img) {
           return { slot: img.slot, size: img.size || null, color: img.color || null };
         }),
-        sections: c.sections.map(function(s) {
+        sections: c.sections.map(function (s) {
           return { id: s.id, label: s.label || '', content: '' };
         }),
       };
@@ -72,11 +72,11 @@ const AI_CHAT_TEMPLATES = [
     id: 'rewrite',
     get label() { return t('ai.tpl.rewrite.label'); },
     get placeholder() { return t('ai.tpl.rewrite.ph'); },
-    buildPrompt: function(input) {
+    buildPrompt: function (input) {
       const snap = _chatProjectSnapshot();
       // Ensure every image has search_query:"" so AI knows to fill it
-      snap.cards.forEach(function(card) {
-        (card.images || []).forEach(function(img) {
+      snap.cards.forEach(function (card) {
+        (card.images || []).forEach(function (img) {
           if (!('search_query' in img)) img.search_query = '';
         });
       });
@@ -91,7 +91,7 @@ const AI_CHAT_TEMPLATES = [
         'Use HTML where useful: <strong>term</strong>, <ul><li>item</li></ul>.',
         'Set project_name to the new subject, project_icon to a single relevant emoji.',
         'For EVERY image (including fullimage cards): fill search_query with an English Wikimedia-friendly keyword, set url to "".',
-      ].map(function(r, i) { return (i + 1) + '. ' + r; }).join('\n');
+      ].map(function (r, i) { return (i + 1) + '. ' + r; }).join('\n');
       const returnShape = `{ "summary": "Rewrote all ${cardCount} cards for [new subject]", "ops": [{ "type": "SET_PROJECT", "project": { "project_name": "...", "project_icon": "...", "settings": {}, "cards": [] } }] }`;
       const systemContent = [
         'You are a flashcard content generator. Your only job is to rewrite a flashcard project for a new subject and return valid JSON.',
@@ -110,7 +110,7 @@ const AI_CHAT_TEMPLATES = [
       ].join('\n');
       return [
         { role: 'system', content: systemContent },
-        { role: 'user',   content: userContent },
+        { role: 'user', content: userContent },
       ];
     },
   },
@@ -118,32 +118,36 @@ const AI_CHAT_TEMPLATES = [
     id: 'add_cards',
     get label() { return t('ai.tpl.add.label'); },
     get placeholder() { return t('ai.tpl.add.ph'); },
-    buildPrompt: function(input) {
+    buildPrompt: function (input) {
       const snap = _chatProjectSnapshot();
-      const cardSummary = snap.cards.map(function(c) {
-        return '  [' + c.layout + '] "' + c.title + '" - sections: ' + c.sections.map(function(s) { return s.label || '(no label)'; }).join(', ');
+      const cardSummary = snap.cards.map(function (c) {
+        return '  [' + c.layout + '] "' + c.title + '" - sections: ' + c.sections.map(function (s) { return s.label || '(no label)'; }).join(', ');
       }).join('\n');
       const returnShape = '{ "summary": "Added 3 cards about [topic]", "ops": [ { "type": "ADD_CARD", "card": { "layout": "...", "title": "...", "sections": [{"label":"...","content":"..."}], "images": [{"slot":0,"url":"","search_query":"..."}] } } ] }';
       return [
-        { role: 'system', content: [
-          'You are a flashcard content generator. Your only job is to add new cards to an existing project and return valid JSON.',
-          '',
-          '1. Match the style and section structure of existing cards.',
-          '2. Write all content in the same language as the user\'s request. Write the summary in that same language too.',
-          '3. Each section: 2–4 sentences of specific, interesting facts. No one-liners.',
-          '4. For every image slot: set search_query (English, Wikimedia-friendly keyword), set url to "".',
-          '5. Use HTML where useful: <strong>term</strong>, <ul><li>item</li></ul>.',
-          '',
-          'Return ONLY this JSON shape — no explanation, no markdown:',
-          returnShape,
-        ].join('\n') },
-        { role: 'user', content: [
-          'Project: "' + state.projectName + '" — default layout: "' + FC_CONFIG.newCard.layout + '"',
-          'Existing cards:',
-          cardSummary,
-          '',
-          'Request: "' + input + '"',
-        ].join('\n') },
+        {
+          role: 'system', content: [
+            'You are a flashcard content generator. Your only job is to add new cards to an existing project and return valid JSON.',
+            '',
+            '1. Match the style and section structure of existing cards.',
+            '2. Write all content in the same language as the user\'s request. Write the summary in that same language too.',
+            '3. Each section: 2–4 sentences of specific, interesting facts. No one-liners.',
+            '4. For every image slot: set search_query (English, Wikimedia-friendly keyword), set url to "".',
+            '5. Use HTML where useful: <strong>term</strong>, <ul><li>item</li></ul>.',
+            '',
+            'Return ONLY this JSON shape — no explanation, no markdown:',
+            returnShape,
+          ].join('\n')
+        },
+        {
+          role: 'user', content: [
+            'Project: "' + state.projectName + '" — default layout: "' + FC_CONFIG.newCard.layout + '"',
+            'Existing cards:',
+            cardSummary,
+            '',
+            'Request: "' + input + '"',
+          ].join('\n')
+        },
       ];
     },
   },
@@ -151,27 +155,31 @@ const AI_CHAT_TEMPLATES = [
     id: 'edit_all',
     get label() { return t('ai.tpl.editAll.label'); },
     get placeholder() { return t('ai.tpl.editAll.ph'); },
-    buildPrompt: function(input) {
+    buildPrompt: function (input) {
       const cards = _chatCompactCards();
       const returnShape = '{ "summary": "Shortened content on 4 cards to max 2 sentences", "ops": [ { "type": "UPDATE_CARD", "id": "...", "patch": { "title": "...", "sections": [{"id":"...","label":"...","content":"..."}] } } ] }';
       return [
-        { role: 'system', content: [
-          'You are a flashcard editor. Apply the requested change to flashcard content and return valid JSON.',
-          '',
-          '1. Only include cards that actually need changes.',
-          '2. Keep existing section IDs; new sections can omit id.',
-          '3. Write all content in the same language as the user\'s request. Write the summary in that same language too.',
-          '4. Use HTML where useful: <strong>term</strong>, <ul><li>item</li></ul>.',
-          '',
-          'Return ONLY this JSON shape — no explanation, no markdown:',
-          returnShape,
-        ].join('\n') },
-        { role: 'user', content: [
-          'Cards:',
-          JSON.stringify(cards, null, 2),
-          '',
-          'Request: "' + input + '"',
-        ].join('\n') },
+        {
+          role: 'system', content: [
+            'You are a flashcard editor. Apply the requested change to flashcard content and return valid JSON.',
+            '',
+            '1. Only include cards that actually need changes.',
+            '2. Keep existing section IDs; new sections can omit id.',
+            '3. Write all content in the same language as the user\'s request. Write the summary in that same language too.',
+            '4. Use HTML where useful: <strong>term</strong>, <ul><li>item</li></ul>.',
+            '',
+            'Return ONLY this JSON shape — no explanation, no markdown:',
+            returnShape,
+          ].join('\n')
+        },
+        {
+          role: 'user', content: [
+            'Cards:',
+            JSON.stringify(cards, null, 2),
+            '',
+            'Request: "' + input + '"',
+          ].join('\n')
+        },
       ];
     },
   },
@@ -179,28 +187,32 @@ const AI_CHAT_TEMPLATES = [
     id: 'edit_active',
     get label() { return t('ai.tpl.editActive.label'); },
     get placeholder() { return t('ai.tpl.editActive.ph'); },
-    buildPrompt: function(input) {
+    buildPrompt: function (input) {
       const card = getActiveCard();
       if (!card) return null;
       const cardData = { id: card.id, layout: card.layout, title: card.title, sections: card.sections };
       const returnShape = `{ "summary": "Updated title and 3 sections on card '${card.id}'", "ops": [ { "type": "UPDATE_CARD", "id": "${card.id}", "patch": { "title": "...", "sections": [{"id":"...","label":"...","content":"..."}] } } ] }`;
       return [
-        { role: 'system', content: [
-          'You are a flashcard editor. Edit the given card based on the request and return valid JSON.',
-          '',
-          '1. Keep existing section IDs; new sections can omit id.',
-          '2. Write all content in the same language as the user\'s request. Write the summary in that same language too.',
-          '3. Use HTML where useful: <strong>term</strong>, <ul><li>item</li></ul>.',
-          '',
-          'Return ONLY this JSON shape — no explanation, no markdown:',
-          returnShape,
-        ].join('\n') },
-        { role: 'user', content: [
-          'Card:',
-          JSON.stringify(cardData, null, 2),
-          '',
-          'Request: "' + input + '"',
-        ].join('\n') },
+        {
+          role: 'system', content: [
+            'You are a flashcard editor. Edit the given card based on the request and return valid JSON.',
+            '',
+            '1. Keep existing section IDs; new sections can omit id.',
+            '2. Write all content in the same language as the user\'s request. Write the summary in that same language too.',
+            '3. Use HTML where useful: <strong>term</strong>, <ul><li>item</li></ul>.',
+            '',
+            'Return ONLY this JSON shape — no explanation, no markdown:',
+            returnShape,
+          ].join('\n')
+        },
+        {
+          role: 'user', content: [
+            'Card:',
+            JSON.stringify(cardData, null, 2),
+            '',
+            'Request: "' + input + '"',
+          ].join('\n')
+        },
       ];
     },
   },
@@ -208,60 +220,73 @@ const AI_CHAT_TEMPLATES = [
     id: 'generate_records',
     get label() { return t('ai.tpl.genRecords.label'); },
     get placeholder() { return t('ai.tpl.genRecords.ph'); },
-    buildPrompt: function(input) {
+    buildPrompt: function (input) {
       if (!state.schema || !state.schema.fields.length) return null;
       const allFields = state.schema.fields;
-      const textFields = allFields.filter(function(f) { return f.type !== 'image'; });
-      const imageFields = allFields.filter(function(f) { return f.type === 'image'; });
+      const textFields = allFields.filter(function (f) { return f.type !== 'image'; });
+      const imageFields = allFields.filter(function (f) { return f.type === 'image'; });
 
       // Parse leading number as count, rest as hint
       const match = input.match(/^(\d+)\s*(.*)/);
-      const n = match ? parseInt(match[1], 10) : 5;
+      const n = match ? parseInt(match[1], 10) : 1;
       const hint = match ? match[2].trim() : input.trim();
 
-      const schemaLines = allFields.map(function(f) { return '- ' + f.key + ' (' + f.type + '): ' + f.label; }).join('\n');
+      const schemaLines = allFields.map(function (f) { return '- ' + f.key + ' (' + f.type + '): ' + f.label; }).join('\n');
       const imgNote = imageFields.length
         ? '\n5. image fields: set value to a concise English Wikimedia search keyword — NOT a URL.'
         : '';
       const returnShape = `{ "summary": "Generated ${n} records about [topic]", "ops": [{ "type": "GENERATE_RECORDS", "records": [{ `
-        + allFields.map(function(f) { return '"' + f.key + '": "..."'; }).join(', ')
+        + allFields.map(function (f) { return '"' + f.key + '": "..."'; }).join(', ')
         + ' }] }] }';
 
       // Up to 3 sample records with most filled text fields
-      const samples = state.records.slice().sort(function(a, b) {
-        return textFields.filter(function(f) { return (b.fields[f.key] || '').trim(); }).length
-             - textFields.filter(function(f) { return (a.fields[f.key] || '').trim(); }).length;
-      }).slice(0, 3).map(function(r) {
+      const samples = state.records.slice().sort(function (a, b) {
+        return textFields.filter(function (f) { return (b.fields[f.key] || '').trim(); }).length
+          - textFields.filter(function (f) { return (a.fields[f.key] || '').trim(); }).length;
+      }).slice(0, 3).map(function (r) {
         const obj = {};
-        allFields.forEach(function(f) {
+        allFields.forEach(function (f) {
           const v = r.fields[f.key] || '';
           obj[f.key] = (f.type === 'image' && v.startsWith('data:')) ? '' : v;
         });
         return obj;
       });
 
+      const existingNames = state.records
+        .map(function (r) { return (r.fields['name'] || '').trim(); })
+        .filter(Boolean);
+
       return [
-        { role: 'system', content: [
-          'You are a record data generator. Generate new records and return valid JSON.',
-          '',
-          'Schema:',
-          schemaLines,
-          '',
-          'Rules:',
-          '1. Return ONLY the JSON shape below — no explanation, no markdown fences.',
-          '2. Generate exactly ' + n + ' records, all distinct.',
-          '3. Write all text content in the same language as the user\'s request. Write the summary in that same language too.',
-          '4. text/text-long fields: 2–4 sentences, specific facts. Use Markdown (**bold**, - lists). No HTML.',
-          '5. Avoid duplicating existing records.' + imgNote,
-          '',
-          'Return ONLY this JSON shape:',
-          returnShape,
-        ].join('\n') },
-        { role: 'user', content: [
-          samples.length ? ('Sample records (match style — do NOT repeat):\n' + JSON.stringify(samples, null, 2)) : '',
-          '',
-          'Generate ' + n + ' new records' + (hint ? ' about: "' + hint + '"' : '') + '.',
-        ].filter(Boolean).join('\n') },
+        {
+          role: 'system', content: [
+            'You are a record data generator. Generate new records and return valid JSON.',
+            '',
+            'Schema:',
+            schemaLines,
+            ...(existingNames.length ? [
+              '',
+              'Already exists — DO NOT generate these or anything too similar:',
+              existingNames.map(function (name) { return '- ' + name; }).join('\n'),
+            ] : []),
+            '',
+            'Rules:',
+            '1. Return ONLY the JSON shape below — no explanation, no markdown fences.',
+            '2. Generate exactly ' + n + ' records, all distinct.',
+            '3. Write all text content in the same language as the user\'s request. Write the summary in that same language too.',
+            '4. text/text-long fields: 2–4 sentences, specific facts. Use Markdown (**bold**, - lists). No HTML.',
+            '5. Each record must be unique — no duplicates with each other or with existing records.' + imgNote,
+            '',
+            'Return ONLY this JSON shape:',
+            returnShape,
+          ].join('\n')
+        },
+        {
+          role: 'user', content: [
+            samples.length ? ('Sample records (match style — do NOT repeat):\n' + JSON.stringify(samples, null, 2)) : '',
+            '',
+            'Generate ' + n + ' new records' + (hint ? ' about: "' + hint + '"' : '') + '.',
+          ].filter(Boolean).join('\n')
+        },
       ];
     },
   },
@@ -269,17 +294,54 @@ const AI_CHAT_TEMPLATES = [
 
 // ── Dialog open / close ────────────────────────────────────────────
 
+const _CHAT_MODELS = {
+  gemini: [
+    { value: 'gemini-2.0-flash', label: '2.0 Flash' },
+    { value: 'gemini-2.5-flash-preview-05-20', label: '2.5 Flash' },
+    { value: 'gemini-2.5-pro-preview-05-06', label: '2.5 Pro' },
+  ],
+  openai: [
+    { value: 'gpt-4o-mini', label: '4o-mini' },
+    { value: 'gpt-4o', label: '4o' },
+  ],
+};
+
+const _ALL_CHAT_MODELS = [
+  { value: 'gpt-4o-mini', label: 'GPT-4o mini', provider: 'openai' },
+  { value: 'gpt-4o', label: 'GPT-4o', provider: 'openai' },
+];
+
+function _populateChatModelSelect() {
+  const sel = document.getElementById('ai-chat-model-select');
+  if (!sel) return;
+  const provider = getAiProvider();
+  const savedModel = localStorage.getItem(`${provider}-model`)
+    || _ALL_CHAT_MODELS.find(function (m) { return m.provider === provider; })?.value;
+  sel.innerHTML = _ALL_CHAT_MODELS.map(function (m) {
+    return '<option value="' + m.value + '"' + (m.value === savedModel ? ' selected' : '') + '>' + m.label + '</option>';
+  }).join('');
+  // Sync provider to match the actually-selected model
+  const selectedModel = _ALL_CHAT_MODELS.find(function (m) { return m.value === sel.value; });
+  if (selectedModel && selectedModel.provider !== provider) switchAiProvider(selectedModel.provider);
+}
+
+export function onAiChatModelChange(value) {
+  const m = _ALL_CHAT_MODELS.find(function (m) { return m.value === value; });
+  if (!m) return;
+  switchAiProvider(m.provider);
+  localStorage.setItem(`${m.provider}-model`, value);
+}
+
 export function openAiChat(templateId) {
   const panel = document.getElementById('ai-chat-panel');
   if (!panel) return;
   _populateChatTemplateSelect();
+  _populateChatModelSelect();
   if (templateId) {
     const sel = document.getElementById('ai-chat-template-select');
     if (sel) sel.value = templateId;
   }
   onAiTemplateChange();
-  const modelSel = document.getElementById('ai-chat-model-select');
-  if (modelSel) modelSel.value = localStorage.getItem('openai-model') || 'gpt-4o-mini';
   panel.classList.remove('minimized');
   panel.style.display = 'flex';
   document.getElementById('ai-chat-input').focus();
@@ -298,7 +360,7 @@ export function toggleAiChatMinimize() {
 export function _populateChatTemplateSelect() {
   const sel = document.getElementById('ai-chat-template-select');
   if (!sel || sel.dataset.ready) return;
-  sel.innerHTML = AI_CHAT_TEMPLATES.map(function(t) {
+  sel.innerHTML = AI_CHAT_TEMPLATES.map(function (t) {
     return '<option value="' + t.id + '">' + esc(t.label) + '</option>';
   }).join('');
   sel.dataset.ready = '1';
@@ -308,22 +370,23 @@ export function onAiTemplateChange() {
   const sel = document.getElementById('ai-chat-template-select');
   const inp = document.getElementById('ai-chat-input');
   if (!sel || !inp) return;
-  const tpl = AI_CHAT_TEMPLATES.find(function(t) { return t.id === sel.value; });
+  const tpl = AI_CHAT_TEMPLATES.find(function (t) { return t.id === sel.value; });
   if (tpl) inp.placeholder = tpl.placeholder;
 }
 
 // ── Send ───────────────────────────────────────────────────────────
 
 export async function sendAiChat() {
-  const inp  = document.getElementById('ai-chat-input');
-  const sel  = document.getElementById('ai-chat-template-select');
+  const inp = document.getElementById('ai-chat-input');
+  const sel = document.getElementById('ai-chat-template-select');
   const text = inp ? inp.value.trim() : '';
   if (!text) return;
 
-  const tpl = AI_CHAT_TEMPLATES.find(function(t) { return t.id === (sel && sel.value); }) || AI_CHAT_TEMPLATES[0];
-  const key = localStorage.getItem(getAiProvider() + '-key') || '';
+  const tpl = AI_CHAT_TEMPLATES.find(function (t) { return t.id === (sel && sel.value); }) || AI_CHAT_TEMPLATES[0];
+  let provider = getAiProvider();
+  let key = localStorage.getItem(`${provider}-key`) || '';
   if (!key) {
-    _appendAiMessage('No ' + getAiProvider() + ' key set. Add it in env.js.');
+    _appendAiMessage(`No ${provider} key set. Add it in Settings → AI (⋯ toolbar).`);
     return;
   }
 
@@ -341,7 +404,7 @@ export async function sendAiChat() {
   _appendAiTyping();
 
   try {
-    const result = getAiProvider() === 'gemini'
+    const result = provider === 'gemini'
       ? await _callGemini(key, prompt)
       : await _callOpenAI(key, prompt);
     _removeTyping();
@@ -373,13 +436,13 @@ export function applyAiChatOps(msgId) {
   delete _chatOpsMap[msgId];
   pushUndo();
 
-  ops.forEach(function(op) {
+  ops.forEach(function (op) {
     if (op.type === 'SET_PROJECT' && op.project) {
       const p = op.project;
-      state.cards = (p.cards || []).map(function(c) {
+      state.cards = (p.cards || []).map(function (c) {
         return Object.assign({}, c, {
           id: c.id || uid(),
-          sections: (c.sections || []).map(function(s) { return Object.assign({}, s, { id: s.id || uid() }); }),
+          sections: (c.sections || []).map(function (s) { return Object.assign({}, s, { id: s.id || uid() }); }),
           images: c.images || [],
         });
       });
@@ -396,24 +459,24 @@ export function applyAiChatOps(msgId) {
     if (op.type === 'ADD_CARD' && op.card) {
       state.cards.push(Object.assign({}, op.card, {
         id: uid(),
-        sections: (op.card.sections || []).map(function(s) { return Object.assign({}, s, { id: uid() }); }),
+        sections: (op.card.sections || []).map(function (s) { return Object.assign({}, s, { id: uid() }); }),
         images: op.card.images || [],
       }));
     }
 
     if (op.type === 'UPDATE_CARD' && op.id && op.patch) {
-      const card = state.cards.find(function(c) { return c.id === op.id; });
+      const card = state.cards.find(function (c) { return c.id === op.id; });
       if (card) {
         if (op.patch.title !== undefined) card.title = op.patch.title;
         if (op.patch.layout) card.layout = op.patch.layout;
         if (op.patch.sections) {
-          card.sections = op.patch.sections.map(function(s) { return Object.assign({}, s, { id: s.id || uid() }); });
+          card.sections = op.patch.sections.map(function (s) { return Object.assign({}, s, { id: s.id || uid() }); });
         }
       }
     }
 
     if (op.type === 'DELETE_CARD' && op.id) {
-      state.cards = state.cards.filter(function(c) { return c.id !== op.id; });
+      state.cards = state.cards.filter(function (c) { return c.id !== op.id; });
     }
 
     if (op.type === 'GENERATE_RECORDS' && Array.isArray(op.records) && op.records.length) {
@@ -425,19 +488,19 @@ export function applyAiChatOps(msgId) {
 
   // Auto-fetch images with search_query but no url
   const pending = [];
-  state.cards.forEach(function(card) {
-    (card.images || []).forEach(function(img) {
+  state.cards.forEach(function (card) {
+    (card.images || []).forEach(function (img) {
       if (img.search_query && !img.url) pending.push(img);
     });
   });
   if (pending.length) {
     showToast('Fetching ' + pending.length + ' image' + (pending.length > 1 ? 's' : '') + '...');
     let filled = 0;
-    Promise.all(pending.map(function(img) {
-      return _fetchImageByKeyword(img.search_query).then(function(url) {
+    Promise.all(pending.map(function (img) {
+      return _fetchImageByKeyword(img.search_query).then(function (url) {
         if (url) { img.url = url; filled++; }
-      }).catch(function() {});
-    })).then(function() {
+      }).catch(function () { });
+    })).then(function () {
       if (filled) window.dispatch('CARD_UI_CHANGED');
     });
   }

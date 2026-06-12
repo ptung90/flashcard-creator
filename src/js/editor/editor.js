@@ -254,10 +254,12 @@ export function renderEditor() {
   const _ltab = LAYOUTS.indexOf(card.layout) >= 9 ? 1 : 0;
   content.innerHTML = `
     <div class="editor-section">
-      <h3>${t('editor.layout')}</h3>
-      <div class="layout-tabs">
-        <button class="layout-tab ${_ltab === 0 ? 'active' : ''}" onclick="switchLayoutTab(0,this)">Basic</button>
-        <button class="layout-tab ${_ltab === 1 ? 'active' : ''}" onclick="switchLayoutTab(1,this)">Special</button>
+      <div style="display:flex;align-items:flex-end;margin:14px 0 8px">
+        <h3 style="margin:0">${t('editor.layout')}</h3>
+        <div class="layout-tabs">
+          <button class="layout-tab ${_ltab === 0 ? 'active' : ''}" onclick="switchLayoutTab(0,this)">Basic</button>
+          <button class="layout-tab ${_ltab === 1 ? 'active' : ''}" onclick="switchLayoutTab(1,this)">Special</button>
+        </div>
       </div>
       <div id="layout-tab-0" class="layout-grid" style="${_ltab !== 0 ? 'display:none' : ''}">${LAYOUTS.slice(0, 9).map((l) => layoutIcon(l, l === card.layout)).join("")}</div>
       <div id="layout-tab-1" class="layout-grid" style="${_ltab !== 1 ? 'display:none' : ''}">${LAYOUTS.slice(9).map((l) => layoutIcon(l, l === card.layout)).join("")}</div>

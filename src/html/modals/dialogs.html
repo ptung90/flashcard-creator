@@ -107,10 +107,7 @@
         <div class="ai-chat-footer">
           <div class="ai-chat-footer-top">
             <select id="ai-chat-template-select" onchange="onAiTemplateChange()"></select>
-            <select id="ai-chat-model-select" onchange="localStorage.setItem('openai-model',this.value)" title="OpenAI model">
-              <option value="gpt-4o-mini">4o-mini</option>
-              <option value="gpt-4o">4o</option>
-            </select>
+            <select id="ai-chat-model-select" onchange="onAiChatModelChange(this.value)" title="Model"></select>
           </div>
           <div class="ai-chat-input-row">
             <textarea id="ai-chat-input" rows="2"

@@ -11,6 +11,9 @@ import { newCard } from '../app/cards.js'
 
 // ── Module state ─────────────────────────────────────────────────────
 let _imgClipboard = null;
+let _sortField = null;
+let _sortDir = 'asc';
+let _selectedIds = new Set();
 
 // ── TurndownService (local instance for record editor) ─────────────────
 let _turndownService = null;
@@ -55,6 +58,52 @@ export function toggleRecCol(key) {
   if (_hiddenRecCols.has(key)) _hiddenRecCols.delete(key);
   else _hiddenRecCols.add(key);
   _saveHiddenRecCols();
+  renderRecordsPanel();
+}
+
+export function toggleSelectRecord(id) {
+  if (_selectedIds.has(id)) _selectedIds.delete(id);
+  else _selectedIds.add(id);
+  renderRecordsPanel();
+}
+
+export function toggleSelectAll() {
+  const allIds = state.records.map(r => r.id);
+  const allSelected = allIds.every(id => _selectedIds.has(id));
+  if (allSelected) _selectedIds.clear();
+  else allIds.forEach(id => _selectedIds.add(id));
+  renderRecordsPanel();
+}
+
+export function deleteSelected() {
+  if (!_selectedIds.size) return;
+  const ids = [..._selectedIds];
+  state.cards = state.cards.filter(c => !ids.includes(c.recordId));
+  state.records = state.records.filter(r => !_selectedIds.has(r.id));
+  _selectedIds.clear();
+  setDirty();
+  window.dispatch('CARD_LIST_CHANGED');
+  renderRecordsPanel();
+}
+
+export function exportSelected() {
+  if (!_selectedIds.size) return;
+  window.exportRecordsJson(_selectedIds);
+}
+
+export function toggleSort(field) {
+  if (_sortField === field) {
+    _sortDir = _sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    _sortField = field;
+    _sortDir = 'asc';
+  }
+  state.records.sort((a, b) => {
+    const av = (a.fields[_sortField] || '').toLowerCase();
+    const bv = (b.fields[_sortField] || '').toLowerCase();
+    return _sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+  });
+  setDirty();
   renderRecordsPanel();
 }
 
@@ -110,9 +159,16 @@ export function renderRecordsPanel() {
     return `<label class="col-menu-item"><input type="checkbox" ${checked} onchange="toggleRecCol('${c.key}')"> ${esc(c.label)}</label>`;
   }).join('');
 
+  const selCount = _selectedIds.size;
+  const selectionBtns = selCount ? `
+    <button class="btn btn-sm btn-secondary" onclick="exportSelected()">⬇ Export (${selCount})</button>
+    <button class="btn btn-sm btn-danger" onclick="deleteSelected()">🗑 Delete (${selCount})</button>
+  ` : '';
+
   const headerHtml = `
     <div class="records-header">
       <span class="records-header-title">${t('rec.title')}</span>
+      ${selectionBtns}
       <button class="btn btn-sm btn-secondary" onclick="addRecord()">${t('rec.add')}</button>
       <button class="btn btn-sm btn-secondary" onclick="generateAll()">${t('rec.generateAll')}</button>
       <button class="btn btn-sm btn-secondary" onclick="syncAllPacked()" title="${t('rec.syncAllTitle')}">${t('rec.syncAll')}</button>
@@ -129,12 +185,12 @@ export function renderRecordsPanel() {
       <button class="btn btn-sm btn-primary" onclick="openAiChat('generate_records')" title="Generate new records with AI">✦ AI</button>
       <div class="records-pack-wrap">
         <button class="btn btn-sm btn-secondary" onclick="toggleRecordsMoreMenu(event)" title="More options">•••</button>
-        <div id="records-more-menu" style="display:none;flex-direction:column;min-width:160px">
-          <button onclick="exportRecordsJson();toggleRecordsMoreMenu(event)">Export JSON</button>
-          <button onclick="copyRecordsForAI();toggleRecordsMoreMenu(event)">✦ Copy for AI</button>
-          <button onclick="importRecordsJsonClick();toggleRecordsMoreMenu(event)">Import JSON</button>
-          <button onclick="pasteRecordsJson();toggleRecordsMoreMenu(event)">Paste JSON (update)</button>
-          <button onclick="pasteRecordsJson(true);toggleRecordsMoreMenu(event)">Append JSON</button>
+        <div id="records-more-menu" style="display:none">
+          <button class="records-pack-item" onclick="exportRecordsJson();toggleRecordsMoreMenu(event)">Export JSON</button>
+          <button class="records-pack-item" onclick="copyRecordsForAI();toggleRecordsMoreMenu(event)">✦ Copy for AI</button>
+          <button class="records-pack-item" onclick="importRecordsJsonClick();toggleRecordsMoreMenu(event)">Import JSON</button>
+          <button class="records-pack-item" onclick="pasteRecordsJson();toggleRecordsMoreMenu(event)">Paste JSON (update)</button>
+          <button class="records-pack-item" onclick="pasteRecordsJson(true);toggleRecordsMoreMenu(event)">Append JSON</button>
         </div>
       </div>
       <input type="file" id="records-import-input" accept=".json" style="display:none" onchange="importRecordsJsonFile(this)">
@@ -144,9 +200,26 @@ export function renderRecordsPanel() {
   const showStatus = !_hiddenRecCols.has('status');
   const showCards = !_hiddenRecCols.has('cards');
 
-  const colHeaders = visibleTextFields.map(f => `<th>${esc(f.label)}</th>`).join('');
+  const colHeaders = visibleTextFields.map(f => {
+    const isSorted = _sortField === f.key;
+    const arrow = isSorted ? (_sortDir === 'asc' ? ' ↑' : ' ↓') : '';
+    return `<th class="rec-th-sortable${isSorted ? ' rec-th-sorted' : ''}" onclick="toggleSort('${f.key}')">${esc(f.label)}${arrow}</th>`;
+  }).join('');
 
-  const rows = state.records.map((rec, ri) => {
+  const displayRecords = _sortField
+    ? state.records.slice().sort((a, b) => {
+        const av = (a.fields[_sortField] || '').toLowerCase();
+        const bv = (b.fields[_sortField] || '').toLowerCase();
+        return _sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+      })
+    : state.records;
+
+  const allIds = displayRecords.map(r => r.id);
+  const allSelected = allIds.length > 0 && allIds.every(id => _selectedIds.has(id));
+  const someSelected = !allSelected && allIds.some(id => _selectedIds.has(id));
+
+  const rows = displayRecords.map((rec, ri) => {
+    const checked = _selectedIds.has(rec.id) ? 'checked' : '';
     const cols = visibleTextFields.map(f => {
       const val = rec.fields[f.key] ?? '';
       const preview = val.length > 120 ? val.slice(0, 120) + '…' : val;
@@ -158,20 +231,27 @@ export function renderRecordsPanel() {
     const cardsTd = showCards
       ? `<td class="rec-cards-cell">${_linkedCardChips(rec.id)}</td>`
       : '';
-    return `<tr class="record-row" onclick="openRecordDetail('${rec.id}')" data-id="${rec.id}">
+    return `<tr class="record-row${_selectedIds.has(rec.id) ? ' record-row--selected' : ''}" onclick="openRecordDetail('${rec.id}')" data-id="${rec.id}">
+      <td class="rec-check-td" onclick="event.stopPropagation();toggleSelectRecord('${rec.id}')"><input type="checkbox" class="rec-checkbox" ${checked} onclick="event.stopPropagation();toggleSelectRecord('${rec.id}')"></td>
       <td class="rec-row-num">${ri + 1}</td>${cols}${statusTd}${cardsTd}
       <td><button class="btn btn-sm record-del-btn" onclick="event.stopPropagation();deleteRecord('${rec.id}')">✕</button></td>
     </tr>`;
   }).join('');
 
+  const indetermAttr = someSelected ? 'data-indeterminate="1"' : '';
   const theadExtra = (showStatus ? `<th style="width:72px">${t('rec.colStatus')}</th>` : '') + (showCards ? `<th style="width:120px">${t('rec.colCards')}</th>` : '');
   const tableHtml = `
     <table class="records-table">
-      <thead><tr><th style="width:28px">#</th>${colHeaders}${theadExtra}<th style="width:32px;"></th></tr></thead>
+      <thead><tr>
+        <th class="rec-check-th"><input type="checkbox" class="rec-checkbox" ${allSelected ? 'checked' : ''} ${indetermAttr} onclick="toggleSelectAll()"></th>
+        <th style="width:28px">#</th>${colHeaders}${theadExtra}<th style="width:32px;"></th>
+      </tr></thead>
       <tbody>${rows || `<tr><td colspan="99" style="padding:12px 8px;color:var(--ink-400);font-style:italic;">${t('rec.noRecords')}</td></tr>`}</tbody>
     </table>`;
 
   panel.innerHTML = headerHtml + tableHtml + `<div id="record-detail" style="display:none"></div>`;
+  const selectAllCb = panel.querySelector('.rec-check-th .rec-checkbox');
+  if (selectAllCb && someSelected) selectAllCb.indeterminate = true;
 }
 
 export function getRecordStatus(record) {
@@ -190,7 +270,7 @@ export function addRecord() {
   openRecordDetail(rec.id);
 }
 
-function deleteRecord(id) {
+export function deleteRecord(id) {
   const yes = confirm(t('rec.confirmDelete'));
   if (yes) {
     state.cards = state.cards.filter(c => c.recordId !== id);
@@ -327,6 +407,7 @@ export function openRecordDetail(id) {
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
           <button class="btn btn-sm btn-primary" onclick="syncRecord('${record.id}')">${t('rec.sync')}</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteRecord('${record.id}')" title="Delete record">🗑</button>
           <button class="btn btn-sm" onclick="document.getElementById('record-detail').style.display='none'">✕</button>
         </div>
       </div>

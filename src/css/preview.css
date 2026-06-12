@@ -1,4 +1,4 @@
-/* ── Preview Panel ── */
+﻿/* ── Preview Panel ── */
 .fc-preview-panel {
   width: 40%;
   min-width: 320px;
@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   background: #e5e7eb;
-  border-left: 1px solid #d1d5db;
+  border-left: 1px solid #e5e7eb;
 }
 
 .fc-preview-header {
@@ -37,7 +37,7 @@
 
 .fc-preview-label {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--c-text-3);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -51,7 +51,7 @@
 
 /* ── Card Render (preview + print) ── */
 .fc-card {
-  background: #fff;
+  background: var(--c-bg);
   color: #1a1a1a;
   display: flex;
   flex-direction: column;
@@ -131,7 +131,7 @@
   left: 0;
   right: 0;
   background: rgba(0,0,0,0.45);
-  color: #fff;
+  color: var(--c-bg);
   font-size: 7px;
   padding: 2px 4px;
   line-height: 1.3;
@@ -140,12 +140,12 @@
 }
 
 .fc-img-attribution a {
-  color: #fff;
+  color: var(--c-bg);
   text-decoration: underline;
 }
 
 .fc-image-slot .empty-placeholder {
-  color: #9ca3af;
+  color: var(--c-text-4);
   font-size: 11px;
   text-align: center;
   pointer-events: none;
@@ -160,7 +160,7 @@
 .fc-layout-2img-4txt .fc-image-slot,
 .fc-layout-3img-3txt .fc-image-slot,
 .fc-layout-img3-txt3 .fc-image-slot {
-  background: #ffffff;
+  background: var(--c-bg);
 }
 
 .fc-img-label {

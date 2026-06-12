@@ -405,6 +405,7 @@ function _consolidateSameLayout(layout) {
     card.imageGridSplit = ref.imageGridSplit ? { ...ref.imageGridSplit } : { ...(LAYOUT_SPLIT_DEFAULTS[layout] || {}) };
     card.imageHeightPercent = ref.imageHeightPercent;
     card.hideTitle = ref.hideTitle ?? true;
+    card.hideSectionLabels = ref.hideSectionLabels ?? false;
     card.title = ref.title || '';
     card.templateId = null; // mixed — won't be auto-synced
     card.packedRecordIds = chunk.map(cell => cell.recordId).filter(Boolean);

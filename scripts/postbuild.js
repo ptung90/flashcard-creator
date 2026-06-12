@@ -4,8 +4,8 @@ import { fileURLToPath } from 'url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const src  = join(ROOT, 'dist', 'index.html')
-const dest = join(ROOT, 'FlashCardApp', 'FlashCard Creator.html')
+const dest = String.raw`G:\My Drive\01_PROJECTS\M1 - CardApp\FlashCardApp\app\FlashCard Creator.html`
 
-mkdirSync(join(ROOT, 'FlashCardApp'), { recursive: true })
+mkdirSync(String.raw`G:\My Drive\01_PROJECTS\M1 - CardApp\FlashCardApp\app`, { recursive: true })
 copyFileSync(src, dest)
-console.log(`✓ Copied dist/index.html → FlashCardApp/FlashCard Creator.html`)
+console.log(String.raw`✓ Copied dist/index.html → G:\My Drive\01_PROJECTS\M1 - CardApp\FlashCardApp\app\FlashCard Creator.html`)

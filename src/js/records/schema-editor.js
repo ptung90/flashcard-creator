@@ -79,7 +79,7 @@ export async function deleteSchemaFromLibrary() {
 export function openSchemaEditor() {
   _editingSchema = state.schema
     ? JSON.parse(JSON.stringify(state.schema))
-    : { fields: [], cardTemplates: [] };
+    : { fields: [{ id: `f${uid()}`, key: 'name', type: 'text', label: 'Name' }], cardTemplates: [] };
   _loadedSchemaName = null;
   _renderSchemaEditor();
   document.getElementById('schema-editor-modal').showModal();
@@ -384,6 +384,11 @@ export function closePackDialog() {
 }
 
 export function saveSchema() {
+  const hasNameField = _editingSchema.fields.some(f => f.key === 'name');
+  if (!hasNameField) {
+    alert('Schema must have a field with key = "name".');
+    return;
+  }
   state.schema = _editingSchema;
   if (!Array.isArray(state.records)) state.records = [];
 

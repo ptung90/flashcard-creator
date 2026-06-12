@@ -1,3 +1,38 @@
+﻿/* ── Design tokens ── */
+:root {
+  /* Brand */
+  --c-brand:        #01606d;
+  --c-brand-hover:  #014f5a;
+  --c-brand-muted:  rgba(1, 96, 109, 0.08);
+  --c-brand-ring:   rgba(1, 96, 109, 0.12);
+
+  /* Text */
+  --c-text:         #111827;
+  --c-text-2:       #374151;
+  --c-text-3:       #6b7280;
+  --c-text-4:       #9ca3af;
+
+  /* Borders */
+  --c-border:       #e5e7eb;
+  --c-border-input: #d1d5db;
+
+  /* Surfaces */
+  --c-bg:           #ffffff;
+  --c-bg-subtle:    #f9fafb;
+  --c-bg-hover:     #f3f4f6;
+  --c-bg-active:    #e5e7eb;
+
+  /* Semantic */
+  --c-danger:       #ef4444;
+
+  /* Shadows */
+  --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md:  0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 2px var(--c-brand-ring);
+}
+
 /* ── Reset & Base ── */
 *,
 *::before,
@@ -8,14 +43,16 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 13px;
   background: #f0f0f2;
-  color: #1a1a2e;
+  color: var(--c-text);
   height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ── App Shell ── */
@@ -27,8 +64,8 @@ body {
 
 /* ── Settings Bar ── */
 .fc-settings-bar {
-  background: #ffffff;
-  border-bottom: 1px solid #d1d5db;
+  background: var(--c-bg);
+  border-bottom: 1px solid #e5e7eb;
   padding: 5px 10px;
   display: flex;
   flex-wrap: wrap;
@@ -42,7 +79,7 @@ body {
   align-items: center;
   gap: 4px;
   padding-right: 10px;
-  border-right: 1px solid #d1d5db;
+  border-right: 1px solid #e5e7eb;
 }
 
 .fc-settings-bar .setting-group:last-child {
@@ -57,7 +94,7 @@ body {
 }
 
 .fc-settings-bar label {
-  color: #4b5563;
+  color: var(--c-text-3);
   font-size: 11px;
   white-space: nowrap;
 }
@@ -65,9 +102,9 @@ body {
 .fc-settings-bar select,
 .fc-settings-bar input[type="number"],
 .fc-settings-bar input[type="text"] {
-  background: #f9fafb;
-  border: 1px solid #d1d5db;
-  color: #1a1a2e;
+  background: var(--c-bg-subtle);
+  border: 1px solid #e5e7eb;
+  color: var(--c-text);
   border-radius: 4px;
   padding: 0 5px;
   font-size: 12px;
@@ -91,7 +128,7 @@ body {
 
 .fc-settings-bar select:focus,
 .fc-settings-bar input:focus {
-  outline: 1px solid #3e9684;
+  outline: 1px solid var(--c-brand);
 }
 
 /* ── Google/Custom Font tags ── */
@@ -119,7 +156,7 @@ body {
   font-size: 9px;
   font-weight: 700;
   background: #7c3aed;
-  color: #fff;
+  color: var(--c-bg);
   border-radius: 2px;
   padding: 0 3px;
 }
@@ -146,15 +183,15 @@ body {
 }
 
 .align-btn {
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
+  background: var(--c-bg-hover);
+  border: 1px solid #e5e7eb;
   border-radius: 3px;
   width: 24px;
   height: 24px;
   font-size: 13px;
   line-height: 1;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--c-text-3);
   padding: 0;
   display: flex;
   align-items: center;
@@ -163,13 +200,13 @@ body {
 
 .align-btn:hover {
   background: #e5e7eb;
-  color: #1f2937;
+  color: var(--c-text-2);
 }
 
 .align-btn.active {
   background: var(--mint-100);
-  border-color: #82c4b6;
-  color: #3e9684;
+  border-color: #4db6c4;
+  color: var(--c-brand);
 }
 
 
@@ -195,8 +232,8 @@ body {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  background: #1a1a2e;
-  color: #fff;
+  background: var(--c-text);
+  color: var(--c-bg);
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 13px;
@@ -212,8 +249,8 @@ body {
 
 /* ── Toolbar (action buttons) ── */
 .fc-toolbar {
-  background: #ffffff;
-  border-bottom: 1px solid #d1d5db;
+  background: var(--c-bg);
+  border-bottom: 1px solid #e5e7eb;
   padding: 4px 10px;
   display: flex;
   gap: 5px;
@@ -235,8 +272,8 @@ body {
 .subfolder-label {
   font-size: 11px;
   font-weight: 500;
-  color: #6b7280;
-  background: #f3f4f6;
+  color: var(--c-text-3);
+  background: var(--c-bg-hover);
   border-radius: 4px;
   padding: 1px 6px;
   white-space: nowrap;
@@ -248,11 +285,11 @@ body {
 #project-name-input {
   font-size: 13px;
   font-weight: 600;
-  color: #1a1a2e;
-  border: 1px solid #d1d5db;
+  color: var(--c-text);
+  border: 1px solid #e5e7eb;
   border-radius: 4px;
   padding: 3px 6px;
-  background: #f9fafb;
+  background: var(--c-bg-subtle);
   width: 160px;
   min-width: 80px;
   text-overflow: ellipsis;
@@ -261,8 +298,8 @@ body {
 
 #project-name-input:focus {
   outline: none;
-  border-color: #3e9684;
-  background: #fff;
+  border-color: var(--c-brand);
+  background: var(--c-bg);
 }
 
 .recent-item--active {
@@ -271,12 +308,13 @@ body {
 
 .btn {
   padding: 5px 12px;
-  border-radius: 5px;
+  border-radius: 3px;
   border: none;
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
   transition: opacity 0.15s;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn:hover {
@@ -284,14 +322,14 @@ body {
 }
 
 .btn-primary {
-  background: #3e9684;
-  color: #fff;
+  background: var(--c-brand);
+  color: var(--c-bg);
 }
 
 .btn-secondary {
-  background: #f3f4f6;
-  color: #1f2937;
-  border: 1px solid #d1d5db;
+  background: var(--c-bg-hover);
+  color: var(--c-text-2);
+  border: 1px solid #e5e7eb;
 }
 
 .btn-danger {
@@ -309,18 +347,18 @@ body {
 }
 
 .btn-group .btn:first-child {
-  border-radius: 4px 0 0 4px;
+  border-radius: 3px 0 0 3px;
   margin-left: 0;
 }
 
 .btn-group .btn:last-child {
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 3px 3px 0;
 }
 
 .btn-group .btn.active {
   background: var(--mint-100);
-  border-color: #82c4b6;
-  color: #3e9684;
+  border-color: #4db6c4;
+  color: var(--c-brand);
   z-index: 1;
 }
 
@@ -356,7 +394,7 @@ body {
 
 .fc-panel-divider:hover,
 .fc-panel-divider.dragging {
-  background: #3e9684;
+  background: var(--c-brand);
 }
 
 /* Scrollbar */
@@ -370,12 +408,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: #e5e7eb;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3e9684;
+  background: var(--c-brand);
 }
 
 /* Language switcher */
@@ -383,13 +421,13 @@ body {
   font-size: 11px;
   padding: 2px 5px;
   min-width: 26px;
-  color: #4b5563;
+  color: var(--c-text-3);
 }
 
 .lang-btn.active {
   background: var(--mint-100);
-  border-color: #82c4b6;
-  color: #3e9684;
+  border-color: #4db6c4;
+  color: var(--c-brand);
   font-weight: 600;
 }
 

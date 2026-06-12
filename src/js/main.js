@@ -16,12 +16,14 @@ import { state, uiState, LAYOUTS, PAPER_MM, HIDE_TITLE_LAYOUTS } from './core/st
 import './core/utils.js'
 // Layer 2
 import { saveJSON, saveJSONAs, loadJSON, dismissRestoreBanner, resumeLastProject,
-         toggleSidebar } from './storage/storage.js'
+         toggleSidebar, setDirty, _updateLabels, _computeReadOnly } from './storage/storage.js'
 import { openLoadModal, closeLoadModal, newProject, openBackupModal, closeBackupModal,
          manualBackup, setWorkDir, openSaveAsModal, closeSaveAsModal, executeSaveAs,
          browseSubfolder, loadFromFolder, createSubfolder, openFilePicker,
          _renderFolderSection, toggleFolderCollapse,
-         deleteRecentItem, loadFromRecent } from './storage/file-modals.js'
+         deleteRecentItem, loadFromRecent,
+         deleteFromFolder, showMoveMenu, showCloneMenu,
+         _execMove, _execClone } from './storage/file-modals.js'
 import { searchWikimedia, searchINaturalist, searchPixabay, searchUnsplash,
          saveUnsplashKey, savePixabayKey, saveAiKey, switchAiProvider,
          toggleAiSection, aiGenerateProject } from './api.js'
@@ -29,11 +31,25 @@ import { setLang } from './i18n.js'
 // Layer 3
 import './render.js'
 // Layer 4
-import { editorToolbarCmd, setActiveSectionFontProp } from './editor/editor.js'
-import './editor/controls.js'
-import { setFontAlign, setTextVAlign } from './editor/sections.js'
+import { editorToolbarCmd, setActiveSectionFontProp, renderEditor } from './editor/editor.js'
+import {
+  switchLayoutTab, setLayout, setTextRows, setTextCols,
+  setCardFontAlign, setCardFontProp, toggleCardFontColor,
+  toggleCardOrientation, setCardOrientation,
+  updateCardProp, updateGridSplitProp,
+  setSlotSize, toggleImgOverride, updateImgProp, clearSlot,
+} from './editor/controls.js'
+import {
+  setFontAlign, setTextVAlign,
+  mergeSections, addSection, deleteSection, moveSection,
+  openSectionMenu, closeSectionMenu, setSectionClass,
+  copySection, pasteSection, copySectionWithImage, pasteSectionWithImage,
+  updateSection, toggleCardCssEditor, updateCardCss,
+  togglePasteBlock, parsePasteBlock,
+  toggleDataArea, editCardData, cancelCardData, saveCardData, swapSlots,
+} from './editor/sections.js'
 // Layer 5
-import { printOne, printAll, exportOnePDF,
+import { renderPreview, printOne, printAll, exportOnePDF,
          openExportPdfDialog, runExportPdf } from './preview.js'
 import { openCssModal, closeCssModal, openSettingsModal, closeSettingsModal,
          openImgModal, closeImgModal, switchTab, copySlot, pasteToSlot,
@@ -44,10 +60,11 @@ import { openCssModal, closeCssModal, openSettingsModal, closeSettingsModal,
 // Layer 6
 import { undo, redo, pushUndo } from './core/undo.js'
 // Layer 7
-import { renderRecordsPanel, openRecordDetail,
+import { renderRecordsPanel, openRecordDetail, addRecord, deleteRecord,
          _clearRecordImage, _copyRecordImage, _pasteRecordImage, _pasteToRecordImage,
          _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
-         toggleRecCol, toggleRecordsMoreMenu } from './records/records.js'
+         toggleRecCol, toggleRecordsMoreMenu, toggleSort,
+         toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected } from './records/records.js'
 import { confirmPack, packAll, generateRecord, generateAll,
          syncRecord, syncAllPacked, openPackDialog } from './records/pack.js'
 import { openSchemaEditor, closeSchemaEditor, saveSchema, closePackDialog,
@@ -63,7 +80,7 @@ import { copyRecordsForAI, closeRecordsAiModal, executeRecordsAiCopy,
          exportRecordsJson, importRecordsJsonClick, importRecordsJsonFile,
          pasteRecordsJson } from './records/ai.js'
 import { openAiChat, closeAiChat, toggleAiChatMinimize, sendAiChat,
-         applyAiChatOps, onAiTemplateChange } from './ai/chat.js'
+         applyAiChatOps, onAiTemplateChange, onAiChatModelChange } from './ai/chat.js'
 // Layer 8
 import { addGoogleFont, removeGoogleFont, setGlobalOrient, changeUIZoom,
          setPhysicalZoom, changePreviewZoom, applyGoogleFonts,
@@ -98,18 +115,20 @@ Object.assign(window, {
   setTwoUpRatio, openCardMenu, setActive, moveCard, deleteCard, handleUploadFiles,
   // storage/storage.js
   saveJSON, saveJSONAs, loadJSON, dismissRestoreBanner, resumeLastProject, toggleSidebar,
+  setDirty, _updateLabels, _computeReadOnly,
   // storage/file-modals.js
   openLoadModal, closeLoadModal, newProject, openBackupModal, closeBackupModal, manualBackup, setWorkDir,
   openSaveAsModal, closeSaveAsModal, executeSaveAs,
   browseSubfolder, loadFromFolder, createSubfolder, openFilePicker,
   _renderFolderSection, toggleFolderCollapse,
   deleteRecentItem, loadFromRecent,
+  deleteFromFolder, showMoveMenu, showCloneMenu, _execMove, _execClone,
   // api.js
   searchWikimedia, searchINaturalist, searchPixabay, searchUnsplash,
   saveUnsplashKey, savePixabayKey, saveAiKey, switchAiProvider,
   toggleAiSection, aiGenerateProject,
   // preview.js
-  printOne, printAll, exportOnePDF, openExportPdfDialog, runExportPdf,
+  renderPreview, printOne, printAll, exportOnePDF, openExportPdfDialog, runExportPdf,
   // modals.js
   openCssModal, closeCssModal, openSettingsModal, closeSettingsModal,
   openImgModal, closeImgModal, switchTab, copySlot, pasteToSlot,
@@ -118,13 +137,28 @@ Object.assign(window, {
   migrateImages, saveStyleToLibrary, applyStyleFromLibrary, deleteStyleFromLibrary,
   // core/undo.js
   undo, redo, pushUndo,
-  // editor/editor.js + editor/sections.js
-  editorToolbarCmd, setActiveSectionFontProp, setFontAlign, setTextVAlign,
+  // editor/editor.js
+  editorToolbarCmd, setActiveSectionFontProp, renderEditor,
+  // editor/controls.js
+  switchLayoutTab, setLayout, setTextRows, setTextCols,
+  setCardFontAlign, setCardFontProp, toggleCardFontColor,
+  toggleCardOrientation, setCardOrientation,
+  updateCardProp, updateGridSplitProp,
+  setSlotSize, toggleImgOverride, updateImgProp, clearSlot,
+  // editor/sections.js
+  setFontAlign, setTextVAlign,
+  mergeSections, addSection, deleteSection, moveSection,
+  openSectionMenu, closeSectionMenu, setSectionClass,
+  copySection, pasteSection, copySectionWithImage, pasteSectionWithImage,
+  updateSection, toggleCardCssEditor, updateCardCss,
+  togglePasteBlock, parsePasteBlock,
+  toggleDataArea, editCardData, cancelCardData, saveCardData, swapSlots,
   // records/records.js
-  renderRecordsPanel, openRecordDetail,
+  renderRecordsPanel, openRecordDetail, addRecord, deleteRecord,
   _clearRecordImage, _copyRecordImage, _pasteRecordImage, _pasteToRecordImage,
   _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
-  toggleRecCol, toggleRecordsMoreMenu,
+  toggleRecCol, toggleRecordsMoreMenu, toggleSort,
+  toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected,
   // records/pack.js
   confirmPack, packAll, generateRecord, generateAll,
   syncRecord, syncAllPacked, openPackDialog,
@@ -143,7 +177,7 @@ Object.assign(window, {
   pasteRecordsJson,
   // ai/chat.js
   openAiChat, closeAiChat, toggleAiChatMinimize, sendAiChat,
-  applyAiChatOps, onAiTemplateChange,
+  applyAiChatOps, onAiTemplateChange, onAiChatModelChange,
   // i18n.js
   setLang,
   // core/state.js

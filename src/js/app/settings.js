@@ -114,14 +114,7 @@ export function addGoogleFont(src) {
   state.settings.googleFonts = fonts;
   input.value = "";
   renderGFontTags();
-  // Auto-select the new font in both dropdowns and apply to state
-  const value = `'${name}',sans-serif`;
-  const titleSel = document.getElementById("set-font-family");
-  const contentSel = document.getElementById("set-cfont-family");
-  if (titleSel) { titleSel.value = value; state.settings.titleFont.family = value; }
-  if (contentSel) { contentSel.value = value; state.settings.contentFont.family = value; }
   setDirty();
-  renderPreview();
 }
 
 export function removeGoogleFont(name) {

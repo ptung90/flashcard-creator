@@ -1,22 +1,21 @@
-﻿import { state, uiState } from '../core/state.js'
-import { esc, uid } from '../core/utils.js'
-import { FC_CONFIG } from '../core/config.js'
+﻿import { state } from '../core/state.js'
+import { uid } from '../core/utils.js'
 import { setDirty, showToast } from '../storage/storage.js'
-import { t } from '../i18n.js'
 import { getAiProvider, _fetchImageByKeyword, _callGemini, _callOpenAI } from '../api.js'
 
 // ── Records JSON Export / Import ───────────────────────────────────────────────
 
-export function exportRecordsJson() {
+export function exportRecordsJson(ids = null) {
   if (!state.schema || !state.records.length) { showToast('No records to export'); return; }
   const allFields = state.schema.fields;
+  const source = ids ? state.records.filter(r => ids.has(r.id)) : state.records;
+  if (!source.length) { showToast('No records to export'); return; }
   const out = {
     schema: allFields.map(f => ({ key: f.key, label: f.label, type: f.type })),
-    records: state.records.map(r => {
+    records: source.map(r => {
       const obj = { id: r.id };
       allFields.forEach(f => {
         const val = r.fields[f.key] ?? '';
-        // strip data: URLs to keep export file small
         obj[f.key] = (f.type === 'image' && val.startsWith('data:')) ? '' : val;
       });
       return obj;
@@ -137,42 +136,52 @@ export function closeGenerateRecordsDialog() {
 }
 
 export async function executeGenerateRecords() {
-  const n = parseInt(document.getElementById('gen-records-count').value, 10) || 5;
+  const n = Number.parseInt(document.getElementById('gen-records-count').value, 10) || 5;
   const hint = document.getElementById('gen-records-hint').value.trim();
   const allFields = state.schema.fields;
   const imageFields = allFields.filter(f => f.type === 'image');
   const textFields = allFields.filter(f => f.type !== 'image');
 
-  const schemaLines = allFields.map(function(f) { return '- ' + f.key + ' (' + f.type + '): ' + f.label; }).join('\n');
+  const schemaLines = allFields.map(f => `- ${f.key} (${f.type}): ${f.label}`).join('\n');
   const imgNote = imageFields.length
     ? '\n- image fields: set value to a concise English Wikimedia search keyword (e.g. species name, landmark) — NOT a URL'
     : '';
 
   // Pick up to 3 records with the most filled text fields as samples
-  const samples = state.records.slice().sort(function(a, b) {
-    const scoreA = textFields.filter(function(f) { return (a.fields[f.key] || '').trim(); }).length;
-    const scoreB = textFields.filter(function(f) { return (b.fields[f.key] || '').trim(); }).length;
+  const samples = state.records.slice().sort((a, b) => {
+    const scoreA = textFields.filter(f => (a.fields[f.key] || '').trim()).length;
+    const scoreB = textFields.filter(f => (b.fields[f.key] || '').trim()).length;
     return scoreB - scoreA;
-  }).slice(0, 3).map(function(r) {
+  }).slice(0, 3).map(r => {
     const obj = {};
-    allFields.forEach(function(f) {
+    allFields.forEach(f => {
       const v = r.fields[f.key] || '';
       obj[f.key] = (f.type === 'image' && v.startsWith('data:')) ? '' : v;
     });
     return obj;
   });
 
+  // Build blacklist from the required "name" field
+  const existingNames = state.records
+    .map(r => (r.fields['name'] || '').trim())
+    .filter(Boolean);
+
   const systemContent = [
     'You are a record data generator. Generate new records matching a schema and return valid JSON.',
     '',
     'Schema:',
     schemaLines,
+    ...(existingNames.length ? [
+      '',
+      'Already exists — DO NOT generate these or anything too similar:',
+      existingNames.map(name => `- ${name}`).join('\n'),
+    ] : []),
     '',
     'Rules:',
-    '1. Return ONLY a JSON array of exactly ' + n + ' records — no wrapper, no explanation, no markdown fences.',
-    '2. Each record: { ' + allFields.map(function(f) { return '"' + f.key + '": "..."'; }).join(', ') + ' }',
+    `1. Return ONLY a JSON array of exactly ${n} records — no wrapper, no explanation, no markdown fences.`,
+    '2. Each record: { ' + allFields.map(f => '"' + f.key + '": "..."').join(', ') + ' }',
     '3. text/text-long fields: 2–4 sentences of specific, accurate, interesting facts. Use Markdown (**bold**, - lists). No HTML.',
-    '4. All records must be distinct — avoid duplicates with each other.' + imgNote,
+    `4. All records must be distinct — avoid duplicates with each other.${imgNote}`,
   ].join('\n');
 
   const userLines = [];
@@ -183,8 +192,9 @@ export async function executeGenerateRecords() {
   }
   userLines.push('Generate ' + n + ' new records' + (hint ? ' about: "' + hint + '"' : '') + '.');
 
-  const key = localStorage.getItem(getAiProvider() + '-key') || '';
-  if (!key) { showToast('No ' + getAiProvider() + ' key set'); return; }
+  let provider = getAiProvider();
+  let key = localStorage.getItem(`${provider}-key`) || '';
+  if (!key) { showToast(`No ${provider} key set. Add it in Settings → AI`); return; }
 
   const btn = document.getElementById('gen-records-btn');
   if (btn) { btn.disabled = true; btn.textContent = '…'; }
@@ -194,7 +204,7 @@ export async function executeGenerateRecords() {
       { role: 'system', content: systemContent },
       { role: 'user',   content: userLines.join('\n') },
     ];
-    const result = getAiProvider() === 'gemini'
+    const result = provider === 'gemini'
       ? await _callGemini(key, messages[0].content + '\n\n' + messages[1].content)
       : await _callOpenAI(key, messages);
 
@@ -216,6 +226,12 @@ export function importRecordsJsonClick() {
   document.getElementById('records-import-input')?.click();
 }
 
+function _isDuplicateRecord(row, textFields) {
+  return state.records.some(r =>
+    textFields.every(f => (r.fields[f.key] ?? '') === (row[f.key] ?? ''))
+  );
+}
+
 export async function _applyImportedRecords(jsonText, append = false) {
   let parsed = JSON.parse(jsonText);
   const incoming = Array.isArray(parsed) ? parsed : (parsed.records || []);
@@ -223,9 +239,13 @@ export async function _applyImportedRecords(jsonText, append = false) {
 
   const allFields = state.schema?.fields || [];
   const imageFields = allFields.filter(f => f.type === 'image');
-  let added = 0, updated = 0;
+  const textFields = allFields.filter(f => f.type !== 'image');
+  let added = 0;
+  let updated = 0;
 
   for (const row of incoming) {
+    if (append && _isDuplicateRecord(row, textFields)) continue;
+
     const existing = !append && row.id && state.records.find(r => r.id === row.id);
     const target = existing || (() => {
       if (!state.schema) return null;

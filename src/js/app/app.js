@@ -73,7 +73,11 @@ export function dispatch(action) {
 
 // ── JSON Export Modal ───────────────────────────────────────────────
 export function openJsonModal() {
-  document.getElementById("json-modal").showModal();
+  const el = id => document.getElementById(id);
+  const gKey = el('gemini-key'); if (gKey) gKey.value = localStorage.getItem('gemini-key') || '';
+  const oKey = el('openai-key'); if (oKey) oKey.value = localStorage.getItem('openai-key') || '';
+  const gModel = el('gemini-model'); if (gModel) gModel.value = localStorage.getItem('gemini-model') || '';
+  el("json-modal").showModal();
 }
 export function closeJsonModal() {
   document.getElementById("json-modal").close();
