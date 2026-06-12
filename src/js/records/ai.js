@@ -350,7 +350,10 @@ Preserve HTML/Markdown formatting. No explanation, no markdown fences.`;
 
   const userPrompt = JSON.stringify(toTranslate, null, 2);
 
-  showToast(`Translating ${toTranslate.length} record(s)…`);
+  const scopeLabel = ids ? `${toTranslate.length} records` : `all ${toTranslate.length} records`;
+  window.openAiChat?.();
+  window._appendUserMessage?.(`${sourceLocale.toUpperCase()} → ${targetLocale.toUpperCase()} · ${scopeLabel}${force ? ' (force)' : ''}`, '');
+  window._appendAiTyping?.();
 
   try {
     const messages = [
@@ -362,7 +365,11 @@ Preserve HTML/Markdown formatting. No explanation, no markdown fences.`;
       : await _callOpenAI(key, messages);
 
     const arr = Array.isArray(result) ? result : (result?.records || result?.translations || null);
-    if (!Array.isArray(arr)) { showToast('Invalid response from AI'); return; }
+    window._removeTyping?.();
+    if (!Array.isArray(arr)) {
+      window._appendAiMessage?.('Invalid response from AI', null);
+      return;
+    }
 
     arr.forEach(item => {
       const rec = state.records.find(r => r.id === item.id);
@@ -376,8 +383,9 @@ Preserve HTML/Markdown formatting. No explanation, no markdown fences.`;
 
     setDirty();
     window.renderRecordsPanel();
-    showToast(`Translated ${arr.length} record(s) → ${targetLocale.toUpperCase()}`);
+    window._appendAiMessage?.(`✓ Translated ${arr.length} record(s) → ${targetLocale.toUpperCase()}`, null);
   } catch (e) {
-    showToast('Translation error: ' + e.message);
+    window._removeTyping?.();
+    window._appendAiMessage?.(`✗ Translation failed: ${e.message}`, null);
   }
 }

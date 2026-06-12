@@ -82,7 +82,9 @@ import { copyRecordsForAI, closeRecordsAiModal, executeRecordsAiCopy,
          exportRecordsJson, importRecordsJsonClick, importRecordsJsonFile,
          pasteRecordsJson, translateRecords } from './records/ai.js'
 import { openAiChat, closeAiChat, toggleAiChatMinimize, sendAiChat,
-         applyAiChatOps, onAiTemplateChange, onAiChatModelChange } from './ai/chat.js'
+         applyAiChatOps, onAiTemplateChange, onAiChatModelChange,
+         appendTranslateOptions,
+         _appendUserMessage, _appendAiMessage, _appendAiTyping, _removeTyping } from './ai/chat.js'
 // Layer 8
 import { addGoogleFont, removeGoogleFont, setGlobalOrient, changeUIZoom,
          setPhysicalZoom, changePreviewZoom, applyGoogleFonts,
@@ -182,6 +184,8 @@ Object.assign(window, {
   // ai/chat.js
   openAiChat, closeAiChat, toggleAiChatMinimize, sendAiChat,
   applyAiChatOps, onAiTemplateChange, onAiChatModelChange,
+  appendTranslateOptions,
+  _appendUserMessage, _appendAiMessage, _appendAiTyping, _removeTyping,
   // i18n.js
   setLang,
   // core/state.js

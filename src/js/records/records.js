@@ -171,17 +171,7 @@ export function renderRecordsPanel() {
     : '';
 
   const translateBtn = state.locales.length > 1 && state.schema?.fields.some(f => f.multilingual !== false && f.type !== 'image')
-    ? `<div class="records-pack-wrap">
-        <button class="btn btn-sm btn-secondary" onclick="toggleTranslateMenu(event)" title="AI translate fields">✦ Translate</button>
-        <div id="translate-menu" style="display:none;flex-direction:column;">
-          ${state.locales.flatMap(src =>
-            state.locales.filter(tgt => tgt !== src).map(tgt =>
-              `<button class="records-pack-item" onclick="translateRecords('${src}','${tgt}',${selCount ? 'window._getSelectedSet()' : 'null'},false);toggleTranslateMenu(event)">${src.toUpperCase()} → ${tgt.toUpperCase()}</button>
-               <button class="records-pack-item records-pack-item--sub" onclick="translateRecords('${src}','${tgt}',${selCount ? 'window._getSelectedSet()' : 'null'},true);toggleTranslateMenu(event)" title="Overwrite existing translations">${src.toUpperCase()} → ${tgt.toUpperCase()} (force)</button>`
-            )
-          ).join('')}
-        </div>
-      </div>`
+    ? `<button class="btn btn-sm btn-secondary" onclick="toggleTranslateMenu(event)" title="AI translate fields">✦ Translate</button>`
     : '';
 
   const headerHtml = `
@@ -361,8 +351,7 @@ export function togglePackMenu(e) {
 
 export function toggleTranslateMenu(event) {
   event.stopPropagation();
-  const menu = document.getElementById('translate-menu');
-  if (menu) menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+  window.appendTranslateOptions?.(_selectedIds.size > 0 ? new Set(_selectedIds) : null);
 }
 
 export function _getSelectedSet() {

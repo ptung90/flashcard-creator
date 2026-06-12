@@ -4,12 +4,14 @@ import { FC_CONFIG } from '../core/config.js'
 import { setDirty, showToast } from '../storage/storage.js'
 import { t } from '../i18n.js'
 import { getAiProvider, switchAiProvider, _callGemini, _callOpenAI, _fetchImageByKeyword } from '../api.js'
-import { _applyImportedRecords } from '../records/ai.js'
+import { _applyImportedRecords, translateRecords } from '../records/ai.js'
 import { pushUndo } from '../core/undo.js'
 
 // ── AI Chat Panel ──────────────────────────────────────────────────
 
 const _chatOpsMap = {};
+
+let _pendingTranslateIds = null;
 
 // ── Snapshot helpers ───────────────────────────────────────────────
 
@@ -508,7 +510,7 @@ export function applyAiChatOps(msgId) {
 
 // ── Bubble rendering ───────────────────────────────────────────────
 
-function _appendUserMessage(text, templateLabel) {
+export function _appendUserMessage(text, templateLabel) {
   const wrap = document.getElementById('ai-chat-messages');
   if (!wrap) return;
   const div = document.createElement('div');
@@ -518,7 +520,7 @@ function _appendUserMessage(text, templateLabel) {
   wrap.scrollTop = wrap.scrollHeight;
 }
 
-function _appendAiMessage(text, ops) {
+export function _appendAiMessage(text, ops) {
   const wrap = document.getElementById('ai-chat-messages');
   if (!wrap) return;
   const div = document.createElement('div');
@@ -537,7 +539,7 @@ function _appendAiMessage(text, ops) {
   wrap.scrollTop = wrap.scrollHeight;
 }
 
-function _appendAiTyping() {
+export function _appendAiTyping() {
   const wrap = document.getElementById('ai-chat-messages');
   if (!wrap) return;
   const div = document.createElement('div');
@@ -548,7 +550,38 @@ function _appendAiTyping() {
   wrap.scrollTop = wrap.scrollHeight;
 }
 
-function _removeTyping() {
+export function _removeTyping() {
   const el = document.getElementById('ai-chat-typing');
   if (el) el.remove();
 }
+
+export function appendTranslateOptions(idsSnapshot) {
+  _pendingTranslateIds = idsSnapshot ? new Set(idsSnapshot) : null;
+  openAiChat();
+  const wrap = document.getElementById('ai-chat-messages');
+  if (!wrap) return;
+  const locales = state.locales;
+  const scopeLabel = _pendingTranslateIds
+    ? `${_pendingTranslateIds.size} selected record${_pendingTranslateIds.size > 1 ? 's' : ''}`
+    : `all ${state.records.length} records`;
+  const pairs = locales.flatMap(src =>
+    locales.filter(tgt => tgt !== src).map(tgt => ({ src, tgt }))
+  );
+  const buttons = pairs.map(({ src, tgt }) =>
+    `<button class="ai-translate-btn" onclick="window._chatTranslate('${src}','${tgt}',false,this)">${src.toUpperCase()} → ${tgt.toUpperCase()}</button>` +
+    `<button class="ai-translate-btn ai-translate-btn--force" title="Overwrite existing" onclick="window._chatTranslate('${src}','${tgt}',true,this)">${src.toUpperCase()} → ${tgt.toUpperCase()} ↺</button>`
+  ).join('');
+  const div = document.createElement('div');
+  div.className = 'ai-chat-bubble ai-chat-bubble--ai ai-chat-bubble--translate';
+  div.innerHTML = `<div class="ai-chat-text">Translate <strong>${scopeLabel}</strong>:</div><div class="ai-translate-options">${buttons}</div>`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+window._chatTranslate = function(src, tgt, force, btn) {
+  const bubble = btn.closest('.ai-chat-bubble--translate');
+  if (bubble) bubble.querySelectorAll('button').forEach(b => { b.disabled = true; });
+  const ids = _pendingTranslateIds;
+  _pendingTranslateIds = null;
+  translateRecords(src, tgt, ids, force);
+};
