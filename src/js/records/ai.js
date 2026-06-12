@@ -1,4 +1,4 @@
-﻿import { state } from '../core/state.js'
+﻿import { state, getLocaleValue } from '../core/state.js'
 import { uid } from '../core/utils.js'
 import { setDirty, showToast } from '../storage/storage.js'
 import { getAiProvider, _fetchImageByKeyword, _callGemini, _callOpenAI } from '../api.js'
@@ -228,7 +228,11 @@ export function importRecordsJsonClick() {
 
 function _isDuplicateRecord(row, textFields) {
   return state.records.some(r =>
-    textFields.every(f => (r.fields[f.key] ?? '') === (row[f.key] ?? ''))
+    textFields.every(f => {
+      const rv = getLocaleValue(r.fields[f.key] ?? '', state.activeLocale);
+      const iv = getLocaleValue(row[f.key] ?? '', state.activeLocale);
+      return rv === iv;
+    })
   );
 }
 
@@ -260,12 +264,12 @@ export async function _applyImportedRecords(jsonText, append = false) {
 
     allFields.filter(f => f.type !== 'image').forEach(f => {
       if (!(f.key in row)) return;
-      const incoming = row[f.key];
-      const existing = target.fields[f.key];
-      if (incoming && typeof incoming === 'object' && existing && typeof existing === 'object') {
-        Object.assign(existing, incoming);
+      const incomingVal = row[f.key];
+      const existingVal = target.fields[f.key];
+      if (incomingVal && typeof incomingVal === 'object' && existingVal && typeof existingVal === 'object') {
+        Object.assign(existingVal, incomingVal);
       } else {
-        target.fields[f.key] = incoming;
+        target.fields[f.key] = incomingVal;
       }
     });
 
@@ -350,8 +354,8 @@ Preserve HTML/Markdown formatting. No explanation, no markdown fences.`;
       ? await _callGemini(key, systemPrompt + '\n\n' + userPrompt)
       : await _callOpenAI(key, messages);
 
-    const arr = Array.isArray(result) ? result : null;
-    if (!arr) { showToast('Invalid response from AI'); return; }
+    const arr = Array.isArray(result) ? result : (result?.records || result?.translations || null);
+    if (!Array.isArray(arr)) { showToast('Invalid response from AI'); return; }
 
     arr.forEach(item => {
       const rec = state.records.find(r => r.id === item.id);

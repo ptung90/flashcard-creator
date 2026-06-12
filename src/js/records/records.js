@@ -1,7 +1,7 @@
 ﻿import TurndownService from 'turndown'
 import { Editor } from '@tiptap/core'
 import { tiptapBaseConfig } from '../editor/editor.js'
-import { state, uiState } from '../core/state.js'
+import { state, uiState, getLocaleValue } from '../core/state.js'
 import { esc, uid, getPaperPx, mdParseInline, _hashStr, mdParse, _compressImage } from '../core/utils.js'
 import { FC_CONFIG } from '../core/config.js'
 import { setDirty, showToast } from '../storage/storage.js'
@@ -105,12 +105,6 @@ export function toggleSort(field) {
     _sortField = field;
     _sortDir = 'asc';
   }
-  state.records.sort((a, b) => {
-    const av = (a.fields[_sortField] || '').toLowerCase();
-    const bv = (b.fields[_sortField] || '').toLowerCase();
-    return _sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
-  });
-  setDirty();
   renderRecordsPanel();
 }
 
@@ -244,10 +238,10 @@ export function renderRecordsPanel() {
   }).join('');
 
   const displayRecords = _sortField
-    ? state.records.slice().sort((a, b) => {
-        const av = (a.fields[_sortField] || '').toLowerCase();
-        const bv = (b.fields[_sortField] || '').toLowerCase();
-        return _sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+    ? [...state.records].sort((a, b) => {
+        const av = (getLocaleValue(a.fields[_sortField], state.activeLocale) || '').toLowerCase();
+        const bv = (getLocaleValue(b.fields[_sortField], state.activeLocale) || '').toLowerCase();
+        return _sortDir === 'asc' ? av < bv ? -1 : av > bv ? 1 : 0 : bv < av ? -1 : bv > av ? 1 : 0;
       })
     : state.records;
 
@@ -333,7 +327,7 @@ export function _migrateRecordFields() {
       if (typeof val === 'string') {
         const obj = {};
         state.locales.forEach(l => { obj[l] = ''; });
-        obj[state.locales[0]] = val;
+        state.locales.forEach(l => { obj[l] = val; });
         rec.fields[f.key] = obj;
       } else if (val && typeof val === 'object') {
         state.locales.forEach(l => { if (!(l in val)) val[l] = ''; });

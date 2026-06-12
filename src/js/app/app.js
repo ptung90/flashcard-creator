@@ -34,6 +34,10 @@ export function dispatch(action) {
     setDirty();
   }
 
+  if (action === 'INIT_LOAD' || action === 'FULL_STATE_UPDATED') {
+    window._migrateRecordFields?.();
+  }
+
   switch (action) {
     case 'INIT_LOAD':
       clearThumbHashes();  // new project — invalidate all cached hashes

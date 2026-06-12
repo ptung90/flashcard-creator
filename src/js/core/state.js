@@ -160,4 +160,5 @@ export function addLocale(code) {
     });
   }
   window.renderRecordsPanel?.();
+  window.renderLocaleSwitch?.();
 }
