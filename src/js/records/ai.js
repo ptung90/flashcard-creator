@@ -213,9 +213,28 @@ export async function executeGenerateRecords() {
       { role: 'system', content: systemContent },
       { role: 'user',   content: userLines.join('\n') },
     ];
+    const recordSchema = {
+      type: 'object',
+      properties: Object.fromEntries(allFields.map(f => [f.key, { type: 'string' }])),
+      required: allFields.map(f => f.key),
+      additionalProperties: false,
+    };
+    const openaiSchema = {
+      type: 'json_schema',
+      json_schema: {
+        name: 'generate_records',
+        strict: true,
+        schema: {
+          type: 'object',
+          properties: { records: { type: 'array', items: recordSchema } },
+          required: ['records'],
+          additionalProperties: false,
+        },
+      },
+    };
     const result = provider === 'gemini'
       ? await _callGemini(key, messages[0].content + '\n\n' + messages[1].content)
-      : await _callOpenAI(key, messages);
+      : await _callOpenAI(key, messages, openaiSchema);
 
     const arr = Array.isArray(result) ? result : (result.records || Object.values(result)[0]);
     if (!Array.isArray(arr) || !arr.length) { showToast('No records returned'); return; }

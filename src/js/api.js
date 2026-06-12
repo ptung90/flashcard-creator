@@ -183,14 +183,14 @@ export async function _fetchImageByKeyword(query) {
   }
 }
 
-export async function _callOpenAI(key, prompt) {
+export async function _callOpenAI(key, prompt, responseFormat) {
   const messages = Array.isArray(prompt) ? prompt : [{ role: "user", content: prompt }];
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` },
     body: JSON.stringify({
       model: localStorage.getItem('openai-model') || 'gpt-4o-mini',
-      response_format: { type: "json_object" },
+      response_format: responseFormat || { type: "json_object" },
       messages,
     })
   });
