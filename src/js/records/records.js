@@ -263,11 +263,38 @@ export function getRecordStatus(record) {
 export function addRecord() {
   if (!state.schema) return;
   const rec = { id: 'rec_' + uid(), fieldsHash: '', fields: {} };
-  state.schema.fields.forEach(f => { rec.fields[f.key] = ''; });
+  state.schema.fields.forEach(f => {
+    if (f.multilingual !== false && f.type !== 'image') {
+      const empty = {};
+      state.locales.forEach(l => { empty[l] = ''; });
+      rec.fields[f.key] = empty;
+    } else {
+      rec.fields[f.key] = '';
+    }
+  });
   state.records.push(rec);
   setDirty();
   renderRecordsPanel();
   openRecordDetail(rec.id);
+}
+
+export function _migrateRecordFields() {
+  if (!state.schema) return;
+  state.schema.fields.forEach(f => {
+    if (f.multilingual === false || f.type === 'image') return;
+    state.records.forEach(rec => {
+      const val = rec.fields[f.key];
+      if (typeof val === 'string') {
+        const obj = {};
+        state.locales.forEach(l => { obj[l] = ''; });
+        obj[state.locales[0]] = val;
+        rec.fields[f.key] = obj;
+      } else if (val && typeof val === 'object') {
+        state.locales.forEach(l => { if (!(l in val)) val[l] = ''; });
+      }
+    });
+  });
+  if (state.records.length) setDirty();
 }
 
 export function deleteRecord(id) {

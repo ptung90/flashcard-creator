@@ -64,7 +64,8 @@ import { renderRecordsPanel, openRecordDetail, addRecord, deleteRecord,
          _clearRecordImage, _copyRecordImage, _pasteRecordImage, _pasteToRecordImage,
          _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
          toggleRecCol, toggleRecordsMoreMenu, toggleSort,
-         toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected } from './records/records.js'
+         toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected,
+         _migrateRecordFields } from './records/records.js'
 import { confirmPack, packAll, generateRecord, generateAll,
          syncRecord, syncAllPacked, openPackDialog } from './records/pack.js'
 import { openSchemaEditor, closeSchemaEditor, saveSchema, closePackDialog,
@@ -159,6 +160,7 @@ Object.assign(window, {
   _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
   toggleRecCol, toggleRecordsMoreMenu, toggleSort,
   toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected,
+  _migrateRecordFields,
   // records/pack.js
   confirmPack, packAll, generateRecord, generateAll,
   syncRecord, syncAllPacked, openPackDialog,

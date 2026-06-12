@@ -414,6 +414,7 @@ export function saveSchema() {
     return;
   }
   state.schema = _editingSchema;
+  window._migrateRecordFields?.();
   if (!Array.isArray(state.records)) state.records = [];
 
   // Build a map of templateId → template for fast lookup
