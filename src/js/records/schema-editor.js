@@ -79,7 +79,7 @@ export async function deleteSchemaFromLibrary() {
 export function openSchemaEditor() {
   _editingSchema = state.schema
     ? JSON.parse(JSON.stringify(state.schema))
-    : { fields: [{ id: `f${uid()}`, key: 'name', type: 'text', label: 'Name' }], cardTemplates: [] };
+    : { fields: [{ id: `f${uid()}`, key: 'name', type: 'text', label: 'Name', multilingual: true }], cardTemplates: [] };
   _loadedSchemaName = null;
   _renderSchemaEditor();
   document.getElementById('schema-editor-modal').showModal();
@@ -100,7 +100,11 @@ function _renderSchemaEditor() {
   const txtFields = s.fields.filter(f => f.type !== 'image');
   const singleLayouts = LAYOUTS.filter(l => !_COMPOUND_LAYOUTS.includes(l) && l !== 'txtgrid');
 
-  const fieldsHtml = s.fields.map((f, i) => `
+  const fieldsHtml = s.fields.map((f, i) => {
+    const isImg = f.type === 'image';
+    const mlChecked = (!isImg && f.multilingual !== false) ? 'checked' : '';
+    const mlDisabled = isImg ? 'disabled title="Image fields are always shared"' : '';
+    return `
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
       <input type="text" placeholder="Label" value="${esc(f.label)}" style="flex:1;min-width:80px;"
         oninput="_schemaFieldChange(${i},'label',this.value)">
@@ -110,8 +114,14 @@ function _renderSchemaEditor() {
         ${['image', 'text', 'text-long'].map(t =>
     `<option value="${t}" ${f.type === t ? 'selected' : ''}>${t}</option>`).join('')}
       </select>
+      <label class="schema-ml-toggle" ${isImg ? 'style="opacity:0.4"' : ''}>
+        <input type="checkbox" ${mlChecked} ${mlDisabled}
+          onchange="_schemaFieldChange(${i},'multilingual',this.checked)">
+        🌐
+      </label>
       <button class="btn btn-sm" onclick="_removeSchemaField(${i})">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   const _checkboxRow = (i, tmpl) =>
     `<div style="font-size:12px;display:flex;gap:14px;margin-bottom:8px;">
@@ -285,7 +295,7 @@ function _slugify(s) {
 }
 
 export function _addSchemaField() {
-  _editingSchema.fields.push({ id: 'f' + uid(), key: '', type: 'text', label: '' });
+  _editingSchema.fields.push({ id: 'f' + uid(), key: '', type: 'text', label: '', multilingual: true });
   _renderSchemaEditor();
 }
 

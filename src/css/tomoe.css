@@ -1159,3 +1159,7 @@ input[type="range"].mint-fill::-webkit-slider-runnable-track {
 .locale-switcher { display: flex; gap: 2px; align-items: center; }
 .locale-btn { min-width: 32px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-400); }
 .locale-btn.active { color: var(--c-brand); background: color-mix(in srgb, var(--c-brand) 10%, transparent); }
+
+/* ── Schema multilingual toggle ────────────────────────────── */
+.schema-ml-toggle { display:flex; align-items:center; gap:3px; cursor:pointer; font-size:13px; user-select:none; }
+.schema-ml-toggle input { cursor:pointer; accent-color: var(--c-brand); }
