@@ -1,4 +1,4 @@
-﻿import { state, uiState, getActiveCard, LAYOUTS, LAYOUT_SLOTS, LAYOUT_SPLIT_DEFAULTS, HIDE_TITLE_LAYOUTS } from '../core/state.js'
+﻿import { state, uiState, getActiveCard, LAYOUTS, LAYOUT_SLOTS, LAYOUT_SPLIT_DEFAULTS, HIDE_TITLE_LAYOUTS, getLocaleValue } from '../core/state.js'
 import { esc, uid, getPaperPx, _hashStr } from '../core/utils.js'
 import { FC_CONFIG } from '../core/config.js'
 import { setDirty, showToast } from '../storage/storage.js'
@@ -10,15 +10,19 @@ import { closePackDialog } from './schema-editor.js'
 
 // ── Record Generation ────────────────────────────────────────────────────────────
 
-function _fieldVal(record, fieldId) {
+function _fieldVal(record, fieldId, locale) {
   const f = state.schema.fields.find(x => x.id === fieldId);
-  return f ? (record.fields[f.key] ?? '') : '';
+  if (!f) return '';
+  return getLocaleValue(record.fields[f.key] ?? '', locale);
 }
 
 export function generateRecord(record, { skipDispatch = false } = {}) {
   if (!state.schema) return;
   const singleTemplates = state.schema.cardTemplates.filter(t => t.templateType === 'single');
   for (const template of singleTemplates) {
+    const resolvedLocale = (template.locale && template.locale !== 'active')
+      ? template.locale
+      : state.activeLocale;
     let card = state.cards.find(c => c.recordId === record.id && c.templateId === template.id);
     if (!card) {
       card = newCard();
@@ -33,13 +37,13 @@ export function generateRecord(record, { skipDispatch = false } = {}) {
     card.paperSize = template.size || null;
     card.cssClass = template.cardClass || null;
     card.images = (template.mapping.imageSlots || [])
-      .map((fid, slot) => ({ slot, url: fid ? _fieldVal(record, fid) : '' }))
+      .map((fid, slot) => ({ slot, url: fid ? _fieldVal(record, fid, resolvedLocale) : '' }))
       .filter(img => img.url);
     card.sections = (template.mapping.sections || [])
       .filter(Boolean)
       .map(fid => {
         const f = state.schema.fields.find(x => x.id === fid);
-        return { id: uid(), label: f?.label ?? '', content: _fieldVal(record, fid) };
+        return { id: uid(), label: f?.label ?? '', content: _fieldVal(record, fid, resolvedLocale) };
       });
   }
   record.fieldsHash = _hashStr(JSON.stringify(record.fields));
@@ -59,6 +63,9 @@ export function syncRecord(recordId) {
     if (!card.packedRecordIds?.includes(recordId)) return;
     const template = compoundTemplates.find(t => t.id === card.templateId);
     if (!template) return;
+    const resolvedLocale = (template.locale && template.locale !== 'active')
+      ? template.locale
+      : state.activeLocale;
     const isTxtGrid = template.layout === 'txtgrid';
     const fixedSlots = LAYOUT_SLOTS[template.layout] ?? 0;
     const records = card.packedRecordIds.map(id => state.records.find(r => r.id === id)).filter(Boolean);
@@ -69,13 +76,13 @@ export function syncRecord(recordId) {
     const slotCount = isTxtGrid ? records.length : fixedSlots;
     if (!isTxtGrid) {
       card.images = records.map((rec, slot) => ({
-        slot, url: template.mapping.imageSlot ? _fieldVal(rec, template.mapping.imageSlot) : ''
+        slot, url: template.mapping.imageSlot ? _fieldVal(rec, template.mapping.imageSlot, resolvedLocale) : ''
       })).filter(img => img.url);
     }
     card.sections = records.map(rec => ({
       id: uid(),
-      label: template.mapping.labelSlot ? _fieldVal(rec, template.mapping.labelSlot) : '',
-      content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot) : ''
+      label: template.mapping.labelSlot ? _fieldVal(rec, template.mapping.labelSlot, resolvedLocale) : '',
+      content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot, resolvedLocale) : ''
     }));
     while (card.sections.length < slotCount) card.sections.push({ id: uid(), label: '', content: '' });
   });
@@ -166,6 +173,10 @@ export function packRecords(template, selectedRecords) {
   const fixedSlots = LAYOUT_SLOTS[layout] ?? 0;
   if (fixedSlots === 0 && !isTxtGrid) return;
 
+  const resolvedLocale = (template.locale && template.locale !== 'active')
+    ? template.locale
+    : state.activeLocale;
+
   // Split into chunks; txtgrid = one chunk with all records
   const chunks = isTxtGrid
     ? [selectedRecords]
@@ -219,14 +230,14 @@ export function packRecords(template, selectedRecords) {
     if (!isTxtGrid) {
       card.images = records.map((rec, slot) => ({
         slot,
-        url: template.mapping.imageSlot ? _fieldVal(rec, template.mapping.imageSlot) : ''
+        url: template.mapping.imageSlot ? _fieldVal(rec, template.mapping.imageSlot, resolvedLocale) : ''
       })).filter(img => img.url);
     }
 
     card.sections = records.map(rec => ({
       id: uid(),
-      label: template.mapping.labelSlot ? _fieldVal(rec, template.mapping.labelSlot) : '',
-      content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot) : ''
+      label: template.mapping.labelSlot ? _fieldVal(rec, template.mapping.labelSlot, resolvedLocale) : '',
+      content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot, resolvedLocale) : ''
     }));
 
     while (card.sections.length < slotCount) {
@@ -253,6 +264,9 @@ export function syncAllPacked() {
   let newCardCount = 0;
 
   templates.forEach(template => {
+    const resolvedLocale = (template.locale && template.locale !== 'active')
+      ? template.locale
+      : state.activeLocale;
     const packedCards = packedByTemplate[template.id];
     if (!packedCards?.length) return;
 
@@ -266,13 +280,13 @@ export function syncAllPacked() {
       const slotCount = isTxtGrid ? records.length : fixedSlots;
       if (!isTxtGrid) {
         card.images = records.map((rec, slot) => ({
-          slot, url: template.mapping.imageSlot ? _fieldVal(rec, template.mapping.imageSlot) : ''
+          slot, url: template.mapping.imageSlot ? _fieldVal(rec, template.mapping.imageSlot, resolvedLocale) : ''
         })).filter(img => img.url);
       }
       card.sections = records.map(rec => ({
         id: uid(),
-        label: template.mapping.labelSlot ? _fieldVal(rec, template.mapping.labelSlot) : '',
-        content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot) : ''
+        label: template.mapping.labelSlot ? _fieldVal(rec, template.mapping.labelSlot, resolvedLocale) : '',
+        content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot, resolvedLocale) : ''
       }));
       while (card.sections.length < slotCount) card.sections.push({ id: uid(), label: '', content: '' });
       if (template.cardConfig) Object.assign(card, template.cardConfig);
@@ -295,8 +309,8 @@ export function syncAllPacked() {
       card.packedRecordIds = allRecords.map(r => r.id);
       card.sections = allRecords.map(rec => ({
         id: uid(),
-        label: template.mapping.labelSlot ? _fieldVal(rec, template.mapping.labelSlot) : '',
-        content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot) : ''
+        label: template.mapping.labelSlot ? _fieldVal(rec, template.mapping.labelSlot, resolvedLocale) : '',
+        content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot, resolvedLocale) : ''
       }));
       newRecords.forEach(r => { r.fieldsHash = _hashStr(JSON.stringify(r.fields)); });
       return;
@@ -315,12 +329,12 @@ export function syncAllPacked() {
       ];
       lastCard.packedRecordIds = allRecords.map(r => r.id);
       lastCard.images = allRecords.map((rec, slot) => ({
-        slot, url: template.mapping.imageSlot ? _fieldVal(rec, template.mapping.imageSlot) : ''
+        slot, url: template.mapping.imageSlot ? _fieldVal(rec, template.mapping.imageSlot, resolvedLocale) : ''
       })).filter(img => img.url);
       lastCard.sections = allRecords.map(rec => ({
         id: uid(),
-        label: template.mapping.labelSlot ? _fieldVal(rec, template.mapping.labelSlot) : '',
-        content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot) : ''
+        label: template.mapping.labelSlot ? _fieldVal(rec, template.mapping.labelSlot, resolvedLocale) : '',
+        content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot, resolvedLocale) : ''
       }));
       while (lastCard.sections.length < fixedSlots) lastCard.sections.push({ id: uid(), label: '', content: '' });
       fill.forEach(r => { r.fieldsHash = _hashStr(JSON.stringify(r.fields)); });
@@ -343,12 +357,12 @@ export function syncAllPacked() {
       card.templateId = template.id;
       card.packedRecordIds = chunk.map(r => r.id);
       card.images = chunk.map((rec, slot) => ({
-        slot, url: template.mapping.imageSlot ? _fieldVal(rec, template.mapping.imageSlot) : ''
+        slot, url: template.mapping.imageSlot ? _fieldVal(rec, template.mapping.imageSlot, resolvedLocale) : ''
       })).filter(img => img.url);
       card.sections = chunk.map(rec => ({
         id: uid(),
-        label: template.mapping.labelSlot ? _fieldVal(rec, template.mapping.labelSlot) : '',
-        content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot) : ''
+        label: template.mapping.labelSlot ? _fieldVal(rec, template.mapping.labelSlot, resolvedLocale) : '',
+        content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot, resolvedLocale) : ''
       }));
       while (card.sections.length < fixedSlots) card.sections.push({ id: uid(), label: '', content: '' });
       chunk.forEach(r => { r.fieldsHash = _hashStr(JSON.stringify(r.fields)); });
