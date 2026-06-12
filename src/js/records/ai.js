@@ -1,4 +1,11 @@
-﻿// ── Records JSON Export / Import ───────────────────────────────────────────────
+﻿import { state, uiState } from '../core/state.js'
+import { esc, uid } from '../core/utils.js'
+import { FC_CONFIG } from '../core/config.js'
+import { setDirty, showToast } from '../storage/storage.js'
+import { t } from '../i18n.js'
+import { getAiProvider, _fetchImageByKeyword, _callGemini, _callOpenAI } from '../api.js'
+
+// ── Records JSON Export / Import ───────────────────────────────────────────────
 
 export function exportRecordsJson() {
   if (!state.schema || !state.records.length) { showToast('No records to export'); return; }
@@ -176,8 +183,8 @@ export async function executeGenerateRecords() {
   }
   userLines.push('Generate ' + n + ' new records' + (hint ? ' about: "' + hint + '"' : '') + '.');
 
-  const key = localStorage.getItem(_aiProvider + '-key') || '';
-  if (!key) { showToast('No ' + _aiProvider + ' key set'); return; }
+  const key = localStorage.getItem(getAiProvider() + '-key') || '';
+  if (!key) { showToast('No ' + getAiProvider() + ' key set'); return; }
 
   const btn = document.getElementById('gen-records-btn');
   if (btn) { btn.disabled = true; btn.textContent = '…'; }
@@ -187,7 +194,7 @@ export async function executeGenerateRecords() {
       { role: 'system', content: systemContent },
       { role: 'user',   content: userLines.join('\n') },
     ];
-    const result = _aiProvider === 'gemini'
+    const result = getAiProvider() === 'gemini'
       ? await _callGemini(key, messages[0].content + '\n\n' + messages[1].content)
       : await _callOpenAI(key, messages);
 
@@ -209,7 +216,7 @@ export function importRecordsJsonClick() {
   document.getElementById('records-import-input')?.click();
 }
 
-async function _applyImportedRecords(jsonText, append = false) {
+export async function _applyImportedRecords(jsonText, append = false) {
   let parsed = JSON.parse(jsonText);
   const incoming = Array.isArray(parsed) ? parsed : (parsed.records || []);
   if (!incoming.length) { showToast('No records found'); return; }
@@ -250,7 +257,7 @@ async function _applyImportedRecords(jsonText, append = false) {
   }
 
   setDirty();
-  renderRecordsPanel();
+  window.renderRecordsPanel();
   showToast(`Imported: ${updated} updated, ${added} added`);
 }
 

@@ -20,7 +20,7 @@ export const LAYOUTS = [
   "8img-8txt",
 ];
 
-const LAYOUT_SPLIT_DEFAULTS = {
+export const LAYOUT_SPLIT_DEFAULTS = {
   "2top-1bot": { row: 50, col: 50, inner: 50 },
   "1top-2bot": { row: 50, col: 50, inner: 50 },
   "1big-2small": { row: 50, col: 67, inner: 50 },
@@ -122,12 +122,5 @@ export const uiState = {
   previewZoom: 1.0,
 };
 
-let _thumbGenId = 0;
-let _thumbRefreshTimer = null;
-let _thumbDirtyVersion = 0;
-let _thumbRenderedVersion = 0;
-let _pendingThumbCardId = undefined; // undefined=idle, null=all, string=specific card
-let _thumbHashes = {};  // card.id → content hash, skip re-render if unchanged
-
 export function getActiveCard() { return state.cards.find((c) => c.id === uiState.activeCardId); }
-function getCardOrientation(card) { return card?.orientation || state.settings.orientation; }
+export function getCardOrientation(card) { return card?.orientation || state.settings.orientation; }

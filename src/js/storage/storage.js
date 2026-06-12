@@ -1,3 +1,5 @@
+﻿import { state, uiState, LAYOUTS, LAYOUT_SPLIT_DEFAULTS } from '../core/state.js'
+import { uid } from '../core/utils.js'
 
 // ── IndexedDB helpers ──────────────────────────────────────────────
 let _idb = null;
@@ -102,7 +104,7 @@ function _pathLeaf(path) { return path ? path.split('/').pop() : (workDirHandle?
 export let workDirHandle = null;
 export let currentSubfolder = null;  // null = root, "l1" or "l1/l2" path (max 2 levels)
 export let currentFileName = null;
-function hasWorkDir() { return !!workDirHandle; }
+export function hasWorkDir() { return !!workDirHandle; }
 let dirty = false;
 let readOnly = false;
 let _autoSaveTimer = null;
@@ -207,7 +209,7 @@ export async function _getActiveDirHandle() {
   return await _getDirFromPath(currentSubfolder);
 }
 
-async function _writeToDir(fileName, json) {
+export async function _writeToDir(fileName, json) {
   const perm = await workDirHandle.requestPermission({ mode: "readwrite" });
   if (perm !== "granted") throw new Error("Permission denied");
   const dir = await _getActiveDirHandle();
@@ -235,7 +237,7 @@ async function _getLibraryDir(type) {
   return await lib.getDirectoryHandle(type, { create: true });
 }
 
-async function listLibrary(type) {
+export async function listLibrary(type) {
   if (!workDirHandle) return [];
   try {
     const dir = await _getLibraryDir(type);
@@ -247,7 +249,7 @@ async function listLibrary(type) {
   } catch (_) { return []; }
 }
 
-async function saveToLibrary(type, name, data) {
+export async function saveToLibrary(type, name, data) {
   const dir = await _getLibraryDir(type);
   const json = JSON.stringify(data, null, 2);
   const fh = await dir.getFileHandle(`${name}.json`, { create: true });
@@ -257,13 +259,13 @@ async function saveToLibrary(type, name, data) {
   await w.close();
 }
 
-async function loadFromLibrary(type, name) {
+export async function loadFromLibrary(type, name) {
   const dir = await _getLibraryDir(type);
   const fh = await dir.getFileHandle(`${name}.json`);
   return JSON.parse(await (await fh.getFile()).text());
 }
 
-async function deleteFromLibrary(type, name) {
+export async function deleteFromLibrary(type, name) {
   const dir = await _getLibraryDir(type);
   await dir.removeEntry(`${name}.json`);
 }
@@ -417,7 +419,7 @@ export async function resumeLastProject() {
     if (perm !== "granted") { alert("Permission denied."); return; }
     await _loadFileFromWorkDir(fileName);
     dismissRestoreBanner();
-    dispatch('INIT_LOAD');
+    window.dispatch('INIT_LOAD');
   } catch (e) { alert("Could not load: " + e.message); }
 }
 
@@ -433,7 +435,7 @@ export function toggleSidebar() {
   const collapsed = sidebar.classList.toggle("collapsed");
   btn.setAttribute("aria-pressed", collapsed ? "true" : "false");
   btn.title = collapsed ? "Show sidebar" : "Hide sidebar";
-  renderPreview();
+  window.renderPreview();
 }
 
 export function applyLoadedData(data) {
@@ -473,14 +475,14 @@ export function applyLoadedData(data) {
   }));
   uiState.activeCardId = state.cards.length ? state.cards[0].id : null;
   if (!state.settings.googleFonts) state.settings.googleFonts = [];
-  applyGoogleFonts(); applySettingsToUI();
+  window.applyGoogleFonts(); window.applySettingsToUI();
   document.getElementById("fc-custom-css").textContent = state.settings.customCss || "";
   _computeReadOnly();
-  dispatch('INIT_LOAD');
+  window.dispatch('INIT_LOAD');
   clearDirty();
 }
 
-function loadJSON(event) {
+export function loadJSON(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();

@@ -1,3 +1,10 @@
+import { _syncBdSwatch } from '../editor/controls.js'
+import { _getEditFolders, setDirty } from '../storage/storage.js'
+import { renderPreview } from '../preview.js'
+import { state, uiState, getActiveCard } from '../core/state.js'
+import { esc, getPaperPx } from '../core/utils.js'
+import { pushUndo } from '../core/undo.js'
+
 // ── Preview & UI Zoom ─────────────────────────────────────────────
 export function changePreviewZoom(delta) {
   if (delta === 0) {

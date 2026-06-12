@@ -1,6 +1,8 @@
 ﻿import { marked } from 'marked'
 marked.use({ breaks: true })
 
+const PAPER_MM = { A4: { w: 210, h: 297 }, A5: { w: 148, h: 210 }, A6: { w: 105, h: 148 }, Letter: { w: 216, h: 279 } };
+
 // ── Helpers ────────────────────────────────────────────────────────
 export function _show(id, display = "flex") { const el = document.getElementById(id); if (el) el.style.display = display; }
 export function _hide(id) { const el = document.getElementById(id); if (el) el.style.display = "none"; }
@@ -9,7 +11,7 @@ export function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
-function getPaperPx(paperSize, orientation) {
+export function getPaperPx(paperSize, orientation) {
   const PPI = 96;
   const MM_PER_IN = 25.4;
   let { w, h } = PAPER_MM[paperSize] || PAPER_MM.A4;
@@ -19,7 +21,7 @@ function getPaperPx(paperSize, orientation) {
   return { w: Math.round((w / MM_PER_IN) * PPI), h: Math.round((h / MM_PER_IN) * PPI) };
 }
 
-function getPaperMm(paperSize, orientation) {
+export function getPaperMm(paperSize, orientation) {
   let { w, h } = PAPER_MM[paperSize] || PAPER_MM.A4;
   if (orientation === "landscape") {
     [w, h] = [h, w];
@@ -27,7 +29,7 @@ function getPaperMm(paperSize, orientation) {
   return { w, h };
 }
 
-function mmToPx(mm) {
+export function mmToPx(mm) {
   return Math.round((mm / 25.4) * 96);
 }
 
@@ -52,6 +54,7 @@ export function esc(str) {
 
 // ── Image compression ─────────────────────────────────────────────
 let MAX_IMG_PX = (window.FC_CONFIG || {}).maxImgPx ?? 1240;
+export function setMaxImgPx(v) { MAX_IMG_PX = v; }
 
 export function _compressImage(dataURL, maxPx = MAX_IMG_PX, quality = 0.82) {
   return new Promise((resolve) => {

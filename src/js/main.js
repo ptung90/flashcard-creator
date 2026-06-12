@@ -49,27 +49,38 @@ import { dispatch, showCardPanel, showRecordsPanel, toggleSettingsBar,
          copyJsonFull, copyJsonNoImg, copyJsonForAI, pasteJsonLoad,
          _syncJsonLineNums, selectProjectIcon } from './app/app.js'
 import { addGoogleFont, removeGoogleFont, setGlobalOrient, changeUIZoom,
-         setPhysicalZoom, changePreviewZoom } from './app/settings.js'
+         setPhysicalZoom, changePreviewZoom, applyGoogleFonts,
+         applySettingsToUI, bindSettings } from './app/settings.js'
 import { addCard, renderSidebar, newCard, refreshAllThumbs,
          scheduleThumbRefresh, setViewMode,
          cloneCard, closeCardMenu, copyCardStyle, pasteCardStyle,
          setTwoUpRatio, openCardMenu, setActive, moveCard,
          deleteCard } from './app/cards.js'
+import { editorToolbarCmd, setActiveSectionFontProp } from './editor/editor.js'
 import { saveJSON, saveJSONAs, dismissRestoreBanner, resumeLastProject,
          toggleSidebar } from './storage/storage.js'
 import { openLoadModal, openBackupModal, closeBackupModal,
-         manualBackup, setWorkDir, openSaveAsModal } from './storage/file-modals.js'
+         manualBackup, setWorkDir, openSaveAsModal,
+         browseSubfolder, loadFromFolder,
+         deleteRecentItem, loadFromRecent } from './storage/file-modals.js'
 import { printOne, printAll, exportOnePDF,
          openExportPdfDialog, runExportPdf } from './preview.js'
 import { openCssModal, closeCssModal, openSettingsModal, closeSettingsModal,
-         openImgModal, closeImgModal, switchTab } from './modals.js'
+         openImgModal, closeImgModal, switchTab, copySlot, pasteToSlot } from './modals.js'
 import { undo, redo } from './core/undo.js'
-import { renderRecordsPanel, openRecordDetail } from './records/records.js'
+import { renderRecordsPanel, openRecordDetail,
+         _clearRecordImage, _copyRecordImage, _pasteRecordImage, _pasteToRecordImage,
+         _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
+         toggleRecCol, toggleRecordsMoreMenu } from './records/records.js'
 import { confirmPack, packAll, generateRecord, generateAll,
-         syncRecord, syncAllPacked } from './records/pack.js'
+         syncRecord, syncAllPacked, openPackDialog } from './records/pack.js'
 import { openSchemaEditor, closeSchemaEditor, saveSchema, closePackDialog,
          applySchemaFromLibrary, saveSchemaToLibrary,
-         deleteSchemaFromLibrary } from './records/schema-editor.js'
+         deleteSchemaFromLibrary,
+         _addSchemaField, _addSchemaSection, _addSchemaTemplate,
+         _removeSchemaField, _removeSchemaTemplate, _schemaCardConfig,
+         _schemaFieldChange, _schemaSingleImageSlot, _schemaSingleSection,
+         _schemaTemplateChange } from './records/schema-editor.js'
 import { copyRecordsForAI, closeRecordsAiModal, executeRecordsAiCopy,
          pasteRecordsAiNames, openGenerateRecordsDialog,
          closeGenerateRecordsDialog, executeGenerateRecords,
@@ -85,7 +96,8 @@ Object.assign(window, {
   // app/app.js + app/settings.js + app/cards.js
   addCard, dispatch, renderSidebar, newCard,
   addGoogleFont, removeGoogleFont, setGlobalOrient, setViewMode, showRecordsPanel,
-  showCardPanel, toggleSettingsBar, changeUIZoom, setPhysicalZoom,
+  showCardPanel, toggleSettingsBar, changeUIZoom, setPhysicalZoom, applyGoogleFonts,
+  applySettingsToUI, bindSettings,
   toggleEmojiPicker, toggleMoreMenu, openJsonModal, closeJsonModal,
   openJsonEditor, openJsonPreview, closeJsonPreview,
   validateJsonPreview, applyJsonPreview, exportJsonFile,
@@ -97,23 +109,34 @@ Object.assign(window, {
   // storage/storage.js
   saveJSON, saveJSONAs, dismissRestoreBanner, resumeLastProject, toggleSidebar,
   // storage/file-modals.js
-  openLoadModal, openBackupModal, closeBackupModal, manualBackup, setWorkDir, openSaveAsModal,
+  openLoadModal, openBackupModal, closeBackupModal, manualBackup, setWorkDir, openSaveAsModal, browseSubfolder, loadFromFolder,
   // preview.js
   printOne, printAll, exportOnePDF,
   openExportPdfDialog, runExportPdf,
   // modals.js
   openCssModal, closeCssModal, openSettingsModal, closeSettingsModal,
-  openImgModal, closeImgModal, switchTab,
+  openImgModal, closeImgModal, switchTab, copySlot, pasteToSlot,
   // core/undo.js
   undo, redo,
+  // editor/editor.js
+  editorToolbarCmd, setActiveSectionFontProp,
   // records/records.js
   renderRecordsPanel, openRecordDetail,
+  _clearRecordImage, _copyRecordImage, _pasteRecordImage, _pasteToRecordImage,
+  _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
+  toggleRecCol, toggleRecordsMoreMenu,
   // records/pack.js
   confirmPack, packAll, generateRecord, generateAll,
-  syncRecord, syncAllPacked,
+  syncRecord, syncAllPacked, openPackDialog,
+  // storage/file-modals.js (additional)
+  deleteRecentItem, loadFromRecent,
   // records/schema-editor.js
   openSchemaEditor, closeSchemaEditor, saveSchema, closePackDialog,
   applySchemaFromLibrary, saveSchemaToLibrary, deleteSchemaFromLibrary,
+  _addSchemaField, _addSchemaSection, _addSchemaTemplate,
+  _removeSchemaField, _removeSchemaTemplate, _schemaCardConfig,
+  _schemaFieldChange, _schemaSingleImageSlot, _schemaSingleSection,
+  _schemaTemplateChange,
   // records/ai.js
   copyRecordsForAI, closeRecordsAiModal, executeRecordsAiCopy,
   pasteRecordsAiNames, openGenerateRecordsDialog,

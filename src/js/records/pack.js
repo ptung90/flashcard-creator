@@ -1,4 +1,14 @@
-﻿// ── Record Generation ────────────────────────────────────────────────────────────
+﻿import { state, uiState, getActiveCard, LAYOUTS, LAYOUT_SLOTS, LAYOUT_SPLIT_DEFAULTS, HIDE_TITLE_LAYOUTS } from '../core/state.js'
+import { esc, uid, getPaperPx, _hashStr } from '../core/utils.js'
+import { FC_CONFIG } from '../core/config.js'
+import { setDirty, showToast } from '../storage/storage.js'
+import { pushUndo } from '../core/undo.js'
+import { t } from '../i18n.js'
+import { newCard } from '../app/cards.js'
+import { openRecordDetail, getRecordStatus } from './records.js'
+import { closePackDialog } from './schema-editor.js'
+
+// ── Record Generation ────────────────────────────────────────────────────────────
 
 function _fieldVal(record, fieldId) {
   const f = state.schema.fields.find(x => x.id === fieldId);
@@ -33,7 +43,7 @@ export function generateRecord(record, { skipDispatch = false } = {}) {
       });
   }
   record.fieldsHash = _hashStr(JSON.stringify(record.fields));
-  if (!skipDispatch) dispatch('CARD_LIST_CHANGED');
+  if (!skipDispatch) window.dispatch('CARD_LIST_CHANGED');
 }
 
 export function syncRecord(recordId) {
@@ -71,8 +81,8 @@ export function syncRecord(recordId) {
   });
 
   setDirty();
-  dispatch('CARD_LIST_CHANGED');
-  renderRecordsPanel();
+  window.dispatch('CARD_LIST_CHANGED');
+  window.renderRecordsPanel();
   openRecordDetail(recordId);
   showToast(t('rec.toast.synced'));
 }
@@ -86,8 +96,8 @@ export function generateAll() {
     count++;
   }
   setDirty();
-  dispatch('CARD_LIST_CHANGED');
-  renderRecordsPanel();
+  window.dispatch('CARD_LIST_CHANGED');
+  window.renderRecordsPanel();
   const msg = t('rec.toast.generated').replace('{n}', count).replace('{s}', count !== 1 ? 's' : '');
   if (typeof showToast === 'function') showToast(msg);
   else {
@@ -100,7 +110,7 @@ export function generateAll() {
 
 let _packTemplateId = null;
 
-function openPackDialog(templateId) {
+export function openPackDialog(templateId) {
   _packTemplateId = templateId;
   const template = state.schema?.cardTemplates.find(t => t.id === templateId);
   if (!template) return;
@@ -135,7 +145,7 @@ export function confirmPack() {
 
   packRecords(template, selectedRecords);
   _consolidateSameLayout(template.layout);
-  dispatch('CARD_LIST_CHANGED');
+  window.dispatch('CARD_LIST_CHANGED');
   closePackDialog();
 
   const slots = LAYOUT_SLOTS[template.layout] ?? 0;
@@ -348,8 +358,8 @@ export function syncAllPacked() {
   });
 
   setDirty();
-  dispatch('CARD_LIST_CHANGED');
-  renderRecordsPanel();
+  window.dispatch('CARD_LIST_CHANGED');
+  window.renderRecordsPanel();
 
   const parts = [];
   if (syncCount) parts.push(t('rec.toast.syncedN').replace('{n}', syncCount).replace('{s}', syncCount !== 1 ? 's' : ''));
@@ -423,7 +433,7 @@ export function packAll() {
   layouts.forEach(l => _consolidateSameLayout(l));
   state.records.forEach(r => { r.fieldsHash = _hashStr(JSON.stringify(r.fields)); });
   setDirty();
-  dispatch('CARD_LIST_CHANGED');
-  renderRecordsPanel();
+  window.dispatch('CARD_LIST_CHANGED');
+  window.renderRecordsPanel();
   showToast(t('rec.toast.packed').replace('{r}', state.records.length).replace('{n}', templates.length).replace('{s}', templates.length !== 1 ? 's' : ''));
 }

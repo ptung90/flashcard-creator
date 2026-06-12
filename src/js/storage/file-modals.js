@@ -57,7 +57,7 @@ async function _renderRecentList() {
     : '<div class="recent-empty">No recent files — browse a JSON file to get started</div>';
 }
 
-async function _renderFolderSection() {
+export async function _renderFolderSection() {
   const folderSection = document.getElementById("load-folder-section");
   if (!workDirHandle) { folderSection.style.display = "none"; return; }
   folderSection.style.display = "flex";
@@ -163,7 +163,7 @@ async function _renderFolderFiles() {
   }
 }
 
-async function browseSubfolder(path) {
+export async function browseSubfolder(path) {
   _modalSubfolder = path;
   await _renderFolderTree();
   await _renderFolderFiles();
@@ -210,7 +210,7 @@ export async function newProject() {
   setCurrentSubfolder(_editFolders.length ? _editFolders[0] : null);
   closeLoadModal();
   _computeReadOnly();
-  dispatch('INIT_LOAD');
+  window.dispatch('INIT_LOAD');
   clearDirty();
 }
 

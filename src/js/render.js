@@ -1,4 +1,7 @@
-﻿// ── Card Render (HTML) ─────────────────────────────────────────────
+﻿import { LAYOUT_SLOTS, LAYOUT_SPLIT_DEFAULTS, getCardOrientation } from './core/state.js'
+import { esc, getPaperPx, mmToPx, mdParseInline, renderSectionContent, mdParse } from './core/utils.js'
+
+// ── Card Render (HTML) ─────────────────────────────────────────────
 const GRID_STRATEGIES = {
   "2x2": (r, c, n) => `grid-template-rows:${r}% ${100 - r}%;grid-template-columns:${c}% ${100 - c}%;`,
   "1top-1bot": (r, c, n) => `grid-template-rows:${r}% ${100 - r}%;`,
@@ -207,7 +210,7 @@ function getCompoundGridStyle(layout, split, gapPx, imgPct) {
   return tracks ? `grid-template-columns:${tracks.columns};grid-template-rows:${tracks.rows};` : "";
 }
 
-function getCompoundGridTracks(layout, split, gapPx) {
+export function getCompoundGridTracks(layout, split, gapPx) {
   const generator = COMPOUND_TRACK_STRATEGIES[layout];
   return generator ? generator(split, gapPx) : null;
 }
@@ -313,8 +316,8 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
   const _cs = `.fc-card[data-id="${card.id}"]`;
   const _h1Rule =
     `${_cs} .fc-section__content h1{margin:0;padding:0;${titleStyle}}` +
-    `${_cs} .fc-section__content h2{margin:0;padding:0;${titleStyle}font-size:${Math.round((titleF.size||14)*0.85)}px;}` +
-    `${_cs} .fc-section__content h3{margin:0;padding:0;${titleStyle}font-size:${Math.round((titleF.size||14)*0.75)}px;}`;
+    `${_cs} .fc-section__content h2{margin:0;padding:0;${titleStyle}font-size:${Math.round((titleF.size || 14) * 0.85)}px;}` +
+    `${_cs} .fc-section__content h3{margin:0;padding:0;${titleStyle}font-size:${Math.round((titleF.size || 14) * 0.75)}px;}`;
   const _labelSizeRule = card.labelSize
     ? `${_cs} .fc-section__label{font-size:${card.labelSize}px}${_cs} .fc-img-label{font-size:${card.labelSize}px}`
     : '';
@@ -484,16 +487,16 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
       const hasContent = !!section.content;
       const imgAreaHtml = hasImg
         ? '<div style="flex:' + imgFlex + ';min-height:0;overflow:hidden;box-sizing:border-box;padding:' + imgPaddingPx + 'px;">' +
-          '<div class="img-bg" style="background-image:url(\'' + esc(img.url) + '\');' + resolveImgStyle(img, imgStyle) + 'background-repeat:no-repeat;width:100%;height:100%;"></div>' +
-          '</div>'
+        '<div class="img-bg" style="background-image:url(\'' + esc(img.url) + '\');' + resolveImgStyle(img, imgStyle) + 'background-repeat:no-repeat;width:100%;height:100%;"></div>' +
+        '</div>'
         : '';
       const cellTitleHtml = hasTitle
         ? '<div class="fc-6cell-title" style="' + titleStyle + '">' + mdParseInline(section.label) + '</div>'
         : '';
       const textHtml = hasContent
         ? '<div class="fc-sections" style="flex:' + txtFlex + ';min-height:0;overflow:auto;padding:' + paddingPx + 'px;' + compoundTextBase + contentStyle + '">' +
-          buildSectionCellHtml(section, true) +
-          '</div>'
+        buildSectionCellHtml(section, true) +
+        '</div>'
         : '';
       const isEmpty = !hasImg && !hasContent && !hasTitle;
       const cellStyle = buildCompoundCellStyle('display:flex;flex-direction:column;', {
@@ -659,10 +662,10 @@ export function buildCardHTML(card, settings, forPrint = false, overridePx = nul
   );
 }
 
-function buildCaptureHTML(card, settings) {
+export function buildCaptureHTML(card, settings) {
   const paperSize = card.paperSize || settings.paperSize;
-  const orient    = getCardOrientation(card);
-  const { w, h }  = getPaperPx(paperSize, orient);
+  const orient = getCardOrientation(card);
+  const { w, h } = getPaperPx(paperSize, orient);
   const overridePx = card.paperSize ? { w, h } : null;
   return (
     '<div style="width:' + w + 'px;height:' + h + 'px;background:white;position:relative;overflow:hidden;">' +

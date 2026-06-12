@@ -1,3 +1,12 @@
+﻿import { state, uiState, getActiveCard } from '../core/state.js'
+import { esc, uid } from '../core/utils.js'
+import { FC_CONFIG } from '../core/config.js'
+import { setDirty, showToast } from '../storage/storage.js'
+import { t } from '../i18n.js'
+import { getAiProvider, _callGemini, _callOpenAI, _fetchImageByKeyword } from '../api.js'
+import { _applyImportedRecords } from '../records/ai.js'
+import { pushUndo } from '../core/undo.js'
+
 // ── AI Chat Panel ──────────────────────────────────────────────────
 
 const _chatOpsMap = {};
@@ -312,9 +321,9 @@ export async function sendAiChat() {
   if (!text) return;
 
   const tpl = AI_CHAT_TEMPLATES.find(function(t) { return t.id === (sel && sel.value); }) || AI_CHAT_TEMPLATES[0];
-  const key = localStorage.getItem(_aiProvider + '-key') || '';
+  const key = localStorage.getItem(getAiProvider() + '-key') || '';
   if (!key) {
-    _appendAiMessage('No ' + _aiProvider + ' key set. Add it in env.js.');
+    _appendAiMessage('No ' + getAiProvider() + ' key set. Add it in env.js.');
     return;
   }
 
@@ -332,7 +341,7 @@ export async function sendAiChat() {
   _appendAiTyping();
 
   try {
-    const result = _aiProvider === 'gemini'
+    const result = getAiProvider() === 'gemini'
       ? await _callGemini(key, prompt)
       : await _callOpenAI(key, prompt);
     _removeTyping();
@@ -412,7 +421,7 @@ export function applyAiChatOps(msgId) {
     }
   });
 
-  dispatch('FULL_STATE_UPDATED');
+  window.dispatch('FULL_STATE_UPDATED');
 
   // Auto-fetch images with search_query but no url
   const pending = [];
@@ -429,7 +438,7 @@ export function applyAiChatOps(msgId) {
         if (url) { img.url = url; filled++; }
       }).catch(function() {});
     })).then(function() {
-      if (filled) dispatch('CARD_UI_CHANGED');
+      if (filled) window.dispatch('CARD_UI_CHANGED');
     });
   }
 }

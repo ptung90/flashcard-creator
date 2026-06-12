@@ -1,4 +1,11 @@
-﻿export function layoutIcon(layout, selected) {
+﻿import { state, uiState, getActiveCard, LAYOUTS, LAYOUT_SLOTS, LAYOUT_SPLIT_DEFAULTS, HIDE_TITLE_LAYOUTS } from '../core/state.js'
+import { uid, esc, getPaperPx } from '../core/utils.js'
+import { FC_CONFIG } from '../core/config.js'
+import { setDirty } from '../storage/storage.js'
+import { pushUndo } from '../core/undo.js'
+import { t } from '../i18n.js'
+
+export function layoutIcon(layout, selected) {
   const icons = {
     "2top-1bot": `
           <div class="lo-row" style="flex:1">
@@ -214,10 +221,10 @@ export function setLayout(layout) {
     while (card.sections.length < target) card.sections.push({ id: uid(), label: "", content: "" });
   }
   setDirty();
-  renderEditor();
-  renderPreview();
-  refreshAllThumbs();
-  dispatch('LAYOUT_CHANGED');
+  window.renderEditor();
+  window.renderPreview();
+  window.refreshAllThumbs();
+  window.dispatch('LAYOUT_CHANGED');
 }
 
 export function setTextRows(n) {
@@ -228,7 +235,7 @@ export function setTextRows(n) {
   const target = card.textRows * (card.textCols || 3);
   while (card.sections.length < target) card.sections.push({ id: uid(), label: "", content: "" });
   setDirty();
-  renderPreview();
+  window.renderPreview();
 }
 
 export function setTextCols(n) {
@@ -239,10 +246,10 @@ export function setTextCols(n) {
   const target = (card.textRows || 1) * card.textCols;
   while (card.sections.length < target) card.sections.push({ id: uid(), label: "", content: "" });
   setDirty();
-  renderPreview();
+  window.renderPreview();
 }
 
-const FIS =
+export const FIS =
   "background:#fff;border:1px solid #d1d5d2;color:#1f2a28;border-radius:4px;padding:3px 5px;font-size:12px";
 
 export function cardOrientationControls() {
@@ -328,8 +335,8 @@ export function setCardFontProp(key, prop, val) {
     card[key][prop] = val;
   }
   setDirty();
-  renderPreview();
-  dispatch('CARD_CONTENT_CHANGED');
+  window.renderPreview();
+  window.dispatch('CARD_CONTENT_CHANGED');
 }
 
 export function toggleCardFontColor(key, enabled) {
@@ -346,9 +353,9 @@ export function toggleCardFontColor(key, enabled) {
     }
   }
   setDirty();
-  renderPreview();
-  renderEditor();
-  dispatch('CARD_UI_CHANGED');
+  window.renderPreview();
+  window.renderEditor();
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function toggleCardOrientation(enabled) {
@@ -357,9 +364,9 @@ export function toggleCardOrientation(enabled) {
   if (!card) return;
   card.orientation = enabled ? (card.orientation || state.settings.orientation) : null;
   setDirty();
-  renderEditor();
-  renderPreview();
-  dispatch('CARD_UI_CHANGED');
+  window.renderEditor();
+  window.renderPreview();
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function setCardOrientation(val) {
@@ -368,9 +375,9 @@ export function setCardOrientation(val) {
   if (!card) return;
   card.orientation = ["portrait", "landscape"].includes(val) ? val : null;
   setDirty();
-  renderEditor();
-  renderPreview();
-  dispatch('CARD_UI_CHANGED');
+  window.renderEditor();
+  window.renderPreview();
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function updateCardProp(prop, val) {
@@ -378,10 +385,10 @@ export function updateCardProp(prop, val) {
   if (!card) return;
   card[prop] = val;
   setDirty();
-  if (prop === "title") renderSidebar();
-  if (prop === "hideTitle" || prop === "hideSectionLabels") renderEditor();
-  renderPreview();
-  dispatch(prop === "title" ? "CARD_TITLE_CHANGED" : "CARD_CONTENT_CHANGED");
+  if (prop === "title") window.renderSidebar();
+  if (prop === "hideTitle" || prop === "hideSectionLabels") window.renderEditor();
+  window.renderPreview();
+  window.dispatch(prop === "title" ? "CARD_TITLE_CHANGED" : "CARD_CONTENT_CHANGED");
 }
 
 export function updateGridSplitProp(key, val) {
@@ -390,8 +397,8 @@ export function updateGridSplitProp(key, val) {
   if (!card.imageGridSplit) card.imageGridSplit = {};
   card.imageGridSplit[key] = val;
   setDirty();
-  renderPreview();
-  dispatch("CARD_CONTENT_CHANGED");
+  window.renderPreview();
+  window.dispatch("CARD_CONTENT_CHANGED");
 }
 
 
@@ -409,7 +416,7 @@ export function setSlotSize(slot, val) {
   if (img.size === val) { img.size = null; img.color = null; }
   else img.size = val;
   setDirty();
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function toggleImgOverride(slot, enabled) {
@@ -423,7 +430,7 @@ export function toggleImgOverride(slot, enabled) {
     img.size = null;
     img.color = null;
   }
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function updateImgProp(slot, key, value) {
@@ -432,7 +439,7 @@ export function updateImgProp(slot, key, value) {
   const img = card.images.find((im) => im.slot === slot);
   if (!img) return;
   img[key] = value;
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function clearSlot(slot) {
@@ -440,5 +447,5 @@ export function clearSlot(slot) {
   const card = getActiveCard();
   if (!card) return;
   card.images = card.images.filter((i) => i.slot !== slot);
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }

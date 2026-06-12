@@ -1,6 +1,18 @@
-import { setCurrentFileName } from '../storage/storage.js'
+import { marked } from 'marked'
+import { setCurrentFileName, restoreWorkDir, _autoRestore,
+         setDirty, showToast, applyLoadedData } from '../storage/storage.js'
+import { applyI18n, getLang, t } from '../i18n.js'
+import { renderEditor } from '../editor/editor.js'
+import { renderPreview, initPanelResize, initPreviewPan } from '../preview.js'
+import { renderRecordsPanel } from '../records/records.js'
+import { insertImageUrl, pendingPasteSlot, setPendingPasteSlot } from '../modals.js'
+import { initUndoKeys } from '../core/undo.js'
+import { state, getActiveCard, uiState, LAYOUT_SLOTS } from '../core/state.js'
+import { _compressImage, _hide } from '../core/utils.js'
 import { bindSettings, applySettingsToUI, applyGoogleFonts, applyUIZoom } from './settings.js'
-import { renderSidebar, refreshAllThumbs, initUploadDropZone } from './cards.js'
+import { renderSidebar, refreshAllThumbs, initUploadDropZone,
+         uploadedImages, clearThumbHashes } from './cards.js'
+import { _fetchImageByKeyword, _buildAiPrompt } from '../api.js'
 
 marked.use({
   extensions: [{
@@ -24,7 +36,7 @@ export function dispatch(action) {
 
   switch (action) {
     case 'INIT_LOAD':
-      _thumbHashes = {};  // new project — invalidate all cached hashes
+      clearThumbHashes();  // new project — invalidate all cached hashes
       if (document.getElementById('records-panel')?.style.display === 'flex') renderRecordsPanel();
       // fall through
     case 'ACTIVE_CARD_CHANGED':
@@ -140,7 +152,7 @@ export function toggleMoreMenu(event) {
   if (open) setTimeout(() => document.addEventListener('click', closeMoreMenu, { once: true }), 0);
 }
 
-function closeMoreMenu() {
+export function closeMoreMenu() {
   const menu = document.getElementById('toolbar-more-menu');
   const btn = document.getElementById('toolbar-more-btn');
   if (menu) menu.classList.remove('open');
@@ -322,7 +334,7 @@ async function _autoFetchImages() {
     } catch {}
   }));
   if (filled) {
-    dispatch('CARD_UI_CHANGED');
+    window.dispatch('CARD_UI_CHANGED');
     setDirty();
     showToast(`✓ ${filled} image${filled > 1 ? "s" : ""} fetched`);
   }
@@ -399,7 +411,7 @@ async function init() {
           ) ?? 0;
       } else {
         uiState.imgModalSlot = pendingPasteSlot;
-        pendingPasteSlot = null;
+        setPendingPasteSlot(null);
         document
           .querySelectorAll(".image-slot-row")
           .forEach((r) => (r.style.outline = ""));

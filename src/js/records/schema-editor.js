@@ -1,4 +1,12 @@
-﻿// ── Schema Editor ─────────────────────────────────────────────────────────────
+﻿import { state, uiState, LAYOUTS, LAYOUT_SLOTS } from '../core/state.js'
+import { esc, uid } from '../core/utils.js'
+import { FC_CONFIG } from '../core/config.js'
+import { setDirty, showToast, hasWorkDir, saveToLibrary, loadFromLibrary,
+         deleteFromLibrary, listLibrary } from '../storage/storage.js'
+import { t } from '../i18n.js'
+import { _applyStyleData } from '../modals.js'
+
+// ── Schema Editor ─────────────────────────────────────────────────────────────
 let _editingSchema = null;
 let _loadedSchemaName = null;
 
@@ -276,17 +284,17 @@ function _slugify(s) {
   return s.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 }
 
-function _addSchemaField() {
+export function _addSchemaField() {
   _editingSchema.fields.push({ id: 'f' + uid(), key: '', type: 'text', label: '' });
   _renderSchemaEditor();
 }
 
-function _removeSchemaField(i) {
+export function _removeSchemaField(i) {
   _editingSchema.fields.splice(i, 1);
   _renderSchemaEditor();
 }
 
-function _schemaFieldChange(i, prop, value) {
+export function _schemaFieldChange(i, prop, value) {
   _editingSchema.fields[i][prop] = value;
   if (prop === 'label' && !_editingSchema.fields[i].key) {
     _editingSchema.fields[i].key = _slugify(value);
@@ -297,7 +305,7 @@ function _schemaFieldChange(i, prop, value) {
   if (prop === 'type') _renderSchemaEditor();
 }
 
-function _addSchemaTemplate() {
+export function _addSchemaTemplate() {
   _editingSchema.cardTemplates.push({
     id: 't' + uid(), templateType: 'single',
     size: 'A6', layout: 'fulltext',
@@ -306,12 +314,12 @@ function _addSchemaTemplate() {
   _renderSchemaEditor();
 }
 
-function _removeSchemaTemplate(i) {
+export function _removeSchemaTemplate(i) {
   _editingSchema.cardTemplates.splice(i, 1);
   _renderSchemaEditor();
 }
 
-function _schemaTemplateChange(i, prop, value) {
+export function _schemaTemplateChange(i, prop, value) {
   const t = _editingSchema.cardTemplates[i];
   if (prop === 'templateType') {
     t.templateType = value;
@@ -343,7 +351,7 @@ function _schemaTemplateChange(i, prop, value) {
   _renderSchemaEditor();
 }
 
-function _schemaCardConfig(i, prop, value) {
+export function _schemaCardConfig(i, prop, value) {
   const tmpl = _editingSchema.cardTemplates[i];
   if (!tmpl) return;
   if (!tmpl.cardConfig) tmpl.cardConfig = {};
@@ -352,17 +360,17 @@ function _schemaCardConfig(i, prop, value) {
   else tmpl.cardConfig[prop] = n;
 }
 
-function _schemaSingleImageSlot(ti, si, value) {
+export function _schemaSingleImageSlot(ti, si, value) {
   if (!_editingSchema.cardTemplates[ti]?.mapping) return;
   _editingSchema.cardTemplates[ti].mapping.imageSlots[si] = value;
 }
 
-function _schemaSingleSection(ti, si, value) {
+export function _schemaSingleSection(ti, si, value) {
   if (!_editingSchema.cardTemplates[ti]?.mapping) return;
   _editingSchema.cardTemplates[ti].mapping.sections[si] = value;
 }
 
-function _addSchemaSection(ti) {
+export function _addSchemaSection(ti) {
   _editingSchema.cardTemplates[ti].mapping.sections.push('');
   _renderSchemaEditor();
 }
@@ -394,8 +402,8 @@ export function saveSchema() {
     card.hideSectionLabels = tmpl.hideSectionLabels ?? false;
   });
 
-  if (state.cards.some(c => c.recordId || c.packedRecordIds)) dispatch('CARD_LIST_CHANGED');
+  if (state.cards.some(c => c.recordId || c.packedRecordIds)) window.dispatch('CARD_LIST_CHANGED');
   setDirty();
   closeSchemaEditor();
-  renderRecordsPanel();
+  window.renderRecordsPanel();
 }

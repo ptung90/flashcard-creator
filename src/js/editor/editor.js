@@ -3,6 +3,14 @@ import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
+import { state, uiState, getActiveCard, LAYOUTS, LAYOUT_SLOTS } from '../core/state.js'
+import { layoutIcon, cardOrientationControls, FIS } from './controls.js'
+import { attachSlotDragHandlers } from './sections.js'
+import { esc, mdParse, renderSectionContent } from '../core/utils.js'
+import { FC_CONFIG } from '../core/config.js'
+import { setDirty } from '../storage/storage.js'
+import { pushUndo } from '../core/undo.js'
+import { t } from '../i18n.js'
 
 // ── Editor ─────────────────────────────────────────────────────────
 
@@ -81,7 +89,7 @@ function _updateToolbarState() {
   });
 }
 
-function editorToolbarCmd(cmd) {
+export function editorToolbarCmd(cmd) {
   if (!_activeEditor) return;
   try {
     switch (cmd) {
@@ -104,14 +112,14 @@ function editorToolbarCmd(cmd) {
   _updateToolbarState();
 }
 
-function setActiveSectionFontProp(prop, val) {
+export function setActiveSectionFontProp(prop, val) {
   if (!_activeSectionId) return;
   const card = getActiveCard();
   if (!card) return;
   const s = card.sections.find(s => s.id === _activeSectionId);
   if (!s) return;
   s[prop] = val;
-  dispatch('CARD_CONTENT_CHANGED');
+  window.dispatch('CARD_CONTENT_CHANGED');
 }
 
 function _onSectionLabelFocus(sectionId) {
@@ -511,7 +519,7 @@ function _initTipTapInstances(card) {
 
     editor.on('update', () => {
       s.content = editor.getHTML();
-      dispatch('CARD_CONTENT_CHANGED');
+      window.dispatch('CARD_CONTENT_CHANGED');
     });
 
     editor.on('focus', () => {
@@ -560,7 +568,7 @@ function _initTipTapInstances(card) {
       labelEditor.on('update', () => {
         if (!_turndownService) return;
         s.label = _turndownService.turndown(labelEditor.getHTML());
-        dispatch('CARD_CONTENT_CHANGED');
+        window.dispatch('CARD_CONTENT_CHANGED');
       });
       labelEditor.on('focus', () => {
         pushUndo();

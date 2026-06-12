@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/postbuild.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "node node_modules/eslint/bin/eslint.js src/js"
   },
   "dependencies": {
     "marked": "^18.0.5",

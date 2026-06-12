@@ -1,4 +1,12 @@
-﻿// ── Custom CSS Modal ───────────────────────────────────────────────
+﻿import { state, uiState, getActiveCard } from './core/state.js'
+import { esc, uid, _hide, _compressImage, setMaxImgPx } from './core/utils.js'
+import { FC_CONFIG } from './core/config.js'
+import { setDirty, showToast, workDirHandle, hasWorkDir, _writeToDir,
+         listLibrary, saveToLibrary, loadFromLibrary, deleteFromLibrary } from './storage/storage.js'
+import { pushUndo } from './core/undo.js'
+import { t } from './i18n.js'
+
+// ── Custom CSS Modal ───────────────────────────────────────────────
 export function openCssModal() {
   document.getElementById("custom-css-input").value =
     state.settings.customCss || "";
@@ -7,14 +15,14 @@ export function openCssModal() {
 export function closeCssModal() {
   document.getElementById("css-modal").close();
 }
-function applyCustomCss() {
+export function applyCustomCss() {
   const css = document.getElementById("custom-css-input").value;
   state.settings.customCss = css;
   document.getElementById("fc-custom-css").textContent = css;
-  dispatch('STATE_MUTATED');
+  window.dispatch('STATE_MUTATED');
   closeCssModal();
 }
-function resetCustomCss() {
+export function resetCustomCss() {
   document.getElementById("custom-css-input").value = "";
 }
 
@@ -88,7 +96,7 @@ export function closeSettingsModal() {
   document.getElementById("settings-modal").close();
 }
 
-function toggleCfgSection(cb) {
+export function toggleCfgSection(cb) {
   const section = cb.closest('.cfg-section');
   const disabled = !cb.checked;
   section.classList.toggle('cfg-section--disabled', disabled);
@@ -102,7 +110,7 @@ function _sectionEnabled(name) {
   return el ? el.checked : true;
 }
 
-function applyAndSaveSettings() {
+export function applyAndSaveSettings() {
   const get = (id) => document.getElementById(id)?.value ?? "";
   const chk = (id) => document.getElementById(id)?.checked ?? false;
   const on = _sectionEnabled;
@@ -193,13 +201,13 @@ function applyAndSaveSettings() {
   if (on("image")) state.settings.image = { ...cfg.image };
   if (on("tfont")) state.settings.titleFont = { ...cfg.titleFont };
   if (on("cfont")) state.settings.contentFont = { ...cfg.contentFont };
-  if (on("behaviour")) MAX_IMG_PX = cfg.maxImgPx ?? 1240;
-  applySettingsToUI();
-  renderPreview();
+  if (on("behaviour")) setMaxImgPx(cfg.maxImgPx ?? 1240);
+  window.applySettingsToUI();
+  window.renderPreview();
   closeSettingsModal();
 }
 
-async function migrateImages(btn) {
+export async function migrateImages(btn) {
   const orig = btn.textContent;
   btn.disabled = true;
   btn.textContent = "Running…";
@@ -212,12 +220,12 @@ async function migrateImages(btn) {
       }
     }
   }
-  dispatch('STATE_MUTATED');
+  window.dispatch('STATE_MUTATED');
   btn.textContent = `Done (${count} image${count !== 1 ? "s" : ""})`;
   setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
 }
 
-async function saveStyleToLibrary() {
+export async function saveStyleToLibrary() {
   if (!hasWorkDir()) { alert('Set a work folder first.'); return; }
   const name = prompt('Save style as:');
   if (!name?.trim()) return;
@@ -231,7 +239,7 @@ async function saveStyleToLibrary() {
   } catch (err) { alert('Save failed: ' + err.message); }
 }
 
-function _applyStyleData(data, name) {
+export function _applyStyleData(data, name) {
   const src = data.fc_style_version ? data.settings : data;
   if (!src) throw new Error('Invalid style file');
   const defaultTF = { family: 'sans-serif', size: 14, color: '#1a1a1a', lineHeight: 1.0, textAlign: 'left' };
@@ -240,13 +248,13 @@ function _applyStyleData(data, name) {
   state.settings.titleFont = { ...defaultTF, ...(src.titleFont || {}) };
   state.settings.contentFont = { ...defaultCF, ...(src.contentFont || {}) };
   if (!state.settings.googleFonts) state.settings.googleFonts = [];
-  applyGoogleFonts(); applySettingsToUI();
+  window.applyGoogleFonts(); window.applySettingsToUI();
   document.getElementById('fc-custom-css').textContent = state.settings.customCss || '';
-  renderPreview(); setDirty();
+  window.renderPreview(); setDirty();
   if (name) showToast(`Style "${name}" applied`);
 }
 
-async function applyStyleFromLibrary() {
+export async function applyStyleFromLibrary() {
   const sel = document.getElementById('style-library-select');
   const name = sel?.value;
   if (!name) return;
@@ -256,7 +264,7 @@ async function applyStyleFromLibrary() {
   } catch (err) { alert('Apply failed: ' + err.message); }
 }
 
-async function deleteStyleFromLibrary() {
+export async function deleteStyleFromLibrary() {
   const sel = document.getElementById('style-library-select');
   const name = sel?.value;
   if (!name) return;
@@ -269,7 +277,7 @@ async function deleteStyleFromLibrary() {
   } catch (err) { alert('Delete failed: ' + err.message); }
 }
 
-function exportStyle() {
+export function exportStyle() {
   const payload = JSON.stringify({ fc_style_version: "1.0", settings: state.settings }, null, 2);
   const slug = (state.projectName || "style").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "style";
   const a = document.createElement("a");
@@ -278,7 +286,7 @@ function exportStyle() {
   a.click();
 }
 
-function importStyle(input) {
+export function importStyle(input) {
   const file = input.files[0];
   if (!file) return;
   input.value = "";
@@ -294,10 +302,10 @@ function importStyle(input) {
       state.settings.titleFont = { ...defaultTF, ...(src.titleFont || {}) };
       state.settings.contentFont = { ...defaultCF, ...(src.contentFont || {}) };
       if (!state.settings.googleFonts) state.settings.googleFonts = [];
-      applyGoogleFonts();
-      applySettingsToUI();
+      window.applyGoogleFonts();
+      window.applySettingsToUI();
       document.getElementById("fc-custom-css").textContent = state.settings.customCss || "";
-      renderPreview();
+      window.renderPreview();
       setDirty();
       showToast("Style imported");
     } catch (err) { alert("Cannot import style: " + err.message); }
@@ -305,7 +313,7 @@ function importStyle(input) {
   reader.readAsText(file);
 }
 
-function resetUserConfig() {
+export function resetUserConfig() {
   if (!confirm("Reset all settings to built-in defaults and reload?")) return;
   localStorage.removeItem("fc_user_config");
   if (workDirHandle) {
@@ -351,7 +359,7 @@ export function switchTab(el) {
   );
 }
 
-function insertImageUrl(url) {
+export function insertImageUrl(url) {
   const card = getActiveCard();
   if (!card) return;
   pushUndo();
@@ -359,7 +367,7 @@ function insertImageUrl(url) {
   if (existing) { existing.url = url; delete existing.attribution; }
   else card.images.push({ slot: uiState.imgModalSlot, url });
   closeImgModal();
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 function insertUnsplashImage(url, attribution) {
@@ -370,11 +378,11 @@ function insertUnsplashImage(url, attribution) {
   if (existing) { existing.url = url; existing.attribution = attribution; }
   else card.images.push({ slot: uiState.imgModalSlot, url, attribution });
   closeImgModal();
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 // URL tab
-function previewUrlInput() {
+export function previewUrlInput() {
   const url = document.getElementById("url-input").value.trim();
   const img = document.getElementById("url-preview-img");
   if (url) {
@@ -385,7 +393,7 @@ function previewUrlInput() {
   }
 }
 
-function insertUrl() {
+export function insertUrl() {
   const url = document.getElementById("url-input").value.trim();
   if (!url) return;
   insertImageUrl(url);
@@ -394,10 +402,11 @@ function insertUrl() {
 }
 
 // ── Copy / Paste image between slots ──────────────────────────────
-let pendingPasteSlot = null;
+export let pendingPasteSlot = null;
+export function setPendingPasteSlot(v) { pendingPasteSlot = v; }
 let _imgClipboard = null;
 
-function copySlot(slot) {
+export function copySlot(slot) {
   const card = getActiveCard();
   if (!card) return;
   const img = card.images.find((i) => i.slot === slot);
@@ -414,10 +423,10 @@ function _pasteFromImgClipboard(slot) {
   const newImg = { ..._imgClipboard, slot };
   if (existing) Object.assign(existing, newImg);
   else card.images.push(newImg);
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
-async function pasteToSlot(slot) {
+export async function pasteToSlot(slot) {
   uiState.imgModalSlot = slot;
   try {
     const items = await navigator.clipboard.read();
@@ -429,7 +438,7 @@ async function pasteToSlot(slot) {
         reader.onload = async (ev) => {
           const compressed = await _compressImage(ev.target.result);
           insertImageUrl(compressed);
-          uploadedImages.push({ name: `pasted-${Date.now()}`, dataURL: compressed });
+          window.uploadedImages.push({ name: `pasted-${Date.now()}`, dataURL: compressed });
         };
         reader.readAsDataURL(blob);
         return;

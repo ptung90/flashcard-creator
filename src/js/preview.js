@@ -1,5 +1,10 @@
 ﻿import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
+import { state, uiState, getActiveCard, getCardOrientation } from './core/state.js'
+import { getPaperPx, getPaperMm, mmToPx } from './core/utils.js'
+import { buildCardHTML, getCompoundGridTracks, buildCaptureHTML } from './render.js'
+import { setDirty, showToast } from './storage/storage.js'
+import { pushUndo } from './core/undo.js'
 
 const _PAIRED_LAYOUTS = new Set(['2img-2txt', '3img-3txt', 'img3-txt3', '6cell', '8img-8txt', 'txtgrid']);
 
@@ -397,7 +402,7 @@ async function exportPDF(normalizeOrient = '') {
 }
 
 // ── Panel resize ──────────────────────────────────────────────────
-function initPanelResize() {
+export function initPanelResize() {
   document.querySelectorAll('.fc-panel-divider').forEach(divider => {
     divider.addEventListener('mousedown', e => {
       e.preventDefault();
@@ -432,7 +437,7 @@ function initPanelResize() {
 }
 
 // ── Preview pan (click-drag to scroll) ────────────────────────────
-function initPreviewPan() {
+export function initPreviewPan() {
   const el = document.getElementById("fc-preview");
   let panning = false, startX, startY, scrollX, scrollY;
 

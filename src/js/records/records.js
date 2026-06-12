@@ -1,6 +1,16 @@
 ﻿import TurndownService from 'turndown'
 import { Editor } from '@tiptap/core'
 import { tiptapBaseConfig } from '../editor/editor.js'
+import { state, uiState } from '../core/state.js'
+import { esc, uid, getPaperPx, mdParseInline, _hashStr, mdParse, _compressImage } from '../core/utils.js'
+import { FC_CONFIG } from '../core/config.js'
+import { setDirty, showToast } from '../storage/storage.js'
+import { t } from '../i18n.js'
+import { buildCardHTML } from '../render.js'
+import { newCard } from '../app/cards.js'
+
+// ── Module state ─────────────────────────────────────────────────────
+let _imgClipboard = null;
 
 // ── TurndownService (local instance for record editor) ─────────────────
 let _turndownService = null;
@@ -41,19 +51,19 @@ function _saveHiddenRecCols() {
   localStorage.setItem('fc_hidden_rec_cols', JSON.stringify([..._hiddenRecCols]));
 }
 
-function toggleRecCol(key) {
+export function toggleRecCol(key) {
   if (_hiddenRecCols.has(key)) _hiddenRecCols.delete(key);
   else _hiddenRecCols.add(key);
   _saveHiddenRecCols();
   renderRecordsPanel();
 }
 
-function toggleColMenu(event) {
+export function toggleColMenu(event) {
   event.stopPropagation();
   const menu = document.getElementById('col-menu');
   if (menu) menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
 }
-function toggleRecordsMoreMenu(event) {
+export function toggleRecordsMoreMenu(event) {
   event.stopPropagation();
   const menu = document.getElementById('records-more-menu');
   if (menu) menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
@@ -170,7 +180,7 @@ export function getRecordStatus(record) {
   return 'synced';
 }
 
-function addRecord() {
+export function addRecord() {
   if (!state.schema) return;
   const rec = { id: 'rec_' + uid(), fieldsHash: '', fields: {} };
   state.schema.fields.forEach(f => { rec.fields[f.key] = ''; });
@@ -184,19 +194,19 @@ function deleteRecord(id) {
   const yes = confirm(t('rec.confirmDelete'));
   if (yes) {
     state.cards = state.cards.filter(c => c.recordId !== id);
-    dispatch('CARD_LIST_CHANGED');
+    window.dispatch('CARD_LIST_CHANGED');
   } else {
     state.cards.filter(c => c.recordId === id).forEach(c => {
       c.recordId = null; c.templateId = null;
     });
-    dispatch('CARD_LIST_CHANGED');
+    window.dispatch('CARD_LIST_CHANGED');
   }
   state.records = state.records.filter(r => r.id !== id);
   setDirty();
   renderRecordsPanel();
 }
 
-function togglePackMenu(e) {
+export function togglePackMenu(e) {
   e.stopPropagation();
   const menu = document.getElementById('pack-menu');
   if (menu) menu.classList.toggle('open');
@@ -338,7 +348,7 @@ function _setRecordField(recordId, key, value) {
   openRecordDetail(recordId);
 }
 
-function _pickRecordImage(recordId, key) {
+export function _pickRecordImage(recordId, key) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
@@ -355,11 +365,11 @@ function _pickRecordImage(recordId, key) {
   input.click();
 }
 
-function _clearRecordImage(recordId, key) {
+export function _clearRecordImage(recordId, key) {
   _setRecordField(recordId, key, '');
 }
 
-function _copyRecordImage(recordId, key) {
+export function _copyRecordImage(recordId, key) {
   const record = state.records.find(r => r.id === recordId);
   if (!record) return;
   const url = record.fields[key];
@@ -368,7 +378,7 @@ function _copyRecordImage(recordId, key) {
   showToast(t('rec.toast.imageCopied'));
 }
 
-async function _pasteToRecordImage(recordId, key) {
+export async function _pasteToRecordImage(recordId, key) {
   try {
     const items = await navigator.clipboard.read();
     for (const item of items) {
@@ -390,7 +400,7 @@ async function _pasteToRecordImage(recordId, key) {
   }
 }
 
-function _pasteRecordImage(recordId, key, e) {
+export function _pasteRecordImage(recordId, key, e) {
   const items = e.clipboardData?.items;
   if (!items) return;
   for (const item of items) {
@@ -410,7 +420,7 @@ function _pasteRecordImage(recordId, key, e) {
 let _recordTiptapInstances = {};
 let _activeRecordEditor = null;
 
-function _recToolbarCmd(cmd) {
+export function _recToolbarCmd(cmd) {
   if (!_activeRecordEditor) return;
   try {
     switch (cmd) {

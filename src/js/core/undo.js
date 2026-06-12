@@ -1,3 +1,6 @@
+import { uid } from './utils.js'
+import { state, uiState } from './state.js'
+
 // ── Undo / Redo ──────────────────────────────────────────────────────
 const imagePool = new Map();  // imgKey → dataURL
 const _revPool  = new Map();  // dataURL → imgKey  (dedup index)
@@ -63,7 +66,7 @@ export function undo() {
   if (!_undoStack.length) return;
   _redoStack.push(_encodeState());
   _restoreState(_decodeSnap(_undoStack.pop()));
-  dispatch('FULL_STATE_UPDATED');
+  window.dispatch('FULL_STATE_UPDATED');
   _updateUndoButtons();
 }
 
@@ -71,7 +74,7 @@ export function redo() {
   if (!_redoStack.length) return;
   _undoStack.push(_encodeState());
   _restoreState(_decodeSnap(_redoStack.pop()));
-  dispatch('FULL_STATE_UPDATED');
+  window.dispatch('FULL_STATE_UPDATED');
   _updateUndoButtons();
 }
 
@@ -82,7 +85,7 @@ function _updateUndoButtons() {
   if (r) r.disabled = !_redoStack.length;
 }
 
-function initUndoKeys() {
+export function initUndoKeys() {
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') {
       e.preventDefault();

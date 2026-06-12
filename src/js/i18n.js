@@ -453,12 +453,12 @@ export function setLang(lang) {
     b.classList.toggle('active', b.dataset.lang === lang);
   });
   applyI18n();
-  renderEditor();
-  renderSidebar();
-  renderRecordsPanel();
-  if (typeof _populateChatTemplateSelect === 'function') {
-    _populateChatTemplateSelect();
-    if (typeof onAiTemplateChange === 'function') onAiTemplateChange();
+  window.renderEditor();
+  window.renderSidebar();
+  window.renderRecordsPanel();
+  if (typeof window._populateChatTemplateSelect === 'function') {
+    window._populateChatTemplateSelect();
+    if (typeof window.onAiTemplateChange === 'function') window.onAiTemplateChange();
   }
 }
 

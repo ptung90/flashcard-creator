@@ -1,3 +1,9 @@
+import { state } from './core/state.js'
+import { FC_CONFIG } from './core/config.js'
+import { showToast } from './storage/storage.js'
+import { t } from './i18n.js'
+import { esc } from './core/utils.js'
+
 // ── External APIs (Image Search) ──────────────────────────────────
 
 function _imgItem(full, thumb) {
@@ -24,7 +30,7 @@ async function _fetchJson(url) {
 }
 
 // Wikimedia Commons
-async function searchWikimedia() {
+export async function searchWikimedia() {
   _searchImages("search-wikimedia", "results-wikimedia", async (q) => {
     const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(q)}&gsrlimit=20&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=300&format=json&origin=*`;
     const data = await _fetchJson(url);
@@ -35,7 +41,7 @@ async function searchWikimedia() {
 }
 
 // iNaturalist
-async function searchINaturalist() {
+export async function searchINaturalist() {
   _searchImages("search-inaturalist", "results-inaturalist", async (q) => {
     const url = `https://api.inaturalist.org/v1/observations?q=${encodeURIComponent(q)}&per_page=24&photos=true&order_by=votes`;
     const data = await _fetchJson(url);
@@ -50,20 +56,20 @@ async function searchINaturalist() {
 // Unsplash
 const _unsplashCache = {};
 
-function saveUnsplashKey() {
+export function saveUnsplashKey() {
   const key = document.getElementById("unsplash-key").value.trim();
   localStorage.setItem("unsplash-key", key);
 }
 
-function _unsplashPick(i) {
+export function _unsplashPick(i) {
   const d = _unsplashCache[i];
   if (!d) return;
   const key = document.getElementById("unsplash-key")?.value.trim() || localStorage.getItem("unsplash-key") || "";
   if (key && d.dlUrl) fetch(`${d.dlUrl}?client_id=${encodeURIComponent(key)}`).catch(() => {});
-  insertUnsplashImage(d.url, { name: d.name, profileUrl: d.profileUrl, photoUrl: d.photoUrl });
+  window.insertUnsplashImage(d.url, { name: d.name, profileUrl: d.profileUrl, photoUrl: d.photoUrl });
 }
 
-async function searchUnsplash() {
+export async function searchUnsplash() {
   const key = document.getElementById("unsplash-key").value.trim() || localStorage.getItem("unsplash-key") || "";
   if (!key) { alert("Please enter your Unsplash Access Key first."); return; }
   _searchImages("search-unsplash", "results-unsplash", async (q) => {
@@ -80,14 +86,15 @@ async function searchUnsplash() {
 
 // ── AI Generate ────────────────────────────────────────────────────
 let _aiProvider = localStorage.getItem("ai-provider") || "gemini";
+export function getAiProvider() { return _aiProvider; }
 
-function saveAiKey(provider) {
+export function saveAiKey(provider) {
   const key = document.getElementById(`${provider}-key`).value.trim();
   localStorage.setItem(`${provider}-key`, key);
   showToast(t('ai.keySaved'));
 }
 
-function switchAiProvider(provider) {
+export function switchAiProvider(provider) {
   _aiProvider = provider;
   localStorage.setItem("ai-provider", provider);
   document.querySelectorAll(".ai-provider-btn").forEach(b =>
@@ -97,7 +104,7 @@ function switchAiProvider(provider) {
   document.getElementById("ai-key-openai").style.display = provider === "openai" ? "" : "none";
 }
 
-function toggleAiSection() {
+export function toggleAiSection() {
   const body = document.getElementById("ai-section-body");
   const chevron = document.getElementById("ai-section-chevron");
   const open = body.style.display === "none";
@@ -106,7 +113,7 @@ function toggleAiSection() {
   if (open) switchAiProvider(_aiProvider); // sync UI on open
 }
 
-function _buildAiPrompt(subject, snapshot) {
+export function _buildAiPrompt(subject, snapshot) {
   return `You are a flashcard content generator. Rewrite the flashcard project JSON below for the new subject: "${subject}".
 
 Rules:
@@ -147,7 +154,7 @@ async function _fetchPexelsUrl(query, key) {
   }
 }
 
-async function _fetchImageByKeyword(query) {
+export async function _fetchImageByKeyword(query) {
   const pexelsKey = localStorage.getItem('pexels-key') || '';
   if (pexelsKey) {
     const url = await _fetchPexelsUrl(query, pexelsKey);
@@ -228,7 +235,7 @@ export async function _callGemini(key, prompt) {
   return JSON.parse(content);
 }
 
-async function aiGenerateProject() {
+export async function aiGenerateProject() {
   const key = document.getElementById(`${_aiProvider}-key`).value.trim()
     || localStorage.getItem(`${_aiProvider}-key`) || "";
   if (!key) { showToast(t('ai.noKey')); return; }
@@ -253,11 +260,11 @@ async function aiGenerateProject() {
 
   try {
     const prompt = _buildAiPrompt(subject, snapshot);
-    const newProject = _aiProvider === "gemini"
+    const newProject = getAiProvider() === "gemini"
       ? await _callGemini(key, prompt)
       : await _callOpenAI(key, prompt);
-    closeJsonModal();
-    openJsonPreview(JSON.stringify(newProject, null, 2));
+    window.closeJsonModal();
+    window.openJsonPreview(JSON.stringify(newProject, null, 2));
   } catch (e) {
     statusEl.textContent = e.message;
   } finally {
@@ -267,12 +274,12 @@ async function aiGenerateProject() {
 }
 
 // Pixabay
-function savePixabayKey() {
+export function savePixabayKey() {
   const key = document.getElementById("pixabay-key").value.trim();
   localStorage.setItem("pixabay-key", key);
 }
 
-async function searchPixabay() {
+export async function searchPixabay() {
   const key = document.getElementById("pixabay-key").value.trim() || localStorage.getItem("pixabay-key") || "";
   if (!key) { alert("Please enter your Pixabay API key first."); return; }
   _searchImages("search-pixabay", "results-pixabay", async (q) => {

@@ -1,4 +1,20 @@
 import html2canvas from 'html2canvas'
+import { state, uiState, getCardOrientation, LAYOUT_SPLIT_DEFAULTS, HIDE_TITLE_LAYOUTS } from '../core/state.js'
+import { uid, esc, getPaperPx, _hashStr, _compressImage } from '../core/utils.js'
+import { setDirty, showToast } from '../storage/storage.js'
+import { pushUndo } from '../core/undo.js'
+import { renderEditor } from '../editor/editor.js'
+import { renderPreview } from '../preview.js'
+import { t } from '../i18n.js'
+import { buildCardHTML } from '../render.js'
+
+let _thumbGenId = 0;
+let _thumbRefreshTimer = null;
+let _thumbDirtyVersion = 0;
+let _thumbRenderedVersion = 0;
+let _pendingThumbCardId = undefined;
+let _thumbHashes = {};
+export function clearThumbHashes() { _thumbHashes = {}; }
 
 // ── Card Management ────────────────────────────────────────────────
 export function newCard() {
@@ -42,8 +58,8 @@ export function addCard() {
   };
   state.cards.push(card);
   uiState.activeCardId = card.id;
-  showCardPanel();
-  dispatch('CARD_LIST_CHANGED');
+  window.showCardPanel();
+  window.dispatch('CARD_LIST_CHANGED');
 }
 
 let _cardStyleClipboard = null;
@@ -129,7 +145,7 @@ export function cloneCard(id) {
   const idx = state.cards.findIndex((c) => c.id === id);
   state.cards.splice(idx + 1, 0, clone);
   uiState.activeCardId = clone.id;
-  dispatch('CARD_LIST_CHANGED');
+  window.dispatch('CARD_LIST_CHANGED');
 }
 
 export function deleteCard(id) {
@@ -140,7 +156,7 @@ export function deleteCard(id) {
       ? state.cards[state.cards.length - 1].id
       : null;
   }
-  dispatch('CARD_LIST_CHANGED');
+  window.dispatch('CARD_LIST_CHANGED');
 }
 
 export function moveCard(id, dir) {
@@ -148,13 +164,13 @@ export function moveCard(id, dir) {
   const j = i + dir;
   if (j < 0 || j >= state.cards.length) return;
   [state.cards[i], state.cards[j]] = [state.cards[j], state.cards[i]];
-  dispatch('CARD_MOVED');
+  window.dispatch('CARD_MOVED');
 }
 
 export function setActive(id) {
-  showCardPanel();
+  window.showCardPanel();
   uiState.activeCardId = id;
-  dispatch('ACTIVE_CARD_CHANGED');
+  window.dispatch('ACTIVE_CARD_CHANGED');
 }
 
 export function setTwoUpRatio(id, value) {
@@ -169,7 +185,7 @@ export function setTwoUpRatio(id, value) {
     card.twoUpRatio = Math.min(90, Math.max(10, n));
   }
   setDirty();
-  renderSidebar();
+  window.renderSidebar();
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────
@@ -177,7 +193,7 @@ export function setViewMode(mode) {
   uiState.sidebarView = mode;
   document.getElementById('view-list-btn').classList.toggle('active', mode === 'list');
   document.getElementById('view-grid-btn').classList.toggle('active', mode === 'grid');
-  dispatch('VIEW_MODE_CHANGED');
+  window.dispatch('VIEW_MODE_CHANGED');
 }
 
 export function renderSidebar() {
@@ -288,7 +304,7 @@ function _attachCardDrag(selector) {
       pushUndo();
       const [card] = state.cards.splice(fromIdx, 1);
       state.cards.splice(toIdx, 0, card);
-      dispatch('CARD_MOVED');
+      window.dispatch('CARD_MOVED');
       setDirty();
     });
   });
@@ -402,7 +418,7 @@ export function scheduleThumbRefresh(cardId = null) {
   _thumbRefreshTimer = setTimeout(() => {
     if (uiState.sidebarView !== 'grid') return;
     const allItems = [...document.querySelectorAll('.fc-card-thumb-item')];
-    if (!allItems.length) { renderSidebar(); return; }
+    if (!allItems.length) { window.renderSidebar(); return; }
     const targetId = _pendingThumbCardId;
     _pendingThumbCardId = undefined;
     const items = targetId
@@ -413,7 +429,7 @@ export function scheduleThumbRefresh(cardId = null) {
 }
 
 // ── Upload (local files → base64) ─────────────────────────────────
-let uploadedImages = []; // session cache: [{name, dataURL}]
+export let uploadedImages = []; // session cache: [{name, dataURL}]
 
 function handleUploadFiles(files) {
   if (!files.length) return;

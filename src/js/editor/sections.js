@@ -1,4 +1,11 @@
-﻿// ── Sections ───────────────────────────────────────────────────────
+﻿import { state, uiState, getActiveCard, LAYOUT_SLOTS } from '../core/state.js'
+import { esc, uid, _compressImage } from '../core/utils.js'
+import { setDirty, showToast } from '../storage/storage.js'
+import { pushUndo } from '../core/undo.js'
+import { t } from '../i18n.js'
+import { insertImageUrl } from '../modals.js'
+
+// ── Sections ───────────────────────────────────────────────────────
 export function mergeSections() {
   const card = getActiveCard();
   if (!card || card.sections.length < 2) return;
@@ -12,7 +19,7 @@ export function mergeSections() {
     .filter(Boolean)
     .join('\n\n');
   card.sections = [{ id: uid(), label: '', content: merged }];
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function addSection() {
@@ -20,7 +27,7 @@ export function addSection() {
   const card = getActiveCard();
   if (!card) return;
   card.sections.push({ id: uid(), label: "Section", content: "" });
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function deleteSection(id) {
@@ -28,7 +35,7 @@ export function deleteSection(id) {
   const card = getActiveCard();
   if (!card) return;
   card.sections = card.sections.filter((s) => s.id !== id);
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function moveSection(id, dir) {
@@ -42,7 +49,7 @@ export function moveSection(id, dir) {
     card.sections[j],
     card.sections[i],
   ];
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function openSectionMenu(id, btn) {
@@ -88,8 +95,8 @@ export function setSectionClass(id) {
   if (cls === null) return;
   s.customClass = cls.trim();
   setDirty();
-  renderPreview();
-  dispatch('CARD_CONTENT_CHANGED');
+  window.renderPreview();
+  window.dispatch('CARD_CONTENT_CHANGED');
 }
 
 let _sectionClipboard = null;
@@ -113,7 +120,7 @@ export function pasteSection(id) {
   if (!s) return;
   s.label = _sectionClipboard.label;
   s.content = _sectionClipboard.content;
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function copySectionWithImage(id) {
@@ -142,7 +149,7 @@ export function pasteSectionWithImage(id) {
   const existing = card.images.find(im => im.slot === si);
   if (existing) Object.assign(existing, newImg);
   else card.images.push(newImg);
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function updateSection(id, field, val) {
@@ -151,7 +158,7 @@ export function updateSection(id, field, val) {
   const s = card.sections.find((s) => s.id === id);
   if (!s) return;
   s[field] = val;
-  dispatch('CARD_CONTENT_CHANGED');
+  window.dispatch('CARD_CONTENT_CHANGED');
 }
 
 
@@ -160,13 +167,13 @@ export function setFontAlign(key, val) {
   document.querySelectorAll('.align-btn[data-key="' + key + '"]').forEach((b) => {
     b.classList.toggle("active", b.dataset.align === val);
   });
-  dispatch('CARD_CONTENT_CHANGED');
+  window.dispatch('CARD_CONTENT_CHANGED');
 }
 
 export function setTextVAlign(val) {
   state.settings.textVAlign = val;
   document.querySelectorAll(".valign-btn").forEach((b) => b.classList.toggle("active", b.dataset.valign === val));
-  dispatch('CARD_CONTENT_CHANGED');
+  window.dispatch('CARD_CONTENT_CHANGED');
 }
 
 // ── Per-card custom CSS ────────────────────────────────────────────
@@ -188,7 +195,7 @@ export function updateCardCss(css) {
     if (css && !dot) btn.insertAdjacentHTML('beforeend', '<span class="card-css-on">●</span>');
     else if (!css && dot) dot.remove();
   }
-  dispatch('CARD_CONTENT_CHANGED');
+  window.dispatch('CARD_CONTENT_CHANGED');
 }
 
 // ── Paste block parser ────────────────────────────────────────────
@@ -222,7 +229,7 @@ export function parsePasteBlock(mode) {
   if (mode === "replace") card.sections = parsed;
   else card.sections = [...card.sections, ...parsed];
 
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function toggleDataArea() {
@@ -269,7 +276,7 @@ export function saveCardData() {
     const originalId = card.id; // Chống mất/trùng ID
     const idx = state.cards.findIndex(c => c.id === originalId);
     if (idx !== -1) state.cards[idx] = { ...card, ...parsed, id: originalId };
-    dispatch('FULL_STATE_UPDATED');
+    window.dispatch('FULL_STATE_UPDATED');
   } catch (e) {
     alert("Invalid JSON:\n" + e.message);
     ta.style.outline = "2px solid #ef4444"; // Báo lỗi viền đỏ
@@ -288,7 +295,7 @@ export function swapSlots(a, b) {
   const bImg = card.images.find((im) => im.slot === b);
   if (aImg) aImg.slot = b;
   if (bImg) bImg.slot = a;
-  dispatch('CARD_UI_CHANGED');
+  window.dispatch('CARD_UI_CHANGED');
 }
 
 export function attachSlotDragHandlers() {
@@ -336,8 +343,8 @@ export function attachSlotDragHandlers() {
         const compressed = await _compressImage(ev.target.result);
         uiState.imgModalSlot = slot;
         insertImageUrl(compressed);
-        if (!uploadedImages.some((u) => u.name === files[0].name))
-          uploadedImages.push({ name: files[0].name, dataURL: compressed });
+        if (!(window.uploadedImages || []).some((u) => u.name === files[0].name))
+          (window.uploadedImages || []).push({ name: files[0].name, dataURL: compressed });
       };
       reader.readAsDataURL(files[0]);
     });
