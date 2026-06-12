@@ -167,6 +167,11 @@ function _renderSchemaEditor() {
             <option value="portrait"  ${(tmpl.orientation || 'portrait') === 'portrait' ? 'selected' : ''}>${t('orient.portrait')}</option>
             <option value="landscape" ${(tmpl.orientation || 'portrait') === 'landscape' ? 'selected' : ''}>${t('orient.landscape')}</option>
           </select>
+          <select onchange="_schemaTemplateChange(${i},'locale',this.value)" style="width:80px;" title="Content locale for this template">
+            ${['active', ...state.locales].map(l =>
+              `<option value="${l}" ${(tmpl.locale || 'active') === l ? 'selected' : ''}>${l === 'active' ? '← active' : l.toUpperCase()}</option>`
+            ).join('')}
+          </select>
           <button class="btn btn-sm" onclick="_removeSchemaTemplate(${i})">✕</button>
         </div>
         <div style="margin-bottom:8px;font-size:12px;display:flex;align-items:center;gap:6px;">
@@ -257,6 +262,11 @@ function _renderSchemaEditor() {
             ${_SINGLE_SIZES.map(sz =>
           `<option value="${sz}" ${(tmpl.size || 'A6') === sz ? 'selected' : ''}>${sz}</option>`).join('')}
           </select>
+          <select onchange="_schemaTemplateChange(${i},'locale',this.value)" style="width:80px;" title="Content locale for this template">
+            ${['active', ...state.locales].map(l =>
+              `<option value="${l}" ${(tmpl.locale || 'active') === l ? 'selected' : ''}>${l === 'active' ? '← active' : l.toUpperCase()}</option>`
+            ).join('')}
+          </select>
           <button class="btn btn-sm" onclick="_removeSchemaTemplate(${i})">✕</button>
         </div>
         <div style="margin-bottom:8px;font-size:12px;display:flex;align-items:center;gap:6px;">
@@ -319,6 +329,7 @@ export function _addSchemaTemplate() {
   _editingSchema.cardTemplates.push({
     id: 't' + uid(), templateType: 'single',
     size: 'A6', layout: 'fulltext',
+    locale: 'active',
     mapping: { imageSlots: [], sections: [''] }
   });
   _renderSchemaEditor();
@@ -356,6 +367,9 @@ export function _schemaTemplateChange(i, prop, value) {
     return;
   } else if (prop === 'cardClass') {
     t.cardClass = value;
+    return;
+  } else if (prop === 'locale') {
+    t.locale = value;
     return;
   }
   _renderSchemaEditor();
