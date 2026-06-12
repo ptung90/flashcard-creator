@@ -339,24 +339,50 @@ export function openRecordDetail(id) {
 
   const fieldInputs = fields.map(f => {
     const val = record.fields[f.key] ?? '';
-    let input;
+    const isMultilingual = f.multilingual !== false && f.type !== 'image';
+
     if (f.type === 'image') {
-      const thumb = val
-        ? `<div class="record-img-thumb" style="background-image:url('${esc(val)}')"></div>`
+      const strVal = typeof val === 'string' ? val : '';
+      const thumb = strVal
+        ? `<div class="record-img-thumb" style="background-image:url('${esc(strVal)}')"></div>`
         : `<div class="record-img-thumb record-img-thumb--empty"><svg class="icon" style="width:18px;height:18px"><use href="#i-image"/></svg></div>`;
-      input = `<div class="record-field-img" onpaste="_pasteRecordImage('${record.id}','${f.key}',event)">
+      const input = `<div class="record-field-img" onpaste="_pasteRecordImage('${record.id}','${f.key}',event)">
         ${thumb}
         <div class="image-slot-btns">
           <button class="btn btn-secondary btn-sm btn-icon" onclick="_pasteToRecordImage('${record.id}','${f.key}')" title="${t('rec.img.paste')}"><svg class="icon" style="width:13px;height:13px"><use href="#i-clipboard"/></svg></button>
-          ${val ? `<button class="btn btn-secondary btn-sm btn-icon" onclick="_copyRecordImage('${record.id}','${f.key}')" title="${t('rec.img.copy')}"><svg class="icon" style="width:13px;height:13px"><use href="#i-copy"/></svg></button>` : ''}
+          ${strVal ? `<button class="btn btn-secondary btn-sm btn-icon" onclick="_copyRecordImage('${record.id}','${f.key}')" title="${t('rec.img.copy')}"><svg class="icon" style="width:13px;height:13px"><use href="#i-copy"/></svg></button>` : ''}
           <button class="btn btn-secondary btn-sm btn-icon" onclick="_pickRecordImage('${record.id}','${f.key}')" title="${t('rec.img.choose')}"><svg class="icon" style="width:13px;height:13px"><use href="#i-search"/></svg></button>
-          ${val ? `<button class="btn btn-danger btn-sm btn-icon" onclick="_clearRecordImage('${record.id}','${f.key}')" title="${t('rec.img.clear')}"><svg class="icon" style="width:13px;height:13px"><use href="#i-x"/></svg></button>` : ''}
+          ${strVal ? `<button class="btn btn-danger btn-sm btn-icon" onclick="_clearRecordImage('${record.id}','${f.key}')" title="${t('rec.img.clear')}"><svg class="icon" style="width:13px;height:13px"><use href="#i-x"/></svg></button>` : ''}
         </div>
       </div>`;
-    } else {
-      const longCls = f.type === 'text-long' ? ' rec-tiptap--long' : '';
-      input = `<div class="section-tiptap-editor${longCls}" id="rec-tiptap-${f.key}" style="${contentFontStyle}"></div>`;
+      return `<div class="record-field-group">
+        <label class="record-field-label">${esc(f.label)}</label>
+        ${input}
+      </div>`;
     }
+
+    if (isMultilingual && typeof val === 'object' && val !== null) {
+      const localeInputs = state.locales.map(l => {
+        const locVal = val[l] ?? '';
+        const longCls = f.type === 'text-long' ? ' rec-tiptap--long' : '';
+        const inputEl = f.type === 'text-long'
+          ? `<div class="section-tiptap-editor${longCls}" id="rec-tiptap-${f.key}-${l}" style="${contentFontStyle}"></div>`
+          : `<input type="text" class="rec-field-input" value="${esc(locVal)}"
+               oninput="_setRecordField('${record.id}','${f.key}',this.value,'${l}')">`;
+        return `<div class="rec-bilingual-row">
+          <span class="rec-locale-tag">${l.toUpperCase()}</span>
+          ${inputEl}
+        </div>`;
+      }).join('');
+      return `<div class="record-field-group">
+        <label class="record-field-label">${esc(f.label)}</label>
+        <div class="rec-bilingual-group">${localeInputs}</div>
+      </div>`;
+    }
+
+    // Non-multilingual text field (plain string)
+    const longCls = f.type === 'text-long' ? ' rec-tiptap--long' : '';
+    const input = `<div class="section-tiptap-editor${longCls}" id="rec-tiptap-${f.key}" style="${contentFontStyle}"></div>`;
     return `<div class="record-field-group">
       <label class="record-field-label">${esc(f.label)}</label>
       ${input}
@@ -448,12 +474,17 @@ export function openRecordDetail(id) {
   _initRecordTiptapInstances(record);
 }
 
-function _setRecordField(recordId, key, value) {
+function _setRecordField(recordId, key, value, locale) {
   const record = state.records.find(r => r.id === recordId);
   if (!record) return;
-  record.fields[key] = value;
+  if (locale && typeof record.fields[key] === 'object' && record.fields[key] !== null) {
+    record.fields[key][locale] = value;
+  } else {
+    record.fields[key] = value;
+  }
   setDirty();
-  openRecordDetail(recordId);
+  // Re-render only for image fields (non-image fields use TipTap or inline oninput)
+  if (!locale) openRecordDetail(recordId);
 }
 
 export function _pickRecordImage(recordId, key) {
@@ -579,48 +610,99 @@ function _initRecordTiptapInstances(record) {
   _ensureTurndown();
   const fields = state.schema?.fields || [];
   fields.filter(f => f.type !== 'image').forEach(f => {
-    const el = document.getElementById('rec-tiptap-' + f.key);
-    if (!el || _recordTiptapInstances[f.key]) return;
-    const val = record.fields[f.key] ?? '';
-    const editor = new Editor({
-      element: el,
-      ...(tiptapBaseConfig(t('rec.tiptapPh'))),
-      content: mdParse(val),
-    });
-    editor.on('update', () => {
-      if (!_turndownService) return;
-      record.fields[f.key] = _turndownService.turndown(editor.getHTML());
-      setDirty();
-      _refreshRecordPreviews(record.id);
-      const row = document.querySelector(`.record-row[data-id="${record.id}"]`);
-      if (row) {
-        const badge = row.querySelector('.rec-badge');
-        if (badge) {
-          const s = getRecordStatus(record);
-          badge.className = `rec-badge rec-badge--${s}`;
-          badge.textContent = s;
+    const isMultilingual = f.multilingual !== false && typeof record.fields[f.key] === 'object' && record.fields[f.key] !== null;
+    if (isMultilingual) {
+      state.locales.forEach(l => {
+        const instanceKey = `${f.key}_${l}`;
+        const el = document.getElementById(`rec-tiptap-${f.key}-${l}`);
+        if (!el || _recordTiptapInstances[instanceKey]) return;
+        const locVal = record.fields[f.key][l] ?? '';
+        const editor = new Editor({
+          element: el,
+          ...(tiptapBaseConfig(t('rec.tiptapPh'))),
+          content: mdParse(locVal),
+        });
+        editor.on('update', () => {
+          if (!_turndownService) return;
+          if (typeof record.fields[f.key] === 'object') {
+            record.fields[f.key][l] = _turndownService.turndown(editor.getHTML());
+          }
+          setDirty();
+          _refreshRecordPreviews(record.id);
+          const row = document.querySelector(`.record-row[data-id="${record.id}"]`);
+          if (row) {
+            const badge = row.querySelector('.rec-badge');
+            if (badge) {
+              const s = getRecordStatus(record);
+              badge.className = `rec-badge rec-badge--${s}`;
+              badge.textContent = s;
+            }
+          }
+        });
+        editor.on('focus', () => {
+          _activeRecordEditor = editor;
+          const tb = document.getElementById('rec-editor-toolbar');
+          if (tb) tb.classList.add('active');
+          _updateRecToolbarState();
+        });
+        editor.on('blur', () => {
+          setTimeout(() => {
+            const anyFocused = Object.values(_recordTiptapInstances).some(ed => ed.isFocused);
+            const tbFocus = document.getElementById('rec-editor-toolbar')?.contains(document.activeElement);
+            if (anyFocused || tbFocus) return;
+            _activeRecordEditor = null;
+            const tb = document.getElementById('rec-editor-toolbar');
+            if (tb) tb.classList.remove('active');
+          }, 150);
+        });
+        editor.on('selectionUpdate', () => _updateRecToolbarState());
+        editor.on('transaction', () => _updateRecToolbarState());
+        _recordTiptapInstances[instanceKey] = editor;
+      });
+    } else {
+      const el = document.getElementById(`rec-tiptap-${f.key}`);
+      if (!el || _recordTiptapInstances[f.key]) return;
+      const val = typeof record.fields[f.key] === 'string' ? record.fields[f.key] : '';
+      const editor = new Editor({
+        element: el,
+        ...(tiptapBaseConfig(t('rec.tiptapPh'))),
+        content: mdParse(val),
+      });
+      editor.on('update', () => {
+        if (!_turndownService) return;
+        record.fields[f.key] = _turndownService.turndown(editor.getHTML());
+        setDirty();
+        _refreshRecordPreviews(record.id);
+        const row = document.querySelector(`.record-row[data-id="${record.id}"]`);
+        if (row) {
+          const badge = row.querySelector('.rec-badge');
+          if (badge) {
+            const s = getRecordStatus(record);
+            badge.className = `rec-badge rec-badge--${s}`;
+            badge.textContent = s;
+          }
         }
-      }
-    });
-    editor.on('focus', () => {
-      _activeRecordEditor = editor;
-      const tb = document.getElementById('rec-editor-toolbar');
-      if (tb) tb.classList.add('active');
-      _updateRecToolbarState();
-    });
-    editor.on('blur', () => {
-      setTimeout(() => {
-        const anyFocused = Object.values(_recordTiptapInstances).some(ed => ed.isFocused);
-        const tbFocus = document.getElementById('rec-editor-toolbar')?.contains(document.activeElement);
-        if (anyFocused || tbFocus) return;
-        _activeRecordEditor = null;
+      });
+      editor.on('focus', () => {
+        _activeRecordEditor = editor;
         const tb = document.getElementById('rec-editor-toolbar');
-        if (tb) tb.classList.remove('active');
-      }, 150);
-    });
-    editor.on('selectionUpdate', () => _updateRecToolbarState());
-    editor.on('transaction', () => _updateRecToolbarState());
-    _recordTiptapInstances[f.key] = editor;
+        if (tb) tb.classList.add('active');
+        _updateRecToolbarState();
+      });
+      editor.on('blur', () => {
+        setTimeout(() => {
+          const anyFocused = Object.values(_recordTiptapInstances).some(ed => ed.isFocused);
+          const tbFocus = document.getElementById('rec-editor-toolbar')?.contains(document.activeElement);
+          if (anyFocused || tbFocus) return;
+          _activeRecordEditor = null;
+          const tb = document.getElementById('rec-editor-toolbar');
+          if (tb) tb.classList.remove('active');
+        }, 150);
+      });
+      editor.on('selectionUpdate', () => _updateRecToolbarState());
+      editor.on('transaction', () => _updateRecToolbarState());
+      _recordTiptapInstances[f.key] = editor;
+    }
   });
 }
 
