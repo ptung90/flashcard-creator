@@ -65,6 +65,7 @@ import { renderRecordsPanel, openRecordDetail, addRecord, deleteRecord,
          _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
          toggleRecCol, toggleRecordsMoreMenu, toggleSort,
          toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected,
+         toggleBilingualView,
          _migrateRecordFields } from './records/records.js'
 import { confirmPack, packAll, generateRecord, generateAll,
          syncRecord, syncAllPacked, openPackDialog } from './records/pack.js'
@@ -160,6 +161,7 @@ Object.assign(window, {
   _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
   toggleRecCol, toggleRecordsMoreMenu, toggleSort,
   toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected,
+  toggleBilingualView,
   _migrateRecordFields,
   // records/pack.js
   confirmPack, packAll, generateRecord, generateAll,

@@ -1169,3 +1169,5 @@ input[type="range"].mint-fill::-webkit-slider-runnable-track {
 .rec-bilingual-row { display: flex; align-items: flex-start; gap: 6px; }
 .rec-locale-tag { min-width: 24px; font-size: 10px; font-weight: 700; color: var(--ink-400);
   text-transform: uppercase; padding-top: 6px; letter-spacing: 0.06em; }
+.rec-col-locale { font-size: 9px; font-weight: 700; color: var(--c-brand); letter-spacing: 0.06em;
+  vertical-align: super; margin-left: 2px; }

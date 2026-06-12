@@ -14,6 +14,7 @@ let _imgClipboard = null;
 let _sortField = null;
 let _sortDir = 'asc';
 let _selectedIds = new Set();
+let _bilingualView = localStorage.getItem('fc_bilingual_view') === '1';
 
 // ── TurndownService (local instance for record editor) ─────────────────
 let _turndownService = null;
@@ -91,6 +92,12 @@ export function exportSelected() {
   window.exportRecordsJson(_selectedIds);
 }
 
+export function toggleBilingualView() {
+  _bilingualView = !_bilingualView;
+  localStorage.setItem('fc_bilingual_view', _bilingualView ? '1' : '0');
+  renderRecordsPanel();
+}
+
 export function toggleSort(field) {
   if (_sortField === field) {
     _sortDir = _sortDir === 'asc' ? 'desc' : 'asc';
@@ -165,10 +172,15 @@ export function renderRecordsPanel() {
     <button class="btn btn-sm btn-danger" onclick="deleteSelected()">🗑 Delete (${selCount})</button>
   ` : '';
 
+  const bilingualBtn = state.locales.length > 1
+    ? `<button class="btn btn-sm btn-secondary${_bilingualView ? ' active' : ''}" onclick="toggleBilingualView()" title="Toggle bilingual columns">⊞ ${_bilingualView ? 'Bilingual' : state.activeLocale.toUpperCase()}</button>`
+    : '';
+
   const headerHtml = `
     <div class="records-header">
       <span class="records-header-title">${t('rec.title')}</span>
       ${selectionBtns}
+      ${bilingualBtn}
       <button class="btn btn-sm btn-secondary" onclick="addRecord()">${t('rec.add')}</button>
       <button class="btn btn-sm btn-secondary" onclick="generateAll()">${t('rec.generateAll')}</button>
       <button class="btn btn-sm btn-secondary" onclick="syncAllPacked()" title="${t('rec.syncAllTitle')}">${t('rec.syncAll')}</button>
@@ -201,6 +213,16 @@ export function renderRecordsPanel() {
   const showCards = !_hiddenRecCols.has('cards');
 
   const colHeaders = visibleTextFields.map(f => {
+    const isMultilingual = f.multilingual !== false;
+    if (isMultilingual && _bilingualView) {
+      return state.locales.map(l => {
+        const isSorted = _sortField === f.key;
+        return `<th class="rec-th-sortable${isSorted ? ' rec-th-sorted' : ''}"
+          onclick="toggleSort('${f.key}')">
+          ${esc(f.label)} <span class="rec-col-locale">${l.toUpperCase()}</span>
+        </th>`;
+      }).join('');
+    }
     const isSorted = _sortField === f.key;
     const arrow = isSorted ? (_sortDir === 'asc' ? ' ↑' : ' ↓') : '';
     return `<th class="rec-th-sortable${isSorted ? ' rec-th-sorted' : ''}" onclick="toggleSort('${f.key}')">${esc(f.label)}${arrow}</th>`;
@@ -222,7 +244,16 @@ export function renderRecordsPanel() {
     const checked = _selectedIds.has(rec.id) ? 'checked' : '';
     const cols = visibleTextFields.map(f => {
       const val = rec.fields[f.key] ?? '';
-      const preview = val.length > 120 ? val.slice(0, 120) + '…' : val;
+      const isMultilingual = f.multilingual !== false && typeof val === 'object' && val !== null;
+      if (isMultilingual && _bilingualView) {
+        return state.locales.map(l => {
+          const locVal = val[l] ?? '';
+          const preview = locVal.length > 80 ? locVal.slice(0, 80) + '…' : locVal;
+          return `<td><span class="record-col-text">${mdParseInline(preview)}</span></td>`;
+        }).join('');
+      }
+      const display = isMultilingual ? (val[state.activeLocale] ?? '') : (typeof val === 'string' ? val : '');
+      const preview = display.length > 120 ? display.slice(0, 120) + '…' : display;
       return `<td><span class="record-col-text">${mdParseInline(preview)}</span></td>`;
     }).join('');
     const statusTd = showStatus
