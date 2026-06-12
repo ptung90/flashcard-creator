@@ -293,6 +293,13 @@ function _renderSchemaEditor() {
       ${fieldsHtml}
       <button class="btn btn-sm btn-secondary" onclick="_addSchemaField()">${t('rec.schema.addField')}</button>
     </div>
+    <div class="schema-lang-section" style="margin-top:12px;">
+      <span class="schema-section-label">Languages:</span>
+      ${state.locales.map(l => `<span class="schema-locale-tag">${l.toUpperCase()}</span>`).join('')}
+      <input type="text" id="new-locale-input" placeholder="e.g. ja, fr" style="width:80px;"
+        onkeydown="if(event.key==='Enter'){addLocale(this.value);this.value='';window.openSchemaEditor();}">
+      <button class="btn btn-sm btn-secondary" onclick="addLocale(document.getElementById('new-locale-input').value);document.getElementById('new-locale-input').value='';window.openSchemaEditor()">+ Add</button>
+    </div>
     <div style="margin-top:16px;">
       <div class="dialog-section-title">${t('rec.schema.templatesTitle')}</div>
       ${templatesHtml}

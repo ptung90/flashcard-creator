@@ -1171,3 +1171,8 @@ input[type="range"].mint-fill::-webkit-slider-runnable-track {
   text-transform: uppercase; padding-top: 6px; letter-spacing: 0.06em; }
 .rec-col-locale { font-size: 9px; font-weight: 700; color: var(--c-brand); letter-spacing: 0.06em;
   vertical-align: super; margin-left: 2px; }
+
+/* ── Schema language section ───────────────────────────────── */
+.schema-lang-section { display:flex; align-items:center; gap:10px; padding:8px 0; flex-wrap:wrap; }
+.schema-section-label { font-size:12px; font-weight:600; color:var(--ink-500); }
+.schema-locale-tag { padding:2px 8px; background:var(--c-bg-2,var(--surface)); border-radius:10px; font-size:11px; font-weight:600; color:var(--ink-700); }
