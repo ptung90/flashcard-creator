@@ -79,9 +79,9 @@ function buildSectionsHtml(sections, hideLabels, inlineSections) {
     .map(
       (sec) =>
         `<div class="fc-section${sec.customClass ? ` ${esc(sec.customClass)}` : ''}">` +
-        (!hideLabels && sec.label ? '<span class="fc-section__label"' + (sec.labelSize ? ` style="font-size:${sec.labelSize}px"` : '') + '>• ' + mdParseInline(sec.label) + ': </span>' : '') +
+        (!hideLabels && getLocaleValue(sec.label, state.activeLocale) ? '<span class="fc-section__label"' + (sec.labelSize ? ` style="font-size:${sec.labelSize}px"` : '') + '>• ' + mdParseInline(getLocaleValue(sec.label, state.activeLocale)) + ': </span>' : '') +
         '<div class="fc-section__content"' + buildSectionContentStyle(sec, inlineSections) + '>' +
-        (inlineSections ? mdParseInline(sec.content) : renderSectionContent(sec.content)) +
+        (inlineSections ? mdParseInline(getLocaleValue(sec.content, state.activeLocale)) : renderSectionContent(getLocaleValue(sec.content, state.activeLocale))) +
         "</div></div>",
     )
     .join("");
