@@ -66,7 +66,7 @@ export function executeRecordsAiCopy() {
   // Match names to existing records to preserve IDs — but keep other fields empty for AI to fill
   const filledNames = new Set(names);
   const records = names.map(name => {
-    const existing = nameField && state.records.find(r => r.fields[nameField.key] === name);
+    const existing = nameField && state.records.find(r => getLocaleValue(r.fields[nameField.key] ?? '', state.activeLocale) === name);
     const obj = { id: existing ? existing.id : `rec_${uid()}` };
     if (nameField) obj[nameField.key] = name;
     otherFields.forEach(f => { obj[f.key] = ''; });
@@ -76,8 +76,8 @@ export function executeRecordsAiCopy() {
   // Pick up to 2 filled records as style reference (exclude names in the fill list)
   const referenceRecords = state.records.filter(r => {
     if (!nameField) return false;
-    if (filledNames.has(r.fields[nameField.key] ?? '')) return false;
-    return otherFields.some(f => f.type !== 'image' && (r.fields[f.key] ?? '').trim());
+    if (filledNames.has(getLocaleValue(r.fields[nameField.key] ?? '', state.activeLocale))) return false;
+    return otherFields.some(f => f.type !== 'image' && getLocaleValue(r.fields[f.key] ?? '', state.activeLocale).trim());
   }).slice(0, 2);
 
   let referenceSection = '';
@@ -86,7 +86,8 @@ export function executeRecordsAiCopy() {
       const obj = { id: r.id };
       allFields.forEach(f => {
         const val = r.fields[f.key] ?? '';
-        obj[f.key] = (f.type === 'image' && val.startsWith('data:')) ? '' : val;
+        const resolved = getLocaleValue(val, state.activeLocale);
+        obj[f.key] = (f.type === 'image' && typeof resolved === 'string' && resolved.startsWith('data:')) ? '' : resolved;
       });
       return obj;
     });
@@ -149,21 +150,22 @@ export async function executeGenerateRecords() {
 
   // Pick up to 3 records with the most filled text fields as samples
   const samples = state.records.slice().sort((a, b) => {
-    const scoreA = textFields.filter(f => (a.fields[f.key] || '').trim()).length;
-    const scoreB = textFields.filter(f => (b.fields[f.key] || '').trim()).length;
+    const scoreA = textFields.filter(f => getLocaleValue(a.fields[f.key] ?? '', state.activeLocale).trim()).length;
+    const scoreB = textFields.filter(f => getLocaleValue(b.fields[f.key] ?? '', state.activeLocale).trim()).length;
     return scoreB - scoreA;
   }).slice(0, 3).map(r => {
     const obj = {};
     allFields.forEach(f => {
-      const v = r.fields[f.key] || '';
-      obj[f.key] = (f.type === 'image' && v.startsWith('data:')) ? '' : v;
+      const v = r.fields[f.key] ?? '';
+      const resolved = getLocaleValue(v, state.activeLocale);
+      obj[f.key] = (f.type === 'image' && typeof resolved === 'string' && resolved.startsWith('data:')) ? '' : resolved;
     });
     return obj;
   });
 
   // Build blacklist from the required "name" field
   const existingNames = state.records
-    .map(r => (r.fields['name'] || '').trim())
+    .map(r => getLocaleValue(r.fields['name'] ?? '', state.activeLocale).trim())
     .filter(Boolean);
 
   const systemContent = [
@@ -268,6 +270,8 @@ export async function _applyImportedRecords(jsonText, append = false) {
       const existingVal = target.fields[f.key];
       if (incomingVal && typeof incomingVal === 'object' && existingVal && typeof existingVal === 'object') {
         Object.assign(existingVal, incomingVal);
+      } else if (typeof incomingVal === 'string' && existingVal && typeof existingVal === 'object') {
+        existingVal[state.activeLocale] = incomingVal;
       } else {
         target.fields[f.key] = incomingVal;
       }
