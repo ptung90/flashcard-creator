@@ -144,16 +144,16 @@ export function renderRecordsPanel() {
     return;
   }
 
-  // Active schema (falls back to first)
-  const schema = state.schemas.find(s => s.id === uiState.activeSchemaId) || state.schemas[0];
-  if (uiState.activeSchemaId !== schema.id) uiState.activeSchemaId = schema.id;
+  const canTranslate = state.locales.length > 1 && state.schemas.some(s => s.fields.some(f => f.multilingual !== false && f.type !== 'image'));
+  const allCompoundTemplates = state.schemas.flatMap(s => s.cardTemplates.filter(t => t.templateType === 'compound'));
 
-  const schemaRecords = state.records.filter(r => r.schemaId === schema.id);
-  const textFields = schema.fields.filter(f => f.type !== 'image');
-  const compoundTemplates = schema.cardTemplates.filter(tmpl => tmpl.templateType === 'compound');
-
+  const allTextFields = [];
+  const seenKeys = new Set();
+  state.schemas.forEach(s => s.fields.filter(f => f.type !== 'image').forEach(f => {
+    if (!seenKeys.has(f.key)) { seenKeys.add(f.key); allTextFields.push(f); }
+  }));
   const colMenuItems = [
-    ...textFields.map(f => ({ key: 'field:' + f.key, label: f.label })),
+    ...allTextFields.map(f => ({ key: 'field:' + f.key, label: f.label })),
     { key: 'status', label: t('rec.colStatus') },
     { key: 'cards', label: t('rec.colCards') },
   ].map(c => {
@@ -165,14 +165,13 @@ export function renderRecordsPanel() {
     `<button class="records-pack-item" onclick="packAll();togglePackMenu(event)">${t('rec.packAll')}</button>`,
     `<button class="records-pack-item" onclick="generateAll();togglePackMenu(event)">${t('rec.generateAll')}</button>`,
     `<button class="records-pack-item" onclick="syncAllPacked();togglePackMenu(event)" title="${t('rec.syncAllTitle')}">${t('rec.syncAll')}</button>`,
-    ...compoundTemplates.length ? [
+    ...allCompoundTemplates.length ? [
       `<div class="records-pack-divider"></div>`,
-      ...compoundTemplates.map(tmpl => `<button class="records-pack-item" onclick="openPackDialog('${tmpl.id}')">${esc(tmpl.layout)}</button>`),
+      ...allCompoundTemplates.map(tmpl => `<button class="records-pack-item" onclick="openPackDialog('${tmpl.id}')">${esc(tmpl.layout)}</button>`),
     ] : [],
   ].join('');
 
   const selCount = _selectedIds.size;
-  const canTranslate = state.locales.length > 1 && schema?.fields.some(f => f.multilingual !== false && f.type !== 'image');
   const selectionBtns = selCount ? `
     ${canTranslate ? `<button class="btn btn-sm btn-secondary" onclick="toggleTranslateMenu(event)">✦ Translate (${selCount})</button>` : ''}
     <button class="btn btn-sm btn-secondary" onclick="exportSelected()">⬇ Export (${selCount})</button>
@@ -185,7 +184,8 @@ export function renderRecordsPanel() {
 
   const moreMenuItems = [
     ...(canTranslate ? [`<button class="records-pack-item" onclick="toggleRecordsMoreMenu(event);appendTranslateOptions(null)">✦ Translate all</button>`] : []),
-    `<button class="records-pack-item" onclick="openSchemaEditor(uiState.activeSchemaId);toggleRecordsMoreMenu(event)">Schema</button>`,
+    `<button class="records-pack-item" onclick="openSchemaEditor();toggleRecordsMoreMenu(event)">Schema</button>`,
+    `<button class="records-pack-item" onclick="openSchemaEditor('__new__');toggleRecordsMoreMenu(event)">+ New Schema</button>`,
     `<button class="records-pack-item" onclick="convertCardsToRecords();toggleRecordsMoreMenu(event)">↩ Convert cards to records</button>`,
     `<div class="records-pack-divider"></div>`,
     `<div class="records-pack-label">${t('rec.columns')}</div>`,
@@ -198,22 +198,14 @@ export function renderRecordsPanel() {
     `<button class="records-pack-item" onclick="pasteRecordsJson(true);toggleRecordsMoreMenu(event)">Append JSON</button>`,
   ].join('');
 
-  const schemaPicker = state.schemas.length > 1
-    ? `<select class="btn btn-sm btn-secondary" onchange="setActiveSchema(this.value)" style="padding:2px 6px;">
-        ${state.schemas.map(s => `<option value="${esc(s.id)}" ${s.id === schema.id ? 'selected' : ''}>${esc(s.name || s.id)}</option>`).join('')}
-      </select>`
-    : '';
-
   const headerHtml = `
     <div class="records-header">
       <span class="records-header-title">${t('rec.title')}</span>
-      ${schemaPicker}
       ${selectionBtns}
       ${state.locales.length > 1 ? `<div class="locale-switcher">${state.locales.map(l =>
         `<button class="btn btn-sm locale-btn${state.activeLocale === l ? ' active' : ''}" data-locale="${l}" onclick="setActiveLocale('${l}')">${l.toUpperCase()}</button>`
       ).join('')}</div>` : ''}
       ${bilingualBtn}
-      <button class="btn btn-sm btn-secondary" onclick="addRecord()">${t('rec.add')}</button>
       <div class="records-pack-wrap">
         <button class="btn btn-sm btn-secondary" onclick="togglePackMenu(event)">${t('rec.pack')}</button>
         <div id="pack-menu">${packMenuItems}</div>
@@ -226,81 +218,81 @@ export function renderRecordsPanel() {
       <input type="file" id="records-import-input" accept=".json" style="display:none" onchange="importRecordsJsonFile(this)">
     </div>`;
 
-  const visibleTextFields = textFields.filter(f => !_hiddenRecCols.has('field:' + f.key));
   const showStatus = !_hiddenRecCols.has('status');
   const showCards = !_hiddenRecCols.has('cards');
 
-  const colHeaders = visibleTextFields.map(f => {
-    const isMultilingual = f.multilingual !== false;
-    if (isMultilingual && _bilingualView) {
-      return state.locales.map(l => {
-        const isSorted = _sortField === f.key;
-        return `<th class="rec-th-sortable${isSorted ? ' rec-th-sorted' : ''}"
-          onclick="toggleSort('${f.key}')">
-          ${esc(f.label)} <span class="rec-col-locale">${l.toUpperCase()}</span>
-        </th>`;
-      }).join('');
-    }
-    const isSorted = _sortField === f.key;
-    const arrow = isSorted ? (_sortDir === 'asc' ? ' ↑' : ' ↓') : '';
-    return `<th class="rec-th-sortable${isSorted ? ' rec-th-sorted' : ''}" onclick="toggleSort('${f.key}')">${esc(f.label)}${arrow}</th>`;
-  }).join('');
+  const schemaSections = state.schemas.map(schema => {
+    const schemaRecords = state.records.filter(r => r.schemaId === schema.id);
+    const textFields = schema.fields.filter(f => f.type !== 'image');
+    const visibleTextFields = textFields.filter(f => !_hiddenRecCols.has('field:' + f.key));
 
-  const displayRecords = _sortField
-    ? [...schemaRecords].sort((a, b) => {
-        const av = (getLocaleValue(a.fields[_sortField], state.activeLocale) || '').toLowerCase();
-        const bv = (getLocaleValue(b.fields[_sortField], state.activeLocale) || '').toLowerCase();
-        return _sortDir === 'asc' ? av < bv ? -1 : av > bv ? 1 : 0 : bv < av ? -1 : bv > av ? 1 : 0;
-      })
-    : schemaRecords;
+    const displayRecords = _sortField
+      ? [...schemaRecords].sort((a, b) => {
+          const av = (getLocaleValue(a.fields[_sortField], state.activeLocale) || '').toLowerCase();
+          const bv = (getLocaleValue(b.fields[_sortField], state.activeLocale) || '').toLowerCase();
+          return _sortDir === 'asc' ? av < bv ? -1 : av > bv ? 1 : 0 : bv < av ? -1 : bv > av ? 1 : 0;
+        })
+      : schemaRecords;
 
-  const allIds = displayRecords.map(r => r.id);
-  const allSelected = allIds.length > 0 && allIds.every(id => _selectedIds.has(id));
-  const someSelected = !allSelected && allIds.some(id => _selectedIds.has(id));
-
-  const rows = displayRecords.map((rec, ri) => {
-    const checked = _selectedIds.has(rec.id) ? 'checked' : '';
-    const cols = visibleTextFields.map(f => {
-      const val = rec.fields[f.key] ?? '';
-      const isMultilingual = f.multilingual !== false && typeof val === 'object' && val !== null;
+    const colHeaders = visibleTextFields.map(f => {
+      const isMultilingual = f.multilingual !== false;
       if (isMultilingual && _bilingualView) {
         return state.locales.map(l => {
-          const locVal = val[l] ?? '';
-          const preview = locVal.length > 80 ? locVal.slice(0, 80) + '…' : locVal;
-          return `<td><span class="record-col-text">${mdParseInline(preview)}</span></td>`;
+          const isSorted = _sortField === f.key;
+          return `<th class="rec-th-sortable${isSorted ? ' rec-th-sorted' : ''}" onclick="toggleSort('${f.key}')">${esc(f.label)} <span class="rec-col-locale">${l.toUpperCase()}</span></th>`;
         }).join('');
       }
-      const display = isMultilingual ? (val[state.activeLocale] ?? '') : (typeof val === 'string' ? val : '');
-      const preview = display.length > 120 ? display.slice(0, 120) + '…' : display;
-      return `<td><span class="record-col-text">${mdParseInline(preview)}</span></td>`;
+      const isSorted = _sortField === f.key;
+      const arrow = isSorted ? (_sortDir === 'asc' ? ' ↑' : ' ↓') : '';
+      return `<th class="rec-th-sortable${isSorted ? ' rec-th-sorted' : ''}" onclick="toggleSort('${f.key}')">${esc(f.label)}${arrow}</th>`;
     }).join('');
-    const statusTd = showStatus
-      ? `<td><span class="rec-badge rec-badge--${getRecordStatus(rec)}">${getRecordStatus(rec)}</span></td>`
-      : '';
-    const cardsTd = showCards
-      ? `<td class="rec-cards-cell">${_linkedCardChips(rec.id)}</td>`
-      : '';
-    return `<tr class="record-row${_selectedIds.has(rec.id) ? ' record-row--selected' : ''}" onclick="openRecordDetail('${rec.id}')" data-id="${rec.id}">
-      <td class="rec-check-td" onclick="event.stopPropagation();toggleSelectRecord('${rec.id}')"><input type="checkbox" class="rec-checkbox" ${checked} onclick="event.stopPropagation();toggleSelectRecord('${rec.id}')"></td>
-      <td class="rec-row-num">${ri + 1}</td>${cols}${statusTd}${cardsTd}
-      <td><button class="btn btn-sm record-del-btn" onclick="event.stopPropagation();deleteRecord('${rec.id}')">✕</button></td>
-    </tr>`;
+
+    const rows = displayRecords.map((rec, ri) => {
+      const checked = _selectedIds.has(rec.id) ? 'checked' : '';
+      const cols = visibleTextFields.map(f => {
+        const val = rec.fields[f.key] ?? '';
+        const isMultilingual = f.multilingual !== false && typeof val === 'object' && val !== null;
+        if (isMultilingual && _bilingualView) {
+          return state.locales.map(l => {
+            const locVal = val[l] ?? '';
+            const preview = locVal.length > 80 ? locVal.slice(0, 80) + '…' : locVal;
+            return `<td><span class="record-col-text">${mdParseInline(preview)}</span></td>`;
+          }).join('');
+        }
+        const display = isMultilingual ? (val[state.activeLocale] ?? '') : (typeof val === 'string' ? val : '');
+        const preview = display.length > 120 ? display.slice(0, 120) + '…' : display;
+        return `<td><span class="record-col-text">${mdParseInline(preview)}</span></td>`;
+      }).join('');
+      const statusTd = showStatus ? `<td><span class="rec-badge rec-badge--${getRecordStatus(rec)}">${getRecordStatus(rec)}</span></td>` : '';
+      const cardsTd = showCards ? `<td class="rec-cards-cell">${_linkedCardChips(rec.id)}</td>` : '';
+      return `<tr class="record-row${_selectedIds.has(rec.id) ? ' record-row--selected' : ''}" onclick="openRecordDetail('${rec.id}')" data-id="${rec.id}">
+        <td class="rec-check-td" onclick="event.stopPropagation();toggleSelectRecord('${rec.id}')"><input type="checkbox" class="rec-checkbox" ${checked} onclick="event.stopPropagation();toggleSelectRecord('${rec.id}')"></td>
+        <td class="rec-row-num">${ri + 1}</td>${cols}${statusTd}${cardsTd}
+        <td><button class="btn btn-sm record-del-btn" onclick="event.stopPropagation();deleteRecord('${rec.id}')">✕</button></td>
+      </tr>`;
+    }).join('');
+
+    const theadExtra = (showStatus ? `<th style="width:72px">${t('rec.colStatus')}</th>` : '') + (showCards ? `<th style="width:120px">${t('rec.colCards')}</th>` : '');
+
+    return `
+      <div class="schema-section">
+        <div class="schema-section-header">
+          <span class="schema-section-name">${esc(schema.name || schema.id)}</span>
+          <span class="schema-record-count">${schemaRecords.length}</span>
+          <button class="btn btn-sm btn-secondary" onclick="openSchemaEditor('${esc(schema.id)}')">Edit</button>
+          <button class="btn btn-sm btn-secondary" onclick="addRecord('${esc(schema.id)}')">+ Add</button>
+        </div>
+        <table class="records-table">
+          <thead><tr>
+            <th class="rec-check-th" style="width:28px"></th>
+            <th style="width:28px">#</th>${colHeaders}${theadExtra}<th style="width:32px;"></th>
+          </tr></thead>
+          <tbody>${rows || `<tr><td colspan="99" style="padding:12px 8px;color:var(--ink-400);font-style:italic;">${t('rec.noRecords')}</td></tr>`}</tbody>
+        </table>
+      </div>`;
   }).join('');
 
-  const indetermAttr = someSelected ? 'data-indeterminate="1"' : '';
-  const theadExtra = (showStatus ? `<th style="width:72px">${t('rec.colStatus')}</th>` : '') + (showCards ? `<th style="width:120px">${t('rec.colCards')}</th>` : '');
-  const tableHtml = `
-    <table class="records-table">
-      <thead><tr>
-        <th class="rec-check-th"><input type="checkbox" class="rec-checkbox" ${allSelected ? 'checked' : ''} ${indetermAttr} onclick="toggleSelectAll()"></th>
-        <th style="width:28px">#</th>${colHeaders}${theadExtra}<th style="width:32px;"></th>
-      </tr></thead>
-      <tbody>${rows || `<tr><td colspan="99" style="padding:12px 8px;color:var(--ink-400);font-style:italic;">${t('rec.noRecords')}</td></tr>`}</tbody>
-    </table>`;
-
-  panel.innerHTML = headerHtml + tableHtml + `<div id="record-detail" style="display:none"></div>`;
-  const selectAllCb = panel.querySelector('.rec-check-th .rec-checkbox');
-  if (selectAllCb && someSelected) selectAllCb.indeterminate = true;
+  panel.innerHTML = headerHtml + schemaSections + `<div id="record-detail" style="display:none"></div>`;
 }
 
 export function getRecordStatus(record) {
@@ -309,8 +301,10 @@ export function getRecordStatus(record) {
   return 'synced';
 }
 
-export function addRecord() {
-  const schema = state.schemas.find(s => s.id === uiState.activeSchemaId) || state.schemas[0];
+export function addRecord(schemaId) {
+  const schema = (schemaId ? state.schemas.find(s => s.id === schemaId) : null)
+    || state.schemas.find(s => s.id === uiState.activeSchemaId)
+    || state.schemas[0];
   if (!schema) return;
   const rec = { id: 'rec_' + uid(), schemaId: schema.id, fieldsHash: '', fields: {} };
   schema.fields.forEach(f => {
