@@ -66,7 +66,8 @@ import { renderRecordsPanel, openRecordDetail, addRecord, deleteRecord,
          toggleRecCol, toggleRecordsMoreMenu, toggleSort,
          toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected,
          toggleBilingualView, toggleTranslateMenu, _getSelectedSet,
-         _migrateRecordFields } from './records/records.js'
+         _migrateRecordFields, _setRecordField,
+         rewriteRecordField, _recAiCustom, setActiveSchema } from './records/records.js'
 import { confirmPack, packAll, generateRecord, generateAll,
          syncRecord, syncAllPacked, openPackDialog } from './records/pack.js'
 import { openSchemaEditor, closeSchemaEditor, saveSchema, closePackDialog,
@@ -75,7 +76,8 @@ import { openSchemaEditor, closeSchemaEditor, saveSchema, closePackDialog,
          _addSchemaField, _addSchemaSection, _addSchemaTemplate,
          _removeSchemaField, _removeSchemaTemplate, _schemaCardConfig,
          _schemaFieldChange, _schemaSingleImageSlot, _schemaSingleSection,
-         _schemaTemplateChange } from './records/schema-editor.js'
+         _schemaTemplateChange, _schemaNameChange } from './records/schema-editor.js'
+import { convertCardsToRecords } from './records/convert.js'
 import { copyRecordsForAI, closeRecordsAiModal, executeRecordsAiCopy,
          pasteRecordsAiNames, openGenerateRecordsDialog,
          closeGenerateRecordsDialog, executeGenerateRecords,
@@ -164,7 +166,8 @@ Object.assign(window, {
   toggleRecCol, toggleRecordsMoreMenu, toggleSort,
   toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected,
   toggleBilingualView, toggleTranslateMenu, _getSelectedSet,
-  _migrateRecordFields,
+  _migrateRecordFields, _setRecordField,
+  rewriteRecordField, _recAiCustom, setActiveSchema,
   // records/pack.js
   confirmPack, packAll, generateRecord, generateAll,
   syncRecord, syncAllPacked, openPackDialog,
@@ -174,7 +177,9 @@ Object.assign(window, {
   _addSchemaField, _addSchemaSection, _addSchemaTemplate,
   _removeSchemaField, _removeSchemaTemplate, _schemaCardConfig,
   _schemaFieldChange, _schemaSingleImageSlot, _schemaSingleSection,
-  _schemaTemplateChange,
+  _schemaTemplateChange, _schemaNameChange,
+  // records/convert.js
+  convertCardsToRecords,
   // records/ai.js
   copyRecordsForAI, closeRecordsAiModal, executeRecordsAiCopy,
   pasteRecordsAiNames, openGenerateRecordsDialog,
