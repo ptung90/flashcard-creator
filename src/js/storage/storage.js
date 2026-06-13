@@ -228,7 +228,8 @@ export function _fallbackDownload(json, name) {
 }
 
 export function _buildDataObj() {
-  return { version: "1.0", project_name: state.projectName, project_icon: state.projectIcon, ...state };
+  const { schema: _legacy, ...rest } = state;
+  return { version: "1.0", project_name: state.projectName, project_icon: state.projectIcon, ...rest };
 }
 
 // ── Library (shared styles & schemas) ──────────────────────────────
@@ -467,12 +468,28 @@ export function applyLoadedData(data) {
       };
     });
   }
-  state.schema  = data.schema  ?? null;
-  state.records = (Array.isArray(data.records) ? data.records : []).map(r => ({
-    id:         r.id ?? ('rec_' + uid()),
-    fieldsHash: r.fieldsHash ?? '',
-    fields:     r.fields ?? {}
-  }));
+  // Migrate old single-schema format (has data.schema but no data.schemas)
+  if (data.schema && !data.schemas) {
+    const schema = { ...data.schema, id: data.schema.id || ('schema_' + uid()) };
+    if (!schema.name) schema.name = 'Records';
+    state.schemas = [schema];
+    const schemaId = schema.id;
+    state.records = (Array.isArray(data.records) ? data.records : []).map(r => ({
+      id:         r.id ?? ('rec_' + uid()),
+      schemaId,
+      fieldsHash: r.fieldsHash ?? '',
+      fields:     r.fields ?? {}
+    }));
+  } else {
+    state.schemas = Array.isArray(data.schemas) ? data.schemas : [];
+    state.records = (Array.isArray(data.records) ? data.records : []).map(r => ({
+      id:         r.id ?? ('rec_' + uid()),
+      schemaId:   r.schemaId ?? (state.schemas[0]?.id ?? ''),
+      fieldsHash: r.fieldsHash ?? '',
+      fields:     r.fields ?? {}
+    }));
+  }
+  uiState.activeSchemaId = state.schemas[0]?.id || null;
   if (Array.isArray(data.locales) && data.locales.length) {
     state.locales = data.locales;
   } else {
@@ -481,6 +498,8 @@ export function applyLoadedData(data) {
   state.activeLocale = data.activeLocale && state.locales.includes(data.activeLocale)
     ? data.activeLocale
     : state.locales[0];
+  // Migrate plain-string record fields to multilingual objects if schema has multilingual fields
+  if (state.schemas.length) window._migrateRecordFields?.();
   uiState.activeCardId = state.cards.length ? state.cards[0].id : null;
   if (!state.settings.googleFonts) state.settings.googleFonts = [];
   window.applyGoogleFonts(); window.applySettingsToUI();

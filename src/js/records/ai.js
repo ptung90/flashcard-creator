@@ -1,22 +1,27 @@
-﻿import { state, getLocaleValue } from '../core/state.js'
+﻿import { state, uiState, getLocaleValue, getSchemaForRecord } from '../core/state.js'
 import { uid } from '../core/utils.js'
 import { setDirty, showToast } from '../storage/storage.js'
 import { getAiProvider, _fetchImageByKeyword, _callGemini, _callOpenAI } from '../api.js'
 
+function _activeSchema() {
+  return state.schemas.find(s => s.id === uiState.activeSchemaId) || state.schemas[0] || null;
+}
+
 // ── Records JSON Export / Import ───────────────────────────────────────────────
 
 export function exportRecordsJson(ids = null) {
-  if (!state.schema || !state.records.length) { showToast('No records to export'); return; }
-  const allFields = state.schema.fields;
+  if (!state.schemas.length || !state.records.length) { showToast('No records to export'); return; }
   const source = ids ? state.records.filter(r => ids.has(r.id)) : state.records;
   if (!source.length) { showToast('No records to export'); return; }
   const out = {
-    schema: allFields.map(f => ({ key: f.key, label: f.label, type: f.type })),
+    schemas: state.schemas,
     records: source.map(r => {
-      const obj = { id: r.id };
+      const schema = getSchemaForRecord(r);
+      const allFields = schema?.fields || [];
+      const obj = { id: r.id, schemaId: r.schemaId };
       allFields.forEach(f => {
         const val = r.fields[f.key] ?? '';
-        obj[f.key] = (f.type === 'image' && val.startsWith('data:')) ? '' : val;
+        obj[f.key] = (f.type === 'image' && typeof val === 'string' && val.startsWith('data:')) ? '' : val;
       });
       return obj;
     })
@@ -30,11 +35,13 @@ export function exportRecordsJson(ids = null) {
 }
 
 export function copyRecordsForAI() {
-  if (!state.schema) { showToast('No schema defined'); return; }
+  const schema = _activeSchema();
+  if (!schema) { showToast('No schema defined'); return; }
   // Pre-populate textarea with existing record names (first text field)
-  const nameField = state.schema.fields.find(f => f.type !== 'image');
-  const lines = state.records.length && nameField
-    ? state.records.map(r => r.fields[nameField.key] ?? '').join('\n')
+  const nameField = schema.fields.find(f => f.type !== 'image');
+  const schemaRecords = state.records.filter(r => r.schemaId === schema.id);
+  const lines = schemaRecords.length && nameField
+    ? schemaRecords.map(r => r.fields[nameField.key] ?? '').join('\n')
     : '';
   document.getElementById('records-ai-names').value = lines;
   document.getElementById('records-ai-modal').showModal();
@@ -52,21 +59,23 @@ export function pasteRecordsAiNames() {
 }
 
 export function executeRecordsAiCopy() {
-  if (!state.schema) return;
+  const schema = _activeSchema();
+  if (!schema) return;
   const rawNames = document.getElementById('records-ai-names').value;
   const names = rawNames.split('\n').map(s => s.trim()).filter(Boolean);
   if (!names.length) { showToast('Enter at least one name'); return; }
 
-  const allFields = state.schema.fields;
+  const allFields = schema.fields;
   const nameField = allFields.find(f => f.type !== 'image');
   const otherFields = allFields.filter(f => f !== nameField);
   const imageFields = allFields.filter(f => f.type === 'image');
   const schemaLines = allFields.map(f => `- ${f.key} (${f.type}): ${f.label}`).join('\n');
+  const schemaRecords = state.records.filter(r => r.schemaId === schema.id);
 
   // Match names to existing records to preserve IDs — but keep other fields empty for AI to fill
   const filledNames = new Set(names);
   const records = names.map(name => {
-    const existing = nameField && state.records.find(r => getLocaleValue(r.fields[nameField.key] ?? '', state.activeLocale) === name);
+    const existing = nameField && schemaRecords.find(r => getLocaleValue(r.fields[nameField.key] ?? '', state.activeLocale) === name);
     const obj = { id: existing ? existing.id : `rec_${uid()}` };
     if (nameField) obj[nameField.key] = name;
     otherFields.forEach(f => { obj[f.key] = ''; });
@@ -74,7 +83,7 @@ export function executeRecordsAiCopy() {
   });
 
   // Pick up to 2 filled records as style reference (exclude names in the fill list)
-  const referenceRecords = state.records.filter(r => {
+  const referenceRecords = schemaRecords.filter(r => {
     if (!nameField) return false;
     if (filledNames.has(getLocaleValue(r.fields[nameField.key] ?? '', state.activeLocale))) return false;
     return otherFields.some(f => f.type !== 'image' && getLocaleValue(r.fields[f.key] ?? '', state.activeLocale).trim());
@@ -127,7 +136,19 @@ ${JSON.stringify(out.records, null, 2)}`;
 }
 
 export function openGenerateRecordsDialog() {
-  if (!state.schema) { showToast('No schema defined'); return; }
+  if (!_activeSchema()) { showToast('No schema defined'); return; }
+  const localeRow = document.getElementById('gen-records-locale-row');
+  const localeSelect = document.getElementById('gen-records-locale');
+  if (localeRow && localeSelect) {
+    if (state.locales.length > 1) {
+      localeSelect.innerHTML = state.locales.map(l =>
+        `<option value="${l}"${l === state.activeLocale ? ' selected' : ''}>${l.toUpperCase()}</option>`
+      ).join('');
+      localeRow.style.display = 'flex';
+    } else {
+      localeRow.style.display = 'none';
+    }
+  }
   document.getElementById('generate-records-dialog').showModal();
   setTimeout(() => document.getElementById('gen-records-count').focus(), 50);
 }
@@ -137,9 +158,12 @@ export function closeGenerateRecordsDialog() {
 }
 
 export async function executeGenerateRecords() {
+  const schema = _activeSchema();
+  if (!schema) return;
   const n = Number.parseInt(document.getElementById('gen-records-count').value, 10) || 5;
   const hint = document.getElementById('gen-records-hint').value.trim();
-  const allFields = state.schema.fields;
+  const targetLocale = document.getElementById('gen-records-locale')?.value || state.activeLocale;
+  const allFields = schema.fields;
   const imageFields = allFields.filter(f => f.type === 'image');
   const textFields = allFields.filter(f => f.type !== 'image');
 
@@ -240,7 +264,7 @@ export async function executeGenerateRecords() {
     if (!Array.isArray(arr) || !arr.length) { showToast('No records returned'); return; }
 
     closeGenerateRecordsDialog();
-    await _applyImportedRecords(JSON.stringify(arr), true);
+    await _applyImportedRecords(JSON.stringify(arr), true, targetLocale);
   } catch (e) {
     showToast('Error: ' + e.message);
   } finally {
@@ -262,14 +286,15 @@ function _isDuplicateRecord(row, textFields) {
   );
 }
 
-export async function _applyImportedRecords(jsonText, append = false) {
+export async function _applyImportedRecords(jsonText, append = false, targetLocale = null) {
   let parsed = JSON.parse(jsonText);
   const vals = !Array.isArray(parsed) ? Object.values(parsed) : null;
   const incoming = Array.isArray(parsed) ? parsed
     : (vals && vals.length === 1 && Array.isArray(vals[0]) ? vals[0] : []);
   if (!incoming.length) { showToast('No records found'); return; }
 
-  const allFields = state.schema?.fields || [];
+  const schema = _activeSchema();
+  const allFields = schema?.fields || [];
   const imageFields = allFields.filter(f => f.type === 'image');
   const textFields = allFields.filter(f => f.type !== 'image');
   let added = 0;
@@ -283,9 +308,9 @@ export async function _applyImportedRecords(jsonText, append = false) {
 
     const existing = !append && row.id && state.records.find(r => r.id === row.id);
     const target = existing || (() => {
-      if (!state.schema) return null;
-      const rec = { id: `rec_${uid()}`, fieldsHash: '', fields: {} };
-      state.schema.fields.forEach(f => {
+      if (!schema) return null;
+      const rec = { id: `rec_${uid()}`, schemaId: schema.id, fieldsHash: '', fields: {} };
+      schema.fields.forEach(f => {
         if (f.multilingual !== false && f.type !== 'image') {
           const empty = {};
           state.locales.forEach(l => { empty[l] = ''; });
@@ -308,7 +333,7 @@ export async function _applyImportedRecords(jsonText, append = false) {
       if (incomingVal && typeof incomingVal === 'object' && existingVal && typeof existingVal === 'object') {
         Object.assign(existingVal, incomingVal);
       } else if (typeof incomingVal === 'string' && existingVal && typeof existingVal === 'object') {
-        existingVal[state.activeLocale] = incomingVal;
+        existingVal[targetLocale || state.activeLocale] = incomingVal;
       } else {
         target.fields[f.key] = incomingVal;
       }
@@ -352,19 +377,18 @@ export function pasteRecordsJson(append = false) {
 }
 
 export async function translateRecords(sourceLocale, targetLocale, ids = null, force = false) {
-  if (!state.schema) return;
+  if (!state.schemas.length) return;
   const provider = getAiProvider();
   const key = localStorage.getItem(`${provider}-key`) || '';
   if (!key) { showToast(`No ${provider} key set. Add it in Settings → AI`); return; }
-
-  const mlFields = state.schema.fields.filter(f => f.multilingual !== false && f.type !== 'image');
-  if (!mlFields.length) { showToast('No multilingual fields in schema'); return; }
 
   const scope = ids
     ? state.records.filter(r => ids.has(r.id))
     : state.records;
 
   const toTranslate = scope.map(rec => {
+    const schema = getSchemaForRecord(rec);
+    const mlFields = schema?.fields.filter(f => f.multilingual !== false && f.type !== 'image') || [];
     const fields = {};
     mlFields.forEach(f => {
       const val = rec.fields[f.key];
@@ -379,7 +403,7 @@ export async function translateRecords(sourceLocale, targetLocale, ids = null, f
   if (!toTranslate.length) { showToast('Nothing to translate'); return; }
 
   const systemPrompt = `You are a translation engine. Translate the given field values from ${sourceLocale.toUpperCase()} to ${targetLocale.toUpperCase()}.
-Return ONLY a JSON array with the same structure — same ids, same field keys, values replaced with ${targetLocale.toUpperCase()} translations.
+Return ONLY a JSON object: { "translations": [ ...same structure, values replaced with ${targetLocale.toUpperCase()} translations... ] }
 Preserve HTML/Markdown formatting. No explanation, no markdown fences.`;
 
   const userPrompt = JSON.stringify(toTranslate, null, 2);

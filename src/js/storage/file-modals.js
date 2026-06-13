@@ -201,7 +201,7 @@ export async function newProject() {
     } else if (!confirm("Start a new project? Unsaved changes will be lost.")) return;
   }
   state.cards   = [];
-  state.schema  = null;
+  state.schemas = [];
   state.records = [];
   state.projectName = "Untitled";
   uiState.activeCardId = null;

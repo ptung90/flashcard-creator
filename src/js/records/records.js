@@ -1,10 +1,11 @@
 ﻿import TurndownService from 'turndown'
 import { Editor } from '@tiptap/core'
 import { tiptapBaseConfig } from '../editor/editor.js'
-import { state, uiState, getLocaleValue } from '../core/state.js'
+import { state, uiState, getLocaleValue, getSchemaForRecord } from '../core/state.js'
 import { esc, uid, getPaperPx, mdParseInline, _hashStr, mdParse, _compressImage } from '../core/utils.js'
 import { FC_CONFIG } from '../core/config.js'
 import { setDirty, showToast } from '../storage/storage.js'
+import { getAiProvider, _callOpenAI, _callGemini } from '../api.js'
 import { t } from '../i18n.js'
 import { buildCardHTML } from '../render.js'
 import { newCard } from '../app/cards.js'
@@ -133,23 +134,23 @@ function _linkedCardChips(recordId) {
 export function renderRecordsPanel() {
   const panel = document.getElementById('records-panel');
   if (!panel) return;
-  if (!state.schema) {
+  if (!state.schemas.length) {
     panel.innerHTML = `
       <div class="records-empty">
         <p>${t('rec.noSchema')}</p>
         <button class="btn btn-sm btn-secondary" onclick="openSchemaEditor()">${t('rec.setupSchema')}</button>
+        <button class="btn btn-sm btn-secondary" onclick="convertCardsToRecords()" style="margin-top:6px">↩ Convert cards to records</button>
       </div>`;
     return;
   }
 
-  const textFields = state.schema.fields.filter(f => f.type !== 'image');
-  const compoundTemplates = state.schema.cardTemplates.filter(tmpl => tmpl.templateType === 'compound');
+  // Active schema (falls back to first)
+  const schema = state.schemas.find(s => s.id === uiState.activeSchemaId) || state.schemas[0];
+  if (uiState.activeSchemaId !== schema.id) uiState.activeSchemaId = schema.id;
 
-  const packMenuItems = compoundTemplates.length
-    ? compoundTemplates.map(tmpl =>
-      `<button class="records-pack-item" onclick="openPackDialog('${tmpl.id}')">${esc(tmpl.layout)}</button>`
-    ).join('')
-    : `<div class="records-pack-item" style="color:var(--ink-400);cursor:default;">${t('rec.noCompoundTemplates')}</div>`;
+  const schemaRecords = state.records.filter(r => r.schemaId === schema.id);
+  const textFields = schema.fields.filter(f => f.type !== 'image');
+  const compoundTemplates = schema.cardTemplates.filter(tmpl => tmpl.templateType === 'compound');
 
   const colMenuItems = [
     ...textFields.map(f => ({ key: 'field:' + f.key, label: f.label })),
@@ -160,8 +161,20 @@ export function renderRecordsPanel() {
     return `<label class="col-menu-item"><input type="checkbox" ${checked} onchange="toggleRecCol('${c.key}')"> ${esc(c.label)}</label>`;
   }).join('');
 
+  const packMenuItems = [
+    `<button class="records-pack-item" onclick="packAll();togglePackMenu(event)">${t('rec.packAll')}</button>`,
+    `<button class="records-pack-item" onclick="generateAll();togglePackMenu(event)">${t('rec.generateAll')}</button>`,
+    `<button class="records-pack-item" onclick="syncAllPacked();togglePackMenu(event)" title="${t('rec.syncAllTitle')}">${t('rec.syncAll')}</button>`,
+    ...compoundTemplates.length ? [
+      `<div class="records-pack-divider"></div>`,
+      ...compoundTemplates.map(tmpl => `<button class="records-pack-item" onclick="openPackDialog('${tmpl.id}')">${esc(tmpl.layout)}</button>`),
+    ] : [],
+  ].join('');
+
   const selCount = _selectedIds.size;
+  const canTranslate = state.locales.length > 1 && schema?.fields.some(f => f.multilingual !== false && f.type !== 'image');
   const selectionBtns = selCount ? `
+    ${canTranslate ? `<button class="btn btn-sm btn-secondary" onclick="toggleTranslateMenu(event)">✦ Translate (${selCount})</button>` : ''}
     <button class="btn btn-sm btn-secondary" onclick="exportSelected()">⬇ Export (${selCount})</button>
     <button class="btn btn-sm btn-danger" onclick="deleteSelected()">🗑 Delete (${selCount})</button>
   ` : '';
@@ -170,39 +183,45 @@ export function renderRecordsPanel() {
     ? `<button class="btn btn-sm btn-secondary${_bilingualView ? ' active' : ''}" onclick="toggleBilingualView()" title="Toggle bilingual columns">⊞ ${_bilingualView ? 'Bilingual' : state.activeLocale.toUpperCase()}</button>`
     : '';
 
-  const translateBtn = state.locales.length > 1 && state.schema?.fields.some(f => f.multilingual !== false && f.type !== 'image')
-    ? `<button class="btn btn-sm btn-secondary" onclick="toggleTranslateMenu(event)" title="AI translate fields">✦ Translate</button>`
+  const moreMenuItems = [
+    ...(canTranslate ? [`<button class="records-pack-item" onclick="toggleRecordsMoreMenu(event);appendTranslateOptions(null)">✦ Translate all</button>`] : []),
+    `<button class="records-pack-item" onclick="openSchemaEditor(uiState.activeSchemaId);toggleRecordsMoreMenu(event)">Schema</button>`,
+    `<button class="records-pack-item" onclick="convertCardsToRecords();toggleRecordsMoreMenu(event)">↩ Convert cards to records</button>`,
+    `<div class="records-pack-divider"></div>`,
+    `<div class="records-pack-label">${t('rec.columns')}</div>`,
+    colMenuItems,
+    `<div class="records-pack-divider"></div>`,
+    `<button class="records-pack-item" onclick="exportRecordsJson();toggleRecordsMoreMenu(event)">Export JSON</button>`,
+    `<button class="records-pack-item" onclick="copyRecordsForAI();toggleRecordsMoreMenu(event)">✦ Copy for AI</button>`,
+    `<button class="records-pack-item" onclick="importRecordsJsonClick();toggleRecordsMoreMenu(event)">Import JSON</button>`,
+    `<button class="records-pack-item" onclick="pasteRecordsJson();toggleRecordsMoreMenu(event)">Paste JSON (update)</button>`,
+    `<button class="records-pack-item" onclick="pasteRecordsJson(true);toggleRecordsMoreMenu(event)">Append JSON</button>`,
+  ].join('');
+
+  const schemaPicker = state.schemas.length > 1
+    ? `<select class="btn btn-sm btn-secondary" onchange="setActiveSchema(this.value)" style="padding:2px 6px;">
+        ${state.schemas.map(s => `<option value="${esc(s.id)}" ${s.id === schema.id ? 'selected' : ''}>${esc(s.name || s.id)}</option>`).join('')}
+      </select>`
     : '';
 
   const headerHtml = `
     <div class="records-header">
       <span class="records-header-title">${t('rec.title')}</span>
+      ${schemaPicker}
       ${selectionBtns}
+      ${state.locales.length > 1 ? `<div class="locale-switcher">${state.locales.map(l =>
+        `<button class="btn btn-sm locale-btn${state.activeLocale === l ? ' active' : ''}" data-locale="${l}" onclick="setActiveLocale('${l}')">${l.toUpperCase()}</button>`
+      ).join('')}</div>` : ''}
       ${bilingualBtn}
-      ${translateBtn}
       <button class="btn btn-sm btn-secondary" onclick="addRecord()">${t('rec.add')}</button>
-      <button class="btn btn-sm btn-secondary" onclick="generateAll()">${t('rec.generateAll')}</button>
-      <button class="btn btn-sm btn-secondary" onclick="syncAllPacked()" title="${t('rec.syncAllTitle')}">${t('rec.syncAll')}</button>
-      <button class="btn btn-sm btn-secondary" onclick="packAll()" title="${t('rec.packAllTitle')}">${t('rec.packAll')}</button>
       <div class="records-pack-wrap">
         <button class="btn btn-sm btn-secondary" onclick="togglePackMenu(event)">${t('rec.pack')}</button>
         <div id="pack-menu">${packMenuItems}</div>
       </div>
-      <div class="records-pack-wrap">
-        <button class="btn btn-sm btn-secondary" onclick="toggleColMenu(event)">${t('rec.columns')}</button>
-        <div id="col-menu" style="display:none">${colMenuItems}</div>
-      </div>
-      <button class="btn btn-sm btn-secondary" onclick="openSchemaEditor()">${t('rec.schema')}</button>
       <button class="btn btn-sm btn-primary" onclick="openAiChat('generate_records')" title="Generate new records with AI">✦ AI</button>
       <div class="records-pack-wrap">
         <button class="btn btn-sm btn-secondary" onclick="toggleRecordsMoreMenu(event)" title="More options">•••</button>
-        <div id="records-more-menu" style="display:none">
-          <button class="records-pack-item" onclick="exportRecordsJson();toggleRecordsMoreMenu(event)">Export JSON</button>
-          <button class="records-pack-item" onclick="copyRecordsForAI();toggleRecordsMoreMenu(event)">✦ Copy for AI</button>
-          <button class="records-pack-item" onclick="importRecordsJsonClick();toggleRecordsMoreMenu(event)">Import JSON</button>
-          <button class="records-pack-item" onclick="pasteRecordsJson();toggleRecordsMoreMenu(event)">Paste JSON (update)</button>
-          <button class="records-pack-item" onclick="pasteRecordsJson(true);toggleRecordsMoreMenu(event)">Append JSON</button>
-        </div>
+        <div id="records-more-menu" style="display:none">${moreMenuItems}</div>
       </div>
       <input type="file" id="records-import-input" accept=".json" style="display:none" onchange="importRecordsJsonFile(this)">
     </div>`;
@@ -228,12 +247,12 @@ export function renderRecordsPanel() {
   }).join('');
 
   const displayRecords = _sortField
-    ? [...state.records].sort((a, b) => {
+    ? [...schemaRecords].sort((a, b) => {
         const av = (getLocaleValue(a.fields[_sortField], state.activeLocale) || '').toLowerCase();
         const bv = (getLocaleValue(b.fields[_sortField], state.activeLocale) || '').toLowerCase();
         return _sortDir === 'asc' ? av < bv ? -1 : av > bv ? 1 : 0 : bv < av ? -1 : bv > av ? 1 : 0;
       })
-    : state.records;
+    : schemaRecords;
 
   const allIds = displayRecords.map(r => r.id);
   const allSelected = allIds.length > 0 && allIds.every(id => _selectedIds.has(id));
@@ -291,9 +310,10 @@ export function getRecordStatus(record) {
 }
 
 export function addRecord() {
-  if (!state.schema) return;
-  const rec = { id: 'rec_' + uid(), fieldsHash: '', fields: {} };
-  state.schema.fields.forEach(f => {
+  const schema = state.schemas.find(s => s.id === uiState.activeSchemaId) || state.schemas[0];
+  if (!schema) return;
+  const rec = { id: 'rec_' + uid(), schemaId: schema.id, fieldsHash: '', fields: {} };
+  schema.fields.forEach(f => {
     if (f.multilingual !== false && f.type !== 'image') {
       const empty = {};
       state.locales.forEach(l => { empty[l] = ''; });
@@ -309,19 +329,19 @@ export function addRecord() {
 }
 
 export function _migrateRecordFields() {
-  if (!state.schema) return;
-  state.schema.fields.forEach(f => {
-    if (f.multilingual === false || f.type === 'image') return;
-    state.records.forEach(rec => {
-      const val = rec.fields[f.key];
-      if (typeof val === 'string') {
-        const obj = {};
-        state.locales.forEach(l => { obj[l] = ''; });
-        state.locales.forEach(l => { obj[l] = val; });
-        rec.fields[f.key] = obj;
-      } else if (val && typeof val === 'object') {
-        state.locales.forEach(l => { if (!(l in val)) val[l] = ''; });
-      }
+  state.schemas.forEach(schema => {
+    schema.fields.forEach(f => {
+      if (f.multilingual === false || f.type === 'image') return;
+      state.records.filter(r => r.schemaId === schema.id).forEach(rec => {
+        const val = rec.fields[f.key];
+        if (typeof val === 'string') {
+          const obj = {};
+          state.locales.forEach(l => { obj[l] = val; });
+          rec.fields[f.key] = obj;
+        } else if (val && typeof val === 'object') {
+          state.locales.forEach(l => { if (!(l in val)) val[l] = ''; });
+        }
+      });
     });
   });
   if (state.records.length) setDirty();
@@ -349,6 +369,11 @@ export function togglePackMenu(e) {
   if (menu) menu.classList.toggle('open');
 }
 
+export function setActiveSchema(id) {
+  uiState.activeSchemaId = id;
+  renderRecordsPanel();
+}
+
 export function toggleTranslateMenu(event) {
   event.stopPropagation();
   window.appendTranslateOptions?.(_selectedIds.size > 0 ? new Set(_selectedIds) : null);
@@ -358,10 +383,12 @@ export function _getSelectedSet() {
   return _selectedIds.size > 0 ? new Set(_selectedIds) : null;
 }
 
-// Close pack menu on outside click
+// Close menus on outside click
 document.addEventListener('click', () => {
-  const m = document.getElementById('pack-menu');
-  if (m) m.classList.remove('open');
+  const pack = document.getElementById('pack-menu');
+  if (pack) pack.classList.remove('open');
+  const more = document.getElementById('records-more-menu');
+  if (more) more.style.display = 'none';
 });
 
 export function openRecordDetail(id) {
@@ -371,8 +398,10 @@ export function openRecordDetail(id) {
   const detail = document.getElementById('record-detail');
   if (!detail) return;
 
-  const fields = state.schema.fields;
-  const singleTemplates = state.schema.cardTemplates.filter(t => t.templateType === 'single');
+  const schema = getSchemaForRecord(record);
+  if (!schema) return;
+  const fields = schema.fields;
+  const singleTemplates = schema.cardTemplates.filter(t => t.templateType === 'single');
   const cf = state.settings.contentFont || {};
   const contentFontStyle = cf.family ? `font-family:${cf.family};` : '';
 
@@ -498,12 +527,24 @@ export function openRecordDetail(id) {
           ${linkedChips ? `<div class="record-detail-chips">${linkedChips}</div>` : ''}
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
+          ${state.locales.length > 1 && schema?.fields.some(f => f.multilingual !== false && f.type !== 'image')
+            ? `<button class="btn btn-sm btn-secondary" onclick="appendTranslateOptions(new Set(['${record.id}']))" title="AI translate this record">✦ Translate</button>`
+            : ''}
           <button class="btn btn-sm btn-primary" onclick="syncRecord('${record.id}')">${t('rec.sync')}</button>
           <button class="btn btn-sm btn-danger" onclick="deleteRecord('${record.id}')" title="Delete record">🗑</button>
           <button class="btn btn-sm" onclick="document.getElementById('record-detail').style.display='none'">✕</button>
         </div>
       </div>
       ${recToolbar}
+      <div class="editor-toolbar editor-toolbar-format editor-toolbar-ai" id="rec-ai-toolbar" style="padding:3px 8px;gap:4px;margin-bottom:4px;">
+        <span style="font-size:11px;color:var(--c-text-3);padding-right:2px;white-space:nowrap">✦ AI</span>
+        <div class="editor-toolbar-divider"></div>
+        <button class="rec-ai-btn" onclick="rewriteRecordField('Expand with more detail. Keep same structure and Markdown format.', this)">Longer</button>
+        <button class="rec-ai-btn" onclick="rewriteRecordField('Condense to key facts only. Keep Markdown format.', this)">Shorter</button>
+        <button class="rec-ai-btn" onclick="rewriteRecordField('Simplify language for easy reading. Keep all key facts and Markdown format.', this)">Simpler</button>
+        <button class="rec-ai-btn" onclick="rewriteRecordField('Rewrite as a first-person guessing game. Give 4-5 clues starting with I, end with *Who am I?*', this)">❓ Quiz</button>
+        <button class="rec-ai-btn" onclick="_recAiCustom(this)">Custom…</button>
+      </div>
     </div>
     <div class="record-detail-body">
       ${fieldInputs}
@@ -513,7 +554,7 @@ export function openRecordDetail(id) {
   _initRecordTiptapInstances(record);
 }
 
-function _setRecordField(recordId, key, value, locale) {
+export function _setRecordField(recordId, key, value, locale) {
   const record = state.records.find(r => r.id === recordId);
   if (!record) return;
   if (locale && typeof record.fields[key] === 'object' && record.fields[key] !== null) {
@@ -640,6 +681,41 @@ function _updateRecToolbarState() {
   });
 }
 
+export async function rewriteRecordField(instruction, btnEl) {
+  const editor = _activeRecordEditor;
+  if (!editor) { showToast('Click into a text field first'); return; }
+  _ensureTurndown();
+  const content = _turndownService.turndown(editor.getHTML());
+  if (!content.trim()) return;
+  const provider = getAiProvider();
+  const key = localStorage.getItem(`${provider}-key`) || '';
+  if (!key) { showToast(`No ${provider} key set`); return; }
+  const origText = btnEl?.textContent;
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = '…'; }
+  try {
+    const messages = [
+      { role: 'system', content: 'You are a flashcard content editor. Rewrite the given text per the instruction. Return JSON: { "text": "<rewritten Markdown>" }. Keep the same language. Preserve Markdown formatting (**, *, -, lists, etc.).' },
+      { role: 'user', content: `Instruction: ${instruction}\n\nText:\n${content}` },
+    ];
+    const result = provider === 'gemini'
+      ? await _callGemini(key, `${messages[0].content}\n\n${messages[1].content}`)
+      : await _callOpenAI(key, messages);
+    const newText = typeof result === 'object' ? (result.text || result.rewrite || '') : String(result || '');
+    if (!newText.trim()) { showToast('No result from AI'); return; }
+    editor.commands.setContent(mdParse(newText));
+  } catch (e) {
+    showToast('AI: ' + (e.message || e));
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = origText; }
+  }
+}
+
+export function _recAiCustom(btnEl) {
+  const instruction = prompt('AI rewrite instruction:');
+  if (!instruction?.trim()) return;
+  rewriteRecordField(instruction.trim(), btnEl);
+}
+
 function _destroyRecordTiptapInstances() {
   Object.values(_recordTiptapInstances).forEach(ed => { try { ed.destroy(); } catch (e) { } });
   _recordTiptapInstances = {};
@@ -647,7 +723,8 @@ function _destroyRecordTiptapInstances() {
 
 function _initRecordTiptapInstances(record) {
   _ensureTurndown();
-  const fields = state.schema?.fields || [];
+  const schema = getSchemaForRecord(record);
+  const fields = schema?.fields || [];
   fields.filter(f => f.type !== 'image').forEach(f => {
     const isMultilingual = f.multilingual !== false && typeof record.fields[f.key] === 'object' && record.fields[f.key] !== null;
     if (isMultilingual) {
@@ -680,18 +757,20 @@ function _initRecordTiptapInstances(record) {
         });
         editor.on('focus', () => {
           _activeRecordEditor = editor;
-          const tb = document.getElementById('rec-editor-toolbar');
-          if (tb) tb.classList.add('active');
+          document.getElementById('rec-editor-toolbar')?.classList.add('active');
+          document.getElementById('rec-ai-toolbar')?.classList.add('active');
           _updateRecToolbarState();
         });
         editor.on('blur', () => {
           setTimeout(() => {
             const anyFocused = Object.values(_recordTiptapInstances).some(ed => ed.isFocused);
-            const tbFocus = document.getElementById('rec-editor-toolbar')?.contains(document.activeElement);
-            if (anyFocused || tbFocus) return;
+            const active = document.activeElement;
+            if (anyFocused
+              || document.getElementById('rec-editor-toolbar')?.contains(active)
+              || document.getElementById('rec-ai-toolbar')?.contains(active)) return;
             _activeRecordEditor = null;
-            const tb = document.getElementById('rec-editor-toolbar');
-            if (tb) tb.classList.remove('active');
+            document.getElementById('rec-editor-toolbar')?.classList.remove('active');
+            document.getElementById('rec-ai-toolbar')?.classList.remove('active');
           }, 150);
         });
         editor.on('selectionUpdate', () => _updateRecToolbarState());
@@ -724,18 +803,20 @@ function _initRecordTiptapInstances(record) {
       });
       editor.on('focus', () => {
         _activeRecordEditor = editor;
-        const tb = document.getElementById('rec-editor-toolbar');
-        if (tb) tb.classList.add('active');
+        document.getElementById('rec-editor-toolbar')?.classList.add('active');
+        document.getElementById('rec-ai-toolbar')?.classList.add('active');
         _updateRecToolbarState();
       });
       editor.on('blur', () => {
         setTimeout(() => {
           const anyFocused = Object.values(_recordTiptapInstances).some(ed => ed.isFocused);
-          const tbFocus = document.getElementById('rec-editor-toolbar')?.contains(document.activeElement);
-          if (anyFocused || tbFocus) return;
+          const active = document.activeElement;
+          if (anyFocused
+            || document.getElementById('rec-editor-toolbar')?.contains(active)
+            || document.getElementById('rec-ai-toolbar')?.contains(active)) return;
           _activeRecordEditor = null;
-          const tb = document.getElementById('rec-editor-toolbar');
-          if (tb) tb.classList.remove('active');
+          document.getElementById('rec-editor-toolbar')?.classList.remove('active');
+          document.getElementById('rec-ai-toolbar')?.classList.remove('active');
         }, 150);
       });
       editor.on('selectionUpdate', () => _updateRecToolbarState());
@@ -750,8 +831,10 @@ function _refreshRecordPreviews(recordId) {
   if (!record) return;
   const strip = document.querySelector('#record-detail .record-preview-strip');
   if (!strip) return;
-  const fields = state.schema.fields;
-  const singleTemplates = state.schema.cardTemplates.filter(t => t.templateType === 'single');
+  const schema = getSchemaForRecord(record);
+  if (!schema) return;
+  const fields = schema.fields;
+  const singleTemplates = schema.cardTemplates.filter(t => t.templateType === 'single');
   strip.innerHTML = `<div class="record-field-label" style="margin-bottom:6px;">${t('rec.preview')}</div>${singleTemplates.map(t => {
     const px = getPaperPx(t.size || 'A6', 'portrait');
     const scale = 130 / px.w;

@@ -110,7 +110,7 @@ export const state = {
   cards: [],
   projectName: "Untitled",
   projectIcon: "🗂️",
-  schema: null,
+  schemas: [],
   records: [],
   activeLocale: 'en',
   locales: ['en', 'vi'],
@@ -118,6 +118,7 @@ export const state = {
 
 export const uiState = {
   activeCardId: null,
+  activeSchemaId: null,
   imgModalSlot: 0,
   activeTab: "wikimedia",
   sidebarView: 'grid',
@@ -126,6 +127,18 @@ export const uiState = {
 
 export function getActiveCard() { return state.cards.find((c) => c.id === uiState.activeCardId); }
 export function getCardOrientation(card) { return card?.orientation || state.settings.orientation; }
+
+export function getSchemaForRecord(record) {
+  if (!record) return null;
+  return state.schemas.find(s => s.id === record.schemaId) || null;
+}
+
+export function getSchemaForTemplate(templateId) {
+  for (const s of state.schemas) {
+    if (s.cardTemplates?.some(t => t.id === templateId)) return s;
+  }
+  return null;
+}
 
 export function getLocaleValue(val, locale) {
   if (val === null || val === undefined) return '';
@@ -149,16 +162,15 @@ export function addLocale(code) {
   const clean = code.trim().toLowerCase();
   if (!clean || state.locales.includes(clean)) return;
   state.locales.push(clean);
-  // migrate existing records: add empty value for new locale to multilingual fields
-  if (state.schema) {
-    state.schema.fields.filter(f => f.multilingual).forEach(f => {
-      state.records.forEach(rec => {
+  state.schemas.forEach(schema => {
+    schema.fields.filter(f => f.multilingual).forEach(f => {
+      state.records.filter(r => r.schemaId === schema.id).forEach(rec => {
         if (rec.fields[f.key] && typeof rec.fields[f.key] === 'object') {
           rec.fields[f.key][clean] = rec.fields[f.key][clean] ?? '';
         }
       });
     });
-  }
+  });
   window.renderRecordsPanel?.();
   window.renderLocaleSwitch?.();
 }

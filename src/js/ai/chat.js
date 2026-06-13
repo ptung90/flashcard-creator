@@ -1,4 +1,4 @@
-﻿import { state, uiState, getActiveCard } from '../core/state.js'
+﻿import { state, uiState, getActiveCard, getLocaleValue } from '../core/state.js'
 import { esc, uid } from '../core/utils.js'
 import { FC_CONFIG } from '../core/config.js'
 import { setDirty, showToast } from '../storage/storage.js'
@@ -223,8 +223,9 @@ const AI_CHAT_TEMPLATES = [
     get label() { return t('ai.tpl.genRecords.label'); },
     get placeholder() { return t('ai.tpl.genRecords.ph'); },
     buildPrompt: function (input) {
-      if (!state.schema || !state.schema.fields.length) return null;
-      const allFields = state.schema.fields;
+      const schema = state.schemas.find(s => s.id === uiState.activeSchemaId) || state.schemas[0];
+      if (!schema?.fields.length) return null;
+      const allFields = schema.fields;
       const textFields = allFields.filter(function (f) { return f.type !== 'image'; });
       const imageFields = allFields.filter(function (f) { return f.type === 'image'; });
 
@@ -237,25 +238,28 @@ const AI_CHAT_TEMPLATES = [
       const imgNote = imageFields.length
         ? '\n5. image fields: set value to a concise English Wikimedia search keyword — NOT a URL.'
         : '';
+      const localeSel = document.getElementById('ai-chat-locale-select');
+      const targetLocale = (localeSel && localeSel.style.display !== 'none' && localeSel.value) ? localeSel.value : state.activeLocale;
+
       const returnShape = `{ "summary": "Generated ${n} records about [topic]", "ops": [{ "type": "GENERATE_RECORDS", "records": [{ `
         + allFields.map(function (f) { return '"' + f.key + '": "..."'; }).join(', ')
         + ' }] }] }';
 
-      // Up to 3 sample records with most filled text fields
+      // Up to 3 sample records with most filled text fields (from targetLocale)
       const samples = state.records.slice().sort(function (a, b) {
-        return textFields.filter(function (f) { return (b.fields[f.key] || '').trim(); }).length
-          - textFields.filter(function (f) { return (a.fields[f.key] || '').trim(); }).length;
+        return textFields.filter(function (f) { return getLocaleValue(b.fields[f.key], targetLocale).trim(); }).length
+          - textFields.filter(function (f) { return getLocaleValue(a.fields[f.key], targetLocale).trim(); }).length;
       }).slice(0, 3).map(function (r) {
         const obj = {};
         allFields.forEach(function (f) {
-          const v = r.fields[f.key] || '';
+          const v = getLocaleValue(r.fields[f.key], targetLocale);
           obj[f.key] = (f.type === 'image' && v.startsWith('data:')) ? '' : v;
         });
         return obj;
       });
 
       const existingNames = state.records
-        .map(function (r) { return (r.fields['name'] || '').trim(); })
+        .map(function (r) { return getLocaleValue(r.fields['name'], targetLocale).trim(); })
         .filter(Boolean);
 
       return [
@@ -274,7 +278,7 @@ const AI_CHAT_TEMPLATES = [
             'Rules:',
             '1. Return ONLY the JSON shape below — no explanation, no markdown fences.',
             '2. Generate exactly ' + n + ' records, all distinct.',
-            '3. Write all text content in the same language as the user\'s request. Write the summary in that same language too.',
+            '3. Write ALL text content in ' + targetLocale.toUpperCase() + '. Write the summary in ' + targetLocale.toUpperCase() + ' too.',
             '4. text/text-long fields: 2–4 sentences, specific facts. Use Markdown (**bold**, - lists). No HTML.',
             '5. Each record must be unique — no duplicates with each other or with existing records.' + imgNote,
             '',
@@ -374,6 +378,16 @@ export function onAiTemplateChange() {
   if (!sel || !inp) return;
   const tpl = AI_CHAT_TEMPLATES.find(function (t) { return t.id === sel.value; });
   if (tpl) inp.placeholder = tpl.placeholder;
+  const localeSel = document.getElementById('ai-chat-locale-select');
+  if (localeSel) {
+    const show = sel.value === 'generate_records' && state.locales.length > 1;
+    if (show) {
+      localeSel.innerHTML = state.locales.map(function (l) {
+        return '<option value="' + l + '"' + (l === state.activeLocale ? ' selected' : '') + '>' + l.toUpperCase() + '</option>';
+      }).join('');
+    }
+    localeSel.style.display = show ? '' : 'none';
+  }
 }
 
 // ── Send ───────────────────────────────────────────────────────────
@@ -482,7 +496,9 @@ export function applyAiChatOps(msgId) {
     }
 
     if (op.type === 'GENERATE_RECORDS' && Array.isArray(op.records) && op.records.length) {
-      _applyImportedRecords(JSON.stringify(op.records), true);
+      const localeSel = document.getElementById('ai-chat-locale-select');
+      const locale = (localeSel && localeSel.style.display !== 'none' && localeSel.value) ? localeSel.value : state.activeLocale;
+      _applyImportedRecords(JSON.stringify(op.records), true, locale);
     }
   });
 

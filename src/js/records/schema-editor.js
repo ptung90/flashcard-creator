@@ -14,7 +14,7 @@ export async function saveSchemaToLibrary() {
   if (!hasWorkDir()) { alert(t('rec.schema.setFolderAlert')); return; }
   const name = prompt(t('rec.schema.savePrompt'), _loadedSchemaName || '');
   if (!name?.trim()) return;
-  const schema = _editingSchema || state.schema;
+  const schema = _editingSchema || state.schemas.find(s => s.id === uiState.activeSchemaId) || state.schemas[0];
   if (!schema) { alert(t('rec.schema.noSchemaAlert')); return; }
   try {
     await saveToLibrary('schemas', name.trim(), schema);
@@ -76,10 +76,18 @@ export async function deleteSchemaFromLibrary() {
   } catch (err) { alert(t('rec.schema.deleteFailAlert').replace('{e}', err.message)); }
 }
 
-export function openSchemaEditor() {
-  _editingSchema = state.schema
-    ? JSON.parse(JSON.stringify(state.schema))
-    : { fields: [{ id: `f${uid()}`, key: 'name', type: 'text', label: 'Name', multilingual: true }], cardTemplates: [] };
+export function openSchemaEditor(schemaId) {
+  const existing = schemaId
+    ? state.schemas.find(s => s.id === schemaId)
+    : (state.schemas.find(s => s.id === uiState.activeSchemaId) || state.schemas[0]);
+  _editingSchema = existing
+    ? JSON.parse(JSON.stringify(existing))
+    : {
+        id: 'schema_' + uid(),
+        name: 'New Schema',
+        fields: [{ id: `f${uid()}`, key: 'name', type: 'text', label: 'Name', multilingual: true }],
+        cardTemplates: []
+      };
   _loadedSchemaName = null;
   _renderSchemaEditor();
   document.getElementById('schema-editor-modal').showModal();
@@ -287,7 +295,14 @@ function _renderSchemaEditor() {
     }
   }).join('');
 
-  document.getElementById('schema-editor-content').innerHTML = `
+  const schemaNameInput = `
+    <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;">
+      <label style="font-size:12px;font-weight:600;white-space:nowrap;">Schema name:</label>
+      <input type="text" value="${esc(s.name || '')}" style="flex:1;"
+        oninput="_schemaNameChange(this.value)">
+    </div>`;
+
+  document.getElementById('schema-editor-content').innerHTML = `${schemaNameInput}
     <div>
       <div class="dialog-section-title">${t('rec.schema.fieldsTitle')}</div>
       ${fieldsHtml}
@@ -319,6 +334,10 @@ export function _addSchemaField() {
 export function _removeSchemaField(i) {
   _editingSchema.fields.splice(i, 1);
   _renderSchemaEditor();
+}
+
+export function _schemaNameChange(value) {
+  if (_editingSchema) _editingSchema.name = value;
 }
 
 export function _schemaFieldChange(i, prop, value) {
@@ -415,21 +434,28 @@ export function closePackDialog() {
 }
 
 export function saveSchema() {
-  const hasNameField = _editingSchema.fields.some(f => f.key === 'name');
-  if (!hasNameField) {
-    alert('Schema must have a field with key = "name".');
+  const hasTextField = _editingSchema.fields.some(f => f.type !== 'image');
+  if (!hasTextField) {
+    alert('Schema must have at least one text field.');
     return;
   }
-  state.schema = _editingSchema;
+  if (!_editingSchema.id) _editingSchema.id = `schema_${uid()}`;
+
+  const idx = state.schemas.findIndex(s => s.id === _editingSchema.id);
+  if (idx >= 0) {
+    state.schemas[idx] = _editingSchema;
+  } else {
+    state.schemas.push(_editingSchema);
+  }
+  uiState.activeSchemaId = _editingSchema.id;
+
   window._migrateRecordFields?.();
   if (!Array.isArray(state.records)) state.records = [];
 
-  // Build a map of templateId → template for fast lookup
-  const allTemplates = state.schema.cardTemplates || [];
+  const allTemplates = _editingSchema.cardTemplates || [];
   const templateMap = Object.fromEntries(allTemplates.map(t => [t.id, t]));
   const singleTemplates = allTemplates.filter(t => t.templateType === 'single');
 
-  // Patch all record-linked cards directly (handles legacy cards without templateId)
   state.cards.forEach(card => {
     if (!card.recordId && !card.packedRecordIds) return;
     const tmpl = templateMap[card.templateId] ||
@@ -442,5 +468,5 @@ export function saveSchema() {
   if (state.cards.some(c => c.recordId || c.packedRecordIds)) window.dispatch('CARD_LIST_CHANGED');
   setDirty();
   closeSchemaEditor();
-  window.renderRecordsPanel();
+  window.renderRecordsPanel?.();
 }

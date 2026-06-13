@@ -1,4 +1,4 @@
-﻿import { state, uiState, getActiveCard, LAYOUTS, LAYOUT_SLOTS, LAYOUT_SPLIT_DEFAULTS, HIDE_TITLE_LAYOUTS, getLocaleValue } from '../core/state.js'
+﻿import { state, uiState, getActiveCard, LAYOUTS, LAYOUT_SLOTS, LAYOUT_SPLIT_DEFAULTS, HIDE_TITLE_LAYOUTS, getLocaleValue, getSchemaForRecord, getSchemaForTemplate } from '../core/state.js'
 import { esc, uid, getPaperPx, _hashStr } from '../core/utils.js'
 import { FC_CONFIG } from '../core/config.js'
 import { setDirty, showToast } from '../storage/storage.js'
@@ -11,14 +11,16 @@ import { closePackDialog } from './schema-editor.js'
 // ── Record Generation ────────────────────────────────────────────────────────────
 
 function _fieldVal(record, fieldId, locale) {
-  const f = state.schema.fields.find(x => x.id === fieldId);
+  const schema = getSchemaForRecord(record);
+  const f = schema?.fields.find(x => x.id === fieldId);
   if (!f) return '';
   return getLocaleValue(record.fields[f.key] ?? '', locale);
 }
 
 export function generateRecord(record, { skipDispatch = false } = {}) {
-  if (!state.schema) return;
-  const singleTemplates = state.schema.cardTemplates.filter(t => t.templateType === 'single');
+  const schema = getSchemaForRecord(record);
+  if (!schema) return;
+  const singleTemplates = schema.cardTemplates.filter(t => t.templateType === 'single');
   for (const template of singleTemplates) {
     const resolvedLocale = (template.locale && template.locale !== 'active')
       ? template.locale
@@ -42,7 +44,7 @@ export function generateRecord(record, { skipDispatch = false } = {}) {
     card.sections = (template.mapping.sections || [])
       .filter(Boolean)
       .map(fid => {
-        const f = state.schema.fields.find(x => x.id === fid);
+        const f = schema.fields.find(x => x.id === fid);
         return { id: uid(), label: f?.label ?? '', content: _fieldVal(record, fid, resolvedLocale) };
       });
   }
@@ -52,13 +54,14 @@ export function generateRecord(record, { skipDispatch = false } = {}) {
 
 export function syncRecord(recordId) {
   const record = state.records.find(r => r.id === recordId);
-  if (!record || !state.schema) return;
+  const schema = getSchemaForRecord(record);
+  if (!record || !schema) return;
 
   // Generate / update single-template cards
   generateRecord(record, { skipDispatch: true });
 
   // Update compound packed cards that contain this record
-  const compoundTemplates = state.schema.cardTemplates.filter(tmpl => tmpl.templateType === 'compound');
+  const compoundTemplates = schema.cardTemplates.filter(tmpl => tmpl.templateType === 'compound');
   state.cards.forEach(card => {
     if (!card.packedRecordIds?.includes(recordId)) return;
     const template = compoundTemplates.find(t => t.id === card.templateId);
@@ -95,7 +98,7 @@ export function syncRecord(recordId) {
 }
 
 export function generateAll() {
-  if (!state.schema) return;
+  if (!state.schemas.length) return;
   let count = 0;
   for (const record of state.records) {
     if (getRecordStatus(record) === 'synced') continue;
@@ -119,14 +122,16 @@ let _packTemplateId = null;
 
 export function openPackDialog(templateId) {
   _packTemplateId = templateId;
-  const template = state.schema?.cardTemplates.find(t => t.id === templateId);
+  const schema = getSchemaForTemplate(templateId);
+  const template = schema?.cardTemplates.find(t => t.id === templateId);
   if (!template) return;
 
   document.getElementById('pack-dialog-layout').textContent = template.layout;
 
-  const textFields = state.schema.fields.filter(f => f.type !== 'image');
-  const checkboxes = state.records.map(r => {
-    const label = textFields.slice(0, 2).map(f => r.fields[f.key] || '').filter(Boolean).join(' — ') || r.id;
+  const textFields = schema.fields.filter(f => f.type !== 'image');
+  const scopeRecords = state.records.filter(r => r.schemaId === schema.id);
+  const checkboxes = scopeRecords.map(r => {
+    const label = textFields.slice(0, 2).map(f => getLocaleValue(r.fields[f.key] ?? '', state.activeLocale) || '').filter(Boolean).join(' — ') || r.id;
     return `<label>
       <input type="checkbox" checked value="${r.id}">
       <span>${esc(label)}</span>
@@ -143,7 +148,8 @@ export function openPackDialog(templateId) {
 }
 
 export function confirmPack() {
-  const template = state.schema?.cardTemplates.find(t => t.id === _packTemplateId);
+  const schema = getSchemaForTemplate(_packTemplateId);
+  const template = schema?.cardTemplates.find(t => t.id === _packTemplateId);
   if (!template) return;
 
   const checkedIds = [...document.querySelectorAll('#pack-dialog-records input[type=checkbox]:checked')]
@@ -249,7 +255,7 @@ export function packRecords(template, selectedRecords) {
 }
 
 export function syncAllPacked() {
-  const templates = state.schema?.cardTemplates?.filter(t => t.templateType === 'compound') || [];
+  const templates = state.schemas.flatMap(s => (s.cardTemplates || []).filter(t => t.templateType === 'compound'));
 
   // Group packed cards by templateId (in state.cards order)
   const packedByTemplate = {};
@@ -432,7 +438,7 @@ function _consolidateSameLayout(layout) {
 }
 
 export function packAll() {
-  const templates = state.schema?.cardTemplates?.filter(t => t.templateType === 'compound') || [];
+  const templates = state.schemas.flatMap(s => (s.cardTemplates || []).filter(t => t.templateType === 'compound'));
   if (!templates.length) { showToast(t('rec.toast.noTemplates')); return; }
   if (!state.records.length) { showToast(t('rec.toast.noRecords')); return; }
   // Clear all packed cards before re-packing from scratch
