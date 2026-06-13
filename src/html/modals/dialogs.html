@@ -1,8 +1,4 @@
-﻿    <!-- ══════════════════════════════════════════════════════════════
-         DIALOGS — native <dialog> (showModal / close)
-         ══════════════════════════════════════════════════════════════ -->
-
-    <!-- Schema Editor Modal -->
+﻿    <!-- Schema Editor Modal -->
     <dialog id="schema-editor-modal">
       <div class="dialog-header">
         <span class="dialog-title">Schema Editor</span>
@@ -14,6 +10,7 @@
           <select id="schema-library-select" style="width:130px;height:26px;font-size:12px"><option value="">— library —</option></select>
           <button class="btn btn-sm btn-secondary" onclick="applySchemaFromLibrary()">Load</button>
           <button class="btn btn-sm btn-secondary" onclick="saveSchemaToLibrary()">Save</button>
+          <button class="btn btn-sm btn-secondary" onclick="saveAllSchemasToLibrary()" title="Save all schemas as a bundle">Save All</button>
           <button class="btn btn-sm btn-danger" onclick="deleteSchemaFromLibrary()">Delete</button>
         </div>
         <button class="btn btn-sm btn-primary" onclick="saveSchema()">Save</button>
@@ -86,6 +83,11 @@
             style="height:30px;font-size:13px;border:1px solid var(--line-strong);border-radius:4px;padding:0 8px"
             onkeydown="if(event.key==='Enter')executeGenerateRecords()">
         </div>
+        <div id="gen-records-locale-row" style="display:none;align-items:center;gap:10px">
+          <label style="font-size:13px;white-space:nowrap">Fill locale</label>
+          <select id="gen-records-locale"
+            style="height:28px;font-size:13px;border:1px solid var(--line-strong);border-radius:4px;padding:0 6px"></select>
+        </div>
       </div>
       <div class="dialog-footer">
         <button class="btn btn-sm btn-secondary" onclick="closeGenerateRecordsDialog()">Cancel</button>
@@ -107,6 +109,7 @@
         <div class="ai-chat-footer">
           <div class="ai-chat-footer-top">
             <select id="ai-chat-template-select" onchange="onAiTemplateChange()"></select>
+            <select id="ai-chat-locale-select" style="display:none" title="Target locale"></select>
             <select id="ai-chat-model-select" onchange="onAiChatModelChange(this.value)" title="Model"></select>
           </div>
           <div class="ai-chat-input-row">
@@ -117,6 +120,32 @@
         </div>
       </div>
     </div>
+
+    <!-- Convert Cards to Records Dialog -->
+    <dialog id="convert-cards-dialog">
+      <div class="dialog-header">
+        <span class="dialog-title">↩ Convert cards to records</span>
+        <button class="btn btn-sm modal-close" onclick="closeConvertDialog()">×</button>
+      </div>
+      <div class="dialog-body" style="padding:0">
+        <div style="padding:8px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;user-select:none">
+            <input type="checkbox" id="convert-select-all" checked onchange="toggleConvertSelectAll(this.checked)">
+            Select all
+          </label>
+          <span id="convert-selection-count" style="font-size:11px;color:var(--ink-400);margin-left:auto"></span>
+          <label style="font-size:12px;display:flex;align-items:center;gap:4px;margin-left:8px">
+            Locale
+            <select id="convert-locale-select" style="height:24px;font-size:12px;border:1px solid var(--line-strong);border-radius:4px;padding:0 4px"></select>
+          </label>
+        </div>
+        <div id="convert-cards-list" style="max-height:340px;overflow-y:auto;padding:8px 14px"></div>
+      </div>
+      <div class="dialog-footer">
+        <button class="btn btn-sm btn-secondary" onclick="closeConvertDialog()">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="executeConvert()">↩ Convert selected</button>
+      </div>
+    </dialog>
 
     <!-- Export PDF Dialog -->
     <dialog id="export-pdf-dialog">

@@ -35,8 +35,30 @@ export async function applySchemaFromLibrary() {
   const name = sel?.value;
   if (!name) return;
   try {
-    const schema = await loadFromLibrary('schemas', name);
-    if (!schema?.fields) throw new Error(t('rec.schema.invalidFile'));
+    const loaded = await loadFromLibrary('schemas', name);
+
+    // ── Array bundle ──────────────────────────────────────────────
+    if (Array.isArray(loaded)) {
+      const choice = confirm(`Load all ${loaded.length} schemas from "${name}"?\nOK = replace all · Cancel = append`);
+      if (choice === null) return;
+      if (choice) {
+        state.schemas = loaded;
+        state.records = state.records.filter(r => state.schemas.some(s => s.id === r.schemaId));
+        uiState.activeSchemaId = state.schemas[0]?.id ?? null;
+      } else {
+        const existingIds = new Set(state.schemas.map(s => s.id));
+        loaded.forEach(s => { if (!existingIds.has(s.id)) state.schemas.push(s); });
+        uiState.activeSchemaId = loaded[0]?.id ?? uiState.activeSchemaId;
+      }
+      setDirty();
+      closeSchemaEditor();
+      window.renderRecordsPanel?.();
+      showToast(`Loaded ${loaded.length} schemas from "${name}"`);
+      return;
+    }
+
+    // ── Single schema (existing behaviour) ───────────────────────
+    if (!loaded?.fields) throw new Error(t('rec.schema.invalidFile'));
     const hasRecords = state.records?.length > 0;
     let templatesOnly = false;
     if (hasRecords) {
@@ -45,9 +67,9 @@ export async function applySchemaFromLibrary() {
       templatesOnly = !choice;
     }
     if (templatesOnly) {
-      _editingSchema.cardTemplates = schema.cardTemplates || [];
+      _editingSchema.cardTemplates = loaded.cardTemplates || [];
     } else {
-      _editingSchema = schema;
+      _editingSchema = loaded;
       _loadedSchemaName = name;
     }
     _renderSchemaEditor();
@@ -61,6 +83,21 @@ export async function applySchemaFromLibrary() {
       }
     } catch (_) {}
   } catch (err) { alert(t('rec.schema.loadFailAlert').replace('{e}', err.message)); }
+}
+
+export async function saveAllSchemasToLibrary() {
+  if (!hasWorkDir()) { alert(t('rec.schema.setFolderAlert')); return; }
+  if (!state.schemas.length) { alert('No schemas to save.'); return; }
+  const name = prompt('Save all schemas as:', _loadedSchemaName || '');
+  if (!name?.trim()) return;
+  try {
+    await saveToLibrary('schemas', name.trim(), state.schemas);
+    const sel = document.getElementById('schema-library-select');
+    if (sel && !Array.from(sel.options).find(o => o.value === name.trim())) {
+      sel.innerHTML += `<option value="${esc(name.trim())}">${esc(name.trim())}</option>`;
+    }
+    showToast(`Saved ${state.schemas.length} schemas as "${name.trim()}"`);
+  } catch (err) { alert(t('rec.schema.saveFailAlert').replace('{e}', err.message)); }
 }
 
 export async function deleteSchemaFromLibrary() {
@@ -131,19 +168,22 @@ function _renderSchemaEditor() {
     </div>`;
   }).join('');
 
-  const _checkboxRow = (i, tmpl) =>
-    `<div style="font-size:12px;display:flex;gap:14px;margin-bottom:8px;">
+  const _checkboxRow = (i, tmpl) => {
+    const effHideTitle = tmpl.hideTitle ?? false;
+    const effHideLabels = tmpl.hideSectionLabels ?? false;
+    return `<div style="font-size:12px;display:flex;gap:14px;margin-bottom:8px;">
       <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
-        <input type="checkbox" ${tmpl.hideTitle ? 'checked' : ''}
+        <input type="checkbox" ${effHideTitle ? 'checked' : ''}
           onchange="_schemaTemplateChange(${i},'hideTitle',this.checked)">
         Hide title
       </label>
       <label style="display:flex;align-items:center;gap:4px;cursor:pointer;">
-        <input type="checkbox" ${tmpl.hideSectionLabels ? 'checked' : ''}
+        <input type="checkbox" ${effHideLabels ? 'checked' : ''}
           onchange="_schemaTemplateChange(${i},'hideSectionLabels',this.checked)">
         Hide section labels
       </label>
     </div>`;
+  };
 
   const templatesHtml = s.cardTemplates.map((tmpl, i) => {
     const isCompound = tmpl.templateType === 'compound';
@@ -285,6 +325,12 @@ function _renderSchemaEditor() {
         </div>
         ${_checkboxRow(i, tmpl)}
         <div style="font-size:12px;">
+          <div style="margin-bottom:4px;">${t('rec.schema.titleField')}
+            <select onchange="_schemaTemplateChange(${i},'titleSlot',this.value)">
+              <option value="">—</option>${txtFields.map(f =>
+                `<option value="${f.id}" ${tmpl.mapping.titleSlot === f.id ? 'selected' : ''}>${esc(f.label)}</option>`).join('')}
+            </select>
+          </div>
           <div>${t('rec.schema.imageSlots')} ${imgSlotSelects}</div>
           <div style="margin-top:4px;">${t('rec.schema.sections')} ${secSelects}
             <button class="btn btn-sm" style="margin-left:4px;"
@@ -356,6 +402,7 @@ export function _addSchemaTemplate() {
     id: 't' + uid(), templateType: 'single',
     size: 'A6', layout: 'fulltext',
     locale: 'active',
+    hideTitle: true, hideSectionLabels: true,
     mapping: { imageSlots: [], sections: [''] }
   });
   _renderSchemaEditor();
@@ -380,10 +427,11 @@ export function _schemaTemplateChange(i, prop, value) {
       t.size = 'A6';
       t.mapping = { imageSlots: [], sections: [''] };
     }
-  } else if (['imageSlot', 'labelSlot', 'textSlot'].includes(prop)) {
+  } else if (['imageSlot', 'labelSlot', 'textSlot', 'titleSlot'].includes(prop)) {
     t.mapping[prop] = value;
   } else if (prop === 'layout') {
     t.layout = value;
+    if (value === 'fulltext') { t.hideTitle = true; t.hideSectionLabels = true; }
   } else if (prop === 'size') {
     t.size = value;
   } else if (prop === 'orientation') {

@@ -142,7 +142,7 @@ function buildCompoundImageSlots(card, imgStyle, cellOptions, sections, forPrint
   return Array.from({ length: slotCount }, (_, i) => {
     const img = card.images.find((im) => im.slot === i);
     const section = sections ? sections[i] : null;
-    const _labelLv = getLocaleValue(section.label, state.activeLocale);
+    const _labelLv = section ? getLocaleValue(section.label, state.activeLocale) : '';
     const label = section && !card.hideSectionLabels && _labelLv ? _labelLv : null;
     const hasImg = !!(img && img.url);
     const effectiveCellOptions = (forPrint && !hasImg) ? { ...cellOptions, borderWidth: 0 } : cellOptions;

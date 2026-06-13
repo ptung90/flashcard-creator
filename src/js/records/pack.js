@@ -1,4 +1,4 @@
-﻿import { state, uiState, getActiveCard, LAYOUTS, LAYOUT_SLOTS, LAYOUT_SPLIT_DEFAULTS, HIDE_TITLE_LAYOUTS, getLocaleValue, getSchemaForRecord, getSchemaForTemplate } from '../core/state.js'
+﻿import { state, uiState, getActiveCard, LAYOUTS, LAYOUT_SLOTS, LAYOUT_SPLIT_DEFAULTS, getLocaleValue, getSchemaForRecord, getSchemaForTemplate } from '../core/state.js'
 import { esc, uid, getPaperPx, _hashStr } from '../core/utils.js'
 import { FC_CONFIG } from '../core/config.js'
 import { setDirty, showToast } from '../storage/storage.js'
@@ -33,20 +33,18 @@ export function generateRecord(record, { skipDispatch = false } = {}) {
       state.cards.push(card);
     }
     card.layout = template.layout;
-    card.hideTitle = template.hideTitle ?? HIDE_TITLE_LAYOUTS.has(template.layout);
+    card.hideTitle = template.hideTitle ?? false;
     card.hideSectionLabels = template.hideSectionLabels ?? false;
     card.orientation = 'portrait';
     card.paperSize = template.size || null;
     card.cssClass = template.cardClass || null;
+    if (template.mapping.titleSlot) card.title = _fieldVal(record, template.mapping.titleSlot, resolvedLocale);
     card.images = (template.mapping.imageSlots || [])
       .map((fid, slot) => ({ slot, url: fid ? _fieldVal(record, fid, resolvedLocale) : '' }))
       .filter(img => img.url);
     card.sections = (template.mapping.sections || [])
       .filter(Boolean)
-      .map(fid => {
-        const f = schema.fields.find(x => x.id === fid);
-        return { id: uid(), label: f?.label ?? '', content: _fieldVal(record, fid, resolvedLocale) };
-      });
+      .map(fid => ({ id: uid(), label: '', content: _fieldVal(record, fid, resolvedLocale) }));
   }
   record.fieldsHash = _hashStr(JSON.stringify(record.fields));
   if (!skipDispatch) window.dispatch('CARD_LIST_CHANGED');
@@ -108,14 +106,12 @@ export function generateAll() {
   setDirty();
   window.dispatch('CARD_LIST_CHANGED');
   window.renderRecordsPanel();
-  const msg = t('rec.toast.generated').replace('{n}', count).replace('{s}', count !== 1 ? 's' : '');
-  if (typeof showToast === 'function') showToast(msg);
-  else {
-    const t = document.createElement('div');
-    t.textContent = msg;
-    t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:8px 16px;border-radius:6px;z-index:9999;font-size:13px;';
-    document.body.appendChild(t); setTimeout(() => t.remove(), 2500);
-  }
+  const msg = t('rec.toast.generated').replace('{n}', count).replace('{s}', count === 1 ? '' : 's');
+  if (typeof showToast === 'function') { showToast(msg); return; }
+  const toastEl = document.createElement('div');
+  toastEl.textContent = msg;
+  toastEl.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:8px 16px;border-radius:6px;z-index:9999;font-size:13px;';
+  document.body.appendChild(toastEl); setTimeout(() => toastEl.remove(), 2500);
 }
 
 let _packTemplateId = null;
@@ -164,20 +160,17 @@ export function confirmPack() {
   const slots = LAYOUT_SLOTS[template.layout] ?? 0;
   const chunks = slots > 0 ? Math.ceil(selectedRecords.length / slots) : 1;
   const msg = t('rec.toast.packResult').replace('{r}', selectedRecords.length).replace('{n}', chunks).replace('{l}', template.layout);
-  if (typeof showToast === 'function') showToast(msg);
-  else {
-    const t = document.createElement('div');
-    t.textContent = msg;
-    t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:8px 16px;border-radius:6px;z-index:9999;font-size:13px;';
-    document.body.appendChild(t); setTimeout(() => t.remove(), 2500);
-  }
+  if (typeof showToast === 'function') { showToast(msg); return; }
+  const toastEl2 = document.createElement('div');
+  toastEl2.textContent = msg;
+  toastEl2.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:8px 16px;border-radius:6px;z-index:9999;font-size:13px;';
+  document.body.appendChild(toastEl2); setTimeout(() => toastEl2.remove(), 2500);
 }
 
 export function packRecords(template, selectedRecords) {
   const layout = template.layout;
-  const isTxtGrid = layout === 'txtgrid';
+  const isTxtGrid = layout === 'txtgrid' || (LAYOUT_SLOTS[layout] ?? 0) === 0;
   const fixedSlots = LAYOUT_SLOTS[layout] ?? 0;
-  if (fixedSlots === 0 && !isTxtGrid) return;
 
   const resolvedLocale = (template.locale && template.locale !== 'active')
     ? template.locale
@@ -221,14 +214,14 @@ export function packRecords(template, selectedRecords) {
       card.paperSize = template.size || null;
       card.imageGridSplit = { ...(LAYOUT_SPLIT_DEFAULTS[layout] || LAYOUT_SPLIT_DEFAULTS['1full']) };
       card.title = `${layout} · ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
-      card.hideTitle = template.hideTitle ?? HIDE_TITLE_LAYOUTS.has(layout);
+      card.hideTitle = template.hideTitle ?? false;
       card.hideSectionLabels = template.hideSectionLabels ?? false;
       state.cards.push(card);
     }
 
     card.templateId = template.id;
     card.packedRecordIds = recordIds;
-    card.hideTitle = template.hideTitle ?? HIDE_TITLE_LAYOUTS.has(layout);
+    card.hideTitle = template.hideTitle ?? false;
     card.hideSectionLabels = template.hideSectionLabels ?? false;
     card.cssClass = template.cardClass || null;
     if (template.cardConfig) Object.assign(card, template.cardConfig);
@@ -300,9 +293,10 @@ export function syncAllPacked() {
       syncCount++;
     });
 
-    // ── Detect new records not yet in any card (including consolidated templateId=null cards) ──
-    const allPackedIdSet = new Set(state.cards.flatMap(c => c.packedRecordIds || []));
-    const newRecords = state.records.filter(r => !allPackedIdSet.has(r.id));
+    // ── Detect new records for this schema not yet packed by this template ──
+    const schema = getSchemaForTemplate(template.id);
+    const packedByThisTemplate = new Set(state.cards.filter(c => c.templateId === template.id).flatMap(c => c.packedRecordIds || []));
+    const newRecords = state.records.filter(r => r.schemaId === schema?.id && !packedByThisTemplate.has(r.id));
     if (!newRecords.length) return;
 
     if (isTxtGrid) {
@@ -382,19 +376,18 @@ export function syncAllPacked() {
   window.renderRecordsPanel();
 
   const parts = [];
-  if (syncCount) parts.push(t('rec.toast.syncedN').replace('{n}', syncCount).replace('{s}', syncCount !== 1 ? 's' : ''));
+  if (syncCount) parts.push(t('rec.toast.syncedN').replace('{n}', syncCount).replace('{s}', syncCount === 1 ? '' : 's'));
   if (newCardCount) parts.push(t('rec.toast.newCards').replace('{n}', newCardCount));
   showToast(parts.length ? parts.join(' · ') : t('rec.toast.noPackedCards'));
 }
 
-function _consolidateSameLayout(layout) {
+function _consolidateSameLayout(layout, templateId) {
   const fixedSlots = LAYOUT_SLOTS[layout];
   if (!fixedSlots) return;
 
-  // packRecords pads sections to fixedSlots, so use packedRecordIds.length
-  // to detect "partial" cards (fewer actual records than slots)
   const partial = state.cards.filter(c =>
     c.layout === layout &&
+    c.templateId === templateId &&
     c.packedRecordIds?.length > 0 &&
     c.packedRecordIds.length < fixedSlots
   );
@@ -438,23 +431,36 @@ function _consolidateSameLayout(layout) {
 }
 
 export function packAll() {
-  const templates = state.schemas.flatMap(s => (s.cardTemplates || []).filter(t => t.templateType === 'compound'));
-  if (!templates.length) { showToast(t('rec.toast.noTemplates')); return; }
+  const compoundTemplates = state.schemas.flatMap(s => (s.cardTemplates || []).filter(t => t.templateType === 'compound'));
+  const hasSingleTemplates = state.schemas.some(s => s.cardTemplates?.some(t => t.templateType === 'single'));
+  if (!compoundTemplates.length && !hasSingleTemplates) { showToast(t('rec.toast.noTemplates')); return; }
   if (!state.records.length) { showToast(t('rec.toast.noRecords')); return; }
-  // Clear all packed cards before re-packing from scratch
+
   state.cards = state.cards.filter(c => !c.packedRecordIds?.length);
   let cardCount = 0;
-  templates.forEach(template => {
+
+  compoundTemplates.forEach(template => {
+    const schema = getSchemaForTemplate(template.id);
+    if (!schema) return;
+    const schemaRecords = state.records.filter(r => r.schemaId === schema.id);
     const before = state.cards.length;
-    packRecords(template, state.records);
-    cardCount += state.cards.length - before + 1;
+    packRecords(template, schemaRecords);
+    cardCount += state.cards.length - before;
   });
-  // Merge partial cards of the same layout to reduce wasted slots
-  const layouts = new Set(templates.map(t => t.layout));
-  layouts.forEach(l => _consolidateSameLayout(l));
+  compoundTemplates.forEach(template => _consolidateSameLayout(template.layout, template.id));
+
+  // Single templates: regenerate all (1 record → 1 card per single template)
+  if (hasSingleTemplates) {
+    state.records.forEach(record => {
+      const before = state.cards.length;
+      generateRecord(record, { skipDispatch: true });
+      cardCount += state.cards.length - before;
+    });
+  }
+
   state.records.forEach(r => { r.fieldsHash = _hashStr(JSON.stringify(r.fields)); });
   setDirty();
   window.dispatch('CARD_LIST_CHANGED');
   window.renderRecordsPanel();
-  showToast(t('rec.toast.packed').replace('{r}', state.records.length).replace('{n}', templates.length).replace('{s}', templates.length !== 1 ? 's' : ''));
+  showToast(t('rec.toast.packed').replace('{r}', state.records.length).replace('{n}', compoundTemplates.length + (hasSingleTemplates ? 1 : 0)).replace('{s}', ''));
 }

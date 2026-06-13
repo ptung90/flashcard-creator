@@ -504,17 +504,19 @@ input[type="range"] { accent-color: var(--mint-600); }
 .records-empty { padding: 32px; text-align: center; color: var(--ink-400); }
 
 .records-header {
-  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 8px;
   padding: 16px 0 12px;
   margin: -16px 0 14px;
   border-bottom: 1px solid var(--line);
   position: sticky; top: -16px; z-index: 10;
   background: var(--paper);
 }
-.records-header-title { font-size: 13px; font-weight: 700; color: var(--ink-900); margin-right: 4px; }
+.records-header-start { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.records-header-end { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-shrink: 0; }
+.records-header-title { font-size: 13px; font-weight: 700; color: var(--ink-900); }
 
 .records-pack-wrap { position: relative; display: inline-block; }
-#pack-menu, #col-menu, #records-more-menu {
+#pack-menu, #col-menu, #ai-menu, #schema-menu, #json-menu, .col-menu-dropdown {
   display: none; flex-direction: column; gap: 1px;
   position: absolute; top: calc(100% + 4px); left: 0;
   background: var(--c-bg); border: 1px solid var(--line-strong);
@@ -1249,10 +1251,40 @@ input[type="range"].mint-fill::-webkit-slider-runnable-track {
   font-size: 13px;
   flex: 1;
 }
+.schema-section-header-end { display: flex; align-items: center; gap: 6px; }
 .schema-record-count {
   font-size: 11px;
   color: var(--ink-400, #888);
   background: var(--bg-3, #eee);
   border-radius: 10px;
   padding: 1px 7px;
+}
+
+/* ── Convert cards dialog ────────────────────────────────────────────── */
+.convert-group { margin-bottom: 12px; }
+.convert-group-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-400, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.convert-card-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 2px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.convert-card-row:hover { background: var(--bg-2, #f5f5f5); }
+.convert-card-row--disabled { opacity: 0.45; cursor: default; }
+.convert-card-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.convert-card-layout {
+  font-size: 11px;
+  color: var(--ink-400, #888);
+  font-family: monospace;
+  flex-shrink: 0;
 }

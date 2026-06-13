@@ -109,14 +109,27 @@ export function toggleSort(field) {
   renderRecordsPanel();
 }
 
-export function toggleColMenu(event) {
+export function toggleColMenu(schemaId, event) {
   event.stopPropagation();
-  const menu = document.getElementById('col-menu');
+  const menu = document.getElementById(`col-menu-${schemaId}`);
+  if (!menu) return;
+  const isOpen = menu.style.display !== 'none';
+  document.querySelectorAll('.col-menu-dropdown').forEach(m => { m.style.display = 'none'; });
+  if (!isOpen) menu.style.display = 'flex';
+}
+export function toggleAiMenu(event) {
+  event.stopPropagation();
+  const menu = document.getElementById('ai-menu');
   if (menu) menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
 }
-export function toggleRecordsMoreMenu(event) {
+export function toggleSchemaMenu(event) {
   event.stopPropagation();
-  const menu = document.getElementById('records-more-menu');
+  const menu = document.getElementById('schema-menu');
+  if (menu) menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
+}
+export function toggleJsonMenu(event) {
+  event.stopPropagation();
+  const menu = document.getElementById('json-menu');
   if (menu) menu.style.display = menu.style.display === 'none' ? 'flex' : 'none';
 }
 function _linkedCardChips(recordId) {
@@ -147,19 +160,6 @@ export function renderRecordsPanel() {
   const canTranslate = state.locales.length > 1 && state.schemas.some(s => s.fields.some(f => f.multilingual !== false && f.type !== 'image'));
   const allCompoundTemplates = state.schemas.flatMap(s => s.cardTemplates.filter(t => t.templateType === 'compound'));
 
-  const allTextFields = [];
-  const seenKeys = new Set();
-  state.schemas.forEach(s => s.fields.filter(f => f.type !== 'image').forEach(f => {
-    if (!seenKeys.has(f.key)) { seenKeys.add(f.key); allTextFields.push(f); }
-  }));
-  const colMenuItems = [
-    ...allTextFields.map(f => ({ key: 'field:' + f.key, label: f.label })),
-    { key: 'status', label: t('rec.colStatus') },
-    { key: 'cards', label: t('rec.colCards') },
-  ].map(c => {
-    const checked = !_hiddenRecCols.has(c.key) ? 'checked' : '';
-    return `<label class="col-menu-item"><input type="checkbox" ${checked} onchange="toggleRecCol('${c.key}')"> ${esc(c.label)}</label>`;
-  }).join('');
 
   const packMenuItems = [
     `<button class="records-pack-item" onclick="packAll();togglePackMenu(event)">${t('rec.packAll')}</button>`,
@@ -178,42 +178,61 @@ export function renderRecordsPanel() {
     <button class="btn btn-sm btn-danger" onclick="deleteSelected()">🗑 Delete (${selCount})</button>
   ` : '';
 
+  const localeGroup = state.locales.length > 1
+    ? `<div class="locale-switcher">${state.locales.map(l =>
+        `<button class="btn btn-sm locale-btn${state.activeLocale === l ? ' active' : ''}" data-locale="${l}" onclick="setActiveLocale('${l}')">${l.toUpperCase()}</button>`
+      ).join('')}</div>`
+    : '';
+
   const bilingualBtn = state.locales.length > 1
     ? `<button class="btn btn-sm btn-secondary${_bilingualView ? ' active' : ''}" onclick="toggleBilingualView()" title="Toggle bilingual columns">⊞ ${_bilingualView ? 'Bilingual' : state.activeLocale.toUpperCase()}</button>`
     : '';
 
-  const moreMenuItems = [
-    ...(canTranslate ? [`<button class="records-pack-item" onclick="toggleRecordsMoreMenu(event);appendTranslateOptions(null)">✦ Translate all</button>`] : []),
-    `<button class="records-pack-item" onclick="openSchemaEditor();toggleRecordsMoreMenu(event)">Schema</button>`,
-    `<button class="records-pack-item" onclick="openSchemaEditor('__new__');toggleRecordsMoreMenu(event)">+ New Schema</button>`,
-    `<button class="records-pack-item" onclick="convertCardsToRecords();toggleRecordsMoreMenu(event)">↩ Convert cards to records</button>`,
+  const aiMenuItems = [
+    `<button class="records-pack-item" onclick="openAiChat('generate_records');toggleAiMenu(event)">✦ AI Chat</button>`,
+    `<button class="records-pack-item" onclick="openGenerateRecordsDialog();toggleAiMenu(event)">✦ Generate records</button>`,
+    `<button class="records-pack-item" onclick="copyRecordsForAI();toggleAiMenu(event)">✦ Copy for AI</button>`,
+    ...(canTranslate ? [`<button class="records-pack-item" onclick="toggleAiMenu(event);appendTranslateOptions(null)">✦ Translate all</button>`] : []),
+  ].join('');
+
+  const schemaMenuItems = [
+    `<button class="records-pack-item" onclick="openSchemaEditor();toggleSchemaMenu(event)">Schema</button>`,
+    `<button class="records-pack-item" onclick="openSchemaEditor('__new__');toggleSchemaMenu(event)">+ New Schema</button>`,
+    `<button class="records-pack-item" onclick="convertCardsToRecords();toggleSchemaMenu(event)">↩ Convert cards</button>`,
+  ].join('');
+
+  const jsonMenuItems = [
+    `<button class="records-pack-item" onclick="exportRecordsJson();toggleJsonMenu(event)">Export JSON</button>`,
     `<div class="records-pack-divider"></div>`,
-    `<div class="records-pack-label">${t('rec.columns')}</div>`,
-    colMenuItems,
-    `<div class="records-pack-divider"></div>`,
-    `<button class="records-pack-item" onclick="exportRecordsJson();toggleRecordsMoreMenu(event)">Export JSON</button>`,
-    `<button class="records-pack-item" onclick="copyRecordsForAI();toggleRecordsMoreMenu(event)">✦ Copy for AI</button>`,
-    `<button class="records-pack-item" onclick="importRecordsJsonClick();toggleRecordsMoreMenu(event)">Import JSON</button>`,
-    `<button class="records-pack-item" onclick="pasteRecordsJson();toggleRecordsMoreMenu(event)">Paste JSON (update)</button>`,
-    `<button class="records-pack-item" onclick="pasteRecordsJson(true);toggleRecordsMoreMenu(event)">Append JSON</button>`,
+    `<button class="records-pack-item" onclick="importRecordsJsonClick();toggleJsonMenu(event)">Import JSON</button>`,
+    `<button class="records-pack-item" onclick="pasteRecordsJson();toggleJsonMenu(event)">Paste JSON</button>`,
+    `<button class="records-pack-item" onclick="pasteRecordsJson(true);toggleJsonMenu(event)">Append JSON</button>`,
   ].join('');
 
   const headerHtml = `
     <div class="records-header">
-      <span class="records-header-title">${t('rec.title')}</span>
-      ${selectionBtns}
-      ${state.locales.length > 1 ? `<div class="locale-switcher">${state.locales.map(l =>
-        `<button class="btn btn-sm locale-btn${state.activeLocale === l ? ' active' : ''}" data-locale="${l}" onclick="setActiveLocale('${l}')">${l.toUpperCase()}</button>`
-      ).join('')}</div>` : ''}
-      ${bilingualBtn}
-      <div class="records-pack-wrap">
-        <button class="btn btn-sm btn-secondary" onclick="togglePackMenu(event)">${t('rec.pack')}</button>
-        <div id="pack-menu">${packMenuItems}</div>
+      <div class="records-header-start">
+        <span class="records-header-title">${t('rec.title')}</span>
+        ${selectionBtns}
       </div>
-      <button class="btn btn-sm btn-primary" onclick="openAiChat('generate_records')" title="Generate new records with AI">✦ AI</button>
-      <div class="records-pack-wrap">
-        <button class="btn btn-sm btn-secondary" onclick="toggleRecordsMoreMenu(event)" title="More options">•••</button>
-        <div id="records-more-menu" style="display:none">${moreMenuItems}</div>
+      <div class="records-header-end">
+        ${localeGroup}${bilingualBtn}
+        <div class="records-pack-wrap">
+          <button class="btn btn-sm btn-secondary" onclick="togglePackMenu(event)">${t('rec.pack')}</button>
+          <div id="pack-menu">${packMenuItems}</div>
+        </div>
+        <div class="records-pack-wrap">
+          <button class="btn btn-sm btn-primary" onclick="toggleAiMenu(event)">✦ AI ▾</button>
+          <div id="ai-menu" style="display:none">${aiMenuItems}</div>
+        </div>
+        <div class="records-pack-wrap">
+          <button class="btn btn-sm btn-secondary" onclick="toggleSchemaMenu(event)">Schema ▾</button>
+          <div id="schema-menu" style="display:none">${schemaMenuItems}</div>
+        </div>
+        <div class="records-pack-wrap">
+          <button class="btn btn-sm btn-secondary" onclick="toggleJsonMenu(event)">JSON ▾</button>
+          <div id="json-menu" style="display:none">${jsonMenuItems}</div>
+        </div>
       </div>
       <input type="file" id="records-import-input" accept=".json" style="display:none" onchange="importRecordsJsonFile(this)">
     </div>`;
@@ -225,6 +244,14 @@ export function renderRecordsPanel() {
     const schemaRecords = state.records.filter(r => r.schemaId === schema.id);
     const textFields = schema.fields.filter(f => f.type !== 'image');
     const visibleTextFields = textFields.filter(f => !_hiddenRecCols.has('field:' + f.key));
+    const colMenuItems = [
+      ...textFields.map(f => ({ key: 'field:' + f.key, label: f.label })),
+      { key: 'status', label: t('rec.colStatus') },
+      { key: 'cards', label: t('rec.colCards') },
+    ].map(c => {
+      const checked = !_hiddenRecCols.has(c.key) ? 'checked' : '';
+      return `<label class="col-menu-item"><input type="checkbox" ${checked} onchange="toggleRecCol('${c.key}')"> ${esc(c.label)}</label>`;
+    }).join('');
 
     const displayRecords = _sortField
       ? [...schemaRecords].sort((a, b) => {
@@ -279,8 +306,15 @@ export function renderRecordsPanel() {
         <div class="schema-section-header">
           <span class="schema-section-name">${esc(schema.name || schema.id)}</span>
           <span class="schema-record-count">${schemaRecords.length}</span>
-          <button class="btn btn-sm btn-secondary" onclick="openSchemaEditor('${esc(schema.id)}')">Edit</button>
-          <button class="btn btn-sm btn-secondary" onclick="addRecord('${esc(schema.id)}')">+ Add</button>
+          <div class="schema-section-header-end">
+            <div class="records-pack-wrap">
+              <button class="btn btn-sm btn-secondary" onclick="toggleColMenu('${esc(schema.id)}', event)">Columns ▾</button>
+              <div id="col-menu-${esc(schema.id)}" class="col-menu-dropdown" style="display:none">${colMenuItems}</div>
+            </div>
+            <button class="btn btn-sm btn-secondary" onclick="openSchemaEditor('${esc(schema.id)}')">Edit</button>
+            <button class="btn btn-sm btn-secondary" onclick="addRecord('${esc(schema.id)}')">+ Add</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteSchema('${esc(schema.id)}')">Delete</button>
+          </div>
         </div>
         <table class="records-table">
           <thead><tr>
@@ -357,6 +391,21 @@ export function deleteRecord(id) {
   renderRecordsPanel();
 }
 
+export function deleteSchema(id) {
+  const schema = state.schemas.find(s => s.id === id);
+  if (!schema) return;
+  const recCount = state.records.filter(r => r.schemaId === id).length;
+  const msg = recCount > 0
+    ? `Delete schema "${schema.name}" and its ${recCount} record(s)?`
+    : `Delete schema "${schema.name}"?`;
+  if (!confirm(msg)) return;
+  state.schemas = state.schemas.filter(s => s.id !== id);
+  state.records = state.records.filter(r => r.schemaId !== id);
+  if (uiState.activeSchemaId === id) uiState.activeSchemaId = state.schemas[0]?.id ?? null;
+  setDirty();
+  renderRecordsPanel();
+}
+
 export function togglePackMenu(e) {
   e.stopPropagation();
   const menu = document.getElementById('pack-menu');
@@ -381,8 +430,11 @@ export function _getSelectedSet() {
 document.addEventListener('click', () => {
   const pack = document.getElementById('pack-menu');
   if (pack) pack.classList.remove('open');
-  const more = document.getElementById('records-more-menu');
-  if (more) more.style.display = 'none';
+  ['ai-menu', 'schema-menu', 'json-menu'].forEach(id => {
+    const m = document.getElementById(id);
+    if (m) m.style.display = 'none';
+  });
+  document.querySelectorAll('.col-menu-dropdown').forEach(m => { m.style.display = 'none'; });
 });
 
 export function openRecordDetail(id) {

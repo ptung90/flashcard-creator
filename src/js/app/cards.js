@@ -64,6 +64,57 @@ export function addCard() {
 
 let _cardStyleClipboard = null;
 
+// ── Card Multi-Select ──────────────────────────────────────────────
+let _selectedCardIds = new Set();
+
+export function toggleCardSelection(id) {
+  if (_selectedCardIds.has(id)) _selectedCardIds.delete(id);
+  else _selectedCardIds.add(id);
+  _syncCardSelectionUI();
+}
+
+export function selectAllCards() {
+  state.cards.forEach(c => _selectedCardIds.add(c.id));
+  _syncCardSelectionUI();
+}
+
+export function clearCardSelection() {
+  _selectedCardIds.clear();
+  _syncCardSelectionUI();
+}
+
+export function deleteSelectedCards() {
+  const n = _selectedCardIds.size;
+  if (!n) return;
+  if (!confirm(`Delete ${n} card${n === 1 ? '' : 's'}?`)) return;
+  pushUndo();
+  state.cards = state.cards.filter(c => !_selectedCardIds.has(c.id));
+  if (_selectedCardIds.has(uiState.activeCardId))
+    uiState.activeCardId = state.cards.at(-1)?.id ?? null;
+  _selectedCardIds.clear();
+  window.dispatch('CARD_LIST_CHANGED');
+}
+
+function _syncCardSelectionUI() {
+  document.querySelectorAll('#card-list [data-id]').forEach(el => {
+    const sel = _selectedCardIds.has(el.dataset.id);
+    el.classList.toggle('card-selected', sel);
+    const cb = el.querySelector('.card-select-cb');
+    if (cb) cb.checked = sel;
+  });
+  const bar = document.getElementById('card-selection-bar');
+  if (!bar) return;
+  const n = _selectedCardIds.size;
+  bar.style.display = n > 0 ? 'flex' : 'none';
+  const countEl = bar.querySelector('.card-sel-count');
+  if (countEl) countEl.textContent = `${n} selected`;
+  const selAll = bar.querySelector('.card-sel-all');
+  if (selAll) {
+    selAll.checked = n > 0 && n === state.cards.length;
+    selAll.indeterminate = n > 0 && n < state.cards.length;
+  }
+}
+
 export function copyCardStyle(id) {
   const card = state.cards.find(c => c.id === id);
   if (!card) return;
@@ -205,21 +256,29 @@ export function renderSidebar() {
   }
 }
 
+function _selectionBar() {
+  const n = _selectedCardIds.size;
+  return `<div id="card-selection-bar" style="display:${n > 0 ? 'flex' : 'none'};align-items:center;gap:6px;padding:4px 8px;background:var(--c-bg-2);border-bottom:1px solid var(--line);font-size:12px;position:sticky;top:0;z-index:2;">
+    <input type="checkbox" class="card-sel-all" onchange="if(this.checked)selectAllCards();else clearCardSelection()">
+    <span class="card-sel-count">${n} selected</span>
+    <button class="btn btn-sm btn-danger" style="margin-left:auto;padding:2px 8px;font-size:11px;" onclick="deleteSelectedCards()">Delete</button>
+    <button class="btn btn-sm" style="padding:2px 6px;font-size:11px;background:transparent;border:1px solid var(--line);" onclick="clearCardSelection()">✕</button>
+  </div>`;
+}
+
 function _renderListSidebar() {
   const list = document.getElementById("card-list");
-  list.innerHTML = state.cards
-    .map(
-      (c, i) => `
-    <div class="fc-card-item ${c.id === uiState.activeCardId ? "active" : ""}${c.twoUp ? ' card-item--twoUp' : ''}" draggable="true" onclick="setActive('${c.id}')" data-id="${c.id}" style="${c.twoUp ? `--twoUp-ratio:${c.twoUpRatio||50}%` : ''}">
+  list.innerHTML = _selectionBar() + state.cards.map((c, i) => `
+    <div class="fc-card-item ${c.id === uiState.activeCardId ? "active" : ""}${c.twoUp ? ' card-item--twoUp' : ''}${_selectedCardIds.has(c.id) ? ' card-selected' : ''}" draggable="true" onclick="setActive('${c.id}')" data-id="${c.id}" style="${c.twoUp ? `--twoUp-ratio:${c.twoUpRatio||50}%` : ''}">
+      <input type="checkbox" class="card-select-cb" ${_selectedCardIds.has(c.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleCardSelection('${c.id}')">
       <span class="card-num">${i + 1}</span>
       <span class="card-title">${esc(c.title || t('card.untitled'))}</span>
       <span class="card-actions">
         <button class="icon-btn card-more-btn" title="More" onclick="event.stopPropagation();openCardMenu('${c.id}',this)"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></button>
       </span>
     </div>
-  `,
-    )
-    .join("");
+  `).join('');
+  _syncCardSelectionUI();
   _attachCardDrag('.fc-card-item');
 }
 
@@ -231,9 +290,10 @@ function _renderGridSidebar() {
   const sameCards = ids.length === state.cards.length && state.cards.every((c, i) => c.id === ids[i]);
 
   if (sameCards) {
-    // Lightweight update: only sync active class and titles
+    // Lightweight update: only sync active class, titles, selection
     items.forEach((el, i) => {
       el.classList.toggle('active', state.cards[i].id === uiState.activeCardId);
+      el.classList.toggle('card-selected', _selectedCardIds.has(state.cards[i].id));
       el.classList.toggle('fc-card-thumb-item--landscape', getCardOrientation(state.cards[i]) === 'landscape');
       el.classList.toggle('fc-card-thumb-item--portrait', getCardOrientation(state.cards[i]) !== 'landscape');
       const titleEl = el.querySelector('.card-thumb-title');
@@ -248,18 +308,22 @@ function _renderGridSidebar() {
         const inp = ratioRow.querySelector('.card-2up-input');
         if (inp) inp.value = state.cards[i].twoUp ? (state.cards[i].twoUpRatio || 50) : '';
       }
+      const cb = el.querySelector('.card-select-cb');
+      if (cb) cb.checked = _selectedCardIds.has(state.cards[i].id);
     });
     if (_thumbRenderedVersion !== _thumbDirtyVersion) {
       _requestThumbGeneration(items);
     }
+    _syncCardSelectionUI();
     return;
   }
 
   // Full rebuild needed (cards added/removed/reordered)
   const genId = ++_thumbGenId;
-  list.innerHTML = '<div class="fc-card-grid">' + state.cards.map((c, i) => `
-    <div class="fc-card-thumb-item ${c.id === uiState.activeCardId ? "active" : ""} ${getCardOrientation(c) === "landscape" ? "fc-card-thumb-item--landscape" : "fc-card-thumb-item--portrait"}${c.twoUp ? ' fc-card-thumb-item--twoUp' : ''}" style="${c.twoUp ? `--twoUp-ratio:${c.twoUpRatio||50}%` : ''}"
+  list.innerHTML = _selectionBar() + '<div class="fc-card-grid">' + state.cards.map((c, i) => `
+    <div class="fc-card-thumb-item ${c.id === uiState.activeCardId ? "active" : ""} ${getCardOrientation(c) === "landscape" ? "fc-card-thumb-item--landscape" : "fc-card-thumb-item--portrait"}${c.twoUp ? ' fc-card-thumb-item--twoUp' : ''}${_selectedCardIds.has(c.id) ? ' card-selected' : ''}" style="${c.twoUp ? `--twoUp-ratio:${c.twoUpRatio||50}%` : ''}"
          draggable="true" onclick="setActive('${c.id}')" data-id="${c.id}">
+      <input type="checkbox" class="card-select-cb" ${_selectedCardIds.has(c.id) ? 'checked' : ''} onclick="event.stopPropagation();toggleCardSelection('${c.id}')">
       <div class="card-thumb-img thumb-loading"></div>
       <span class="card-thumb-num">#${i + 1}</span>
       <div class="card-thumb-title">${esc(c.title || t('card.untitled'))}</div>
@@ -271,6 +335,7 @@ function _renderGridSidebar() {
       </div>
     </div>
   `).join("") + '</div>';
+  _syncCardSelectionUI();
   _generateThumbs(genId);
   _attachCardDrag('.fc-card-thumb-item');
 }

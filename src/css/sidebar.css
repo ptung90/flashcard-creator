@@ -154,6 +154,43 @@
 }
 .card-2up-input:focus { outline: none; border-color: #2563eb; }
 
+/* ── Card selection ──────────────────────────────────────────────── */
+.card-select-cb {
+  flex-shrink: 0;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.fc-card-item:hover .card-select-cb,
+.fc-card-item.card-selected .card-select-cb,
+.fc-card-thumb-item:hover .card-select-cb,
+.fc-card-thumb-item.card-selected .card-select-cb {
+  opacity: 1;
+}
+.fc-card-item.card-selected {
+  background: #ede9fe;
+  border-color: #7c3aed;
+}
+.fc-card-thumb-item.card-selected {
+  outline: 2px solid #7c3aed;
+  outline-offset: -2px;
+}
+.fc-card-thumb-item .card-select-cb {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  z-index: 3;
+  width: 14px;
+  height: 14px;
+  accent-color: #7c3aed;
+}
+.fc-card-item .card-select-cb {
+  accent-color: #7c3aed;
+}
+
 /* 2-up visual: list view */
 .fc-card-item.card-item--twoUp {
   border-left: 3px solid #2563eb;

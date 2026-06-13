@@ -27,7 +27,7 @@ import { openLoadModal, closeLoadModal, newProject, openBackupModal, closeBackup
 import { searchWikimedia, searchINaturalist, searchPixabay, searchUnsplash,
          saveUnsplashKey, savePixabayKey, saveAiKey, switchAiProvider,
          toggleAiSection, aiGenerateProject } from './api.js'
-import { setLang } from './i18n.js'
+import { setLang, t } from './i18n.js'
 // Layer 3
 import './render.js'
 // Layer 4
@@ -63,21 +63,22 @@ import { undo, redo, pushUndo } from './core/undo.js'
 import { renderRecordsPanel, openRecordDetail, addRecord, deleteRecord,
          _clearRecordImage, _copyRecordImage, _pasteRecordImage, _pasteToRecordImage,
          _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
-         toggleRecCol, toggleRecordsMoreMenu, toggleSort,
+         toggleRecCol, toggleAiMenu, toggleSchemaMenu, toggleJsonMenu, toggleSort,
          toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected,
          toggleBilingualView, toggleTranslateMenu, _getSelectedSet,
          _migrateRecordFields, _setRecordField,
-         rewriteRecordField, _recAiCustom, setActiveSchema } from './records/records.js'
+         rewriteRecordField, _recAiCustom, setActiveSchema, deleteSchema } from './records/records.js'
 import { confirmPack, packAll, generateRecord, generateAll,
          syncRecord, syncAllPacked, openPackDialog } from './records/pack.js'
 import { openSchemaEditor, closeSchemaEditor, saveSchema, closePackDialog,
-         applySchemaFromLibrary, saveSchemaToLibrary,
+         applySchemaFromLibrary, saveSchemaToLibrary, saveAllSchemasToLibrary,
          deleteSchemaFromLibrary,
          _addSchemaField, _addSchemaSection, _addSchemaTemplate,
          _removeSchemaField, _removeSchemaTemplate, _schemaCardConfig,
          _schemaFieldChange, _schemaSingleImageSlot, _schemaSingleSection,
          _schemaTemplateChange, _schemaNameChange } from './records/schema-editor.js'
-import { convertCardsToRecords } from './records/convert.js'
+import { convertCardsToRecords, openConvertDialog, closeConvertDialog,
+         toggleConvertSelectAll, _updateConvertCount, executeConvert } from './records/convert.js'
 import { copyRecordsForAI, closeRecordsAiModal, executeRecordsAiCopy,
          pasteRecordsAiNames, openGenerateRecordsDialog,
          closeGenerateRecordsDialog, executeGenerateRecords,
@@ -95,7 +96,8 @@ import { addCard, renderSidebar, newCard, refreshAllThumbs,
          scheduleThumbRefresh, setViewMode,
          cloneCard, closeCardMenu, copyCardStyle, pasteCardStyle,
          setTwoUpRatio, openCardMenu, setActive, moveCard,
-         deleteCard, handleUploadFiles } from './app/cards.js'
+         deleteCard, handleUploadFiles,
+         toggleCardSelection, selectAllCards, clearCardSelection, deleteSelectedCards } from './app/cards.js'
 import { dispatch, showCardPanel, showRecordsPanel, toggleSettingsBar,
          toggleEmojiPicker, toggleMoreMenu, closeMoreMenu, openJsonModal, closeJsonModal,
          openJsonEditor, openJsonPreview, closeJsonPreview,
@@ -119,6 +121,7 @@ Object.assign(window, {
   addCard, renderSidebar, newCard, refreshAllThumbs, scheduleThumbRefresh,
   setViewMode, cloneCard, closeCardMenu, copyCardStyle, pasteCardStyle,
   setTwoUpRatio, openCardMenu, setActive, moveCard, deleteCard, handleUploadFiles,
+  toggleCardSelection, selectAllCards, clearCardSelection, deleteSelectedCards,
   // storage/storage.js
   saveJSON, saveJSONAs, loadJSON, dismissRestoreBanner, resumeLastProject, toggleSidebar,
   setDirty, _updateLabels, _computeReadOnly,
@@ -163,23 +166,24 @@ Object.assign(window, {
   renderRecordsPanel, openRecordDetail, addRecord, deleteRecord,
   _clearRecordImage, _copyRecordImage, _pasteRecordImage, _pasteToRecordImage,
   _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
-  toggleRecCol, toggleRecordsMoreMenu, toggleSort,
+  toggleRecCol, toggleAiMenu, toggleSchemaMenu, toggleJsonMenu, toggleSort,
   toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected,
   toggleBilingualView, toggleTranslateMenu, _getSelectedSet,
   _migrateRecordFields, _setRecordField,
-  rewriteRecordField, _recAiCustom, setActiveSchema,
+  rewriteRecordField, _recAiCustom, setActiveSchema, deleteSchema,
   // records/pack.js
   confirmPack, packAll, generateRecord, generateAll,
   syncRecord, syncAllPacked, openPackDialog,
   // records/schema-editor.js
   openSchemaEditor, closeSchemaEditor, saveSchema, closePackDialog,
-  applySchemaFromLibrary, saveSchemaToLibrary, deleteSchemaFromLibrary,
+  applySchemaFromLibrary, saveSchemaToLibrary, saveAllSchemasToLibrary, deleteSchemaFromLibrary,
   _addSchemaField, _addSchemaSection, _addSchemaTemplate,
   _removeSchemaField, _removeSchemaTemplate, _schemaCardConfig,
   _schemaFieldChange, _schemaSingleImageSlot, _schemaSingleSection,
   _schemaTemplateChange, _schemaNameChange,
   // records/convert.js
-  convertCardsToRecords,
+  convertCardsToRecords, openConvertDialog, closeConvertDialog,
+  toggleConvertSelectAll, _updateConvertCount, executeConvert,
   // records/ai.js
   copyRecordsForAI, closeRecordsAiModal, executeRecordsAiCopy,
   pasteRecordsAiNames, openGenerateRecordsDialog,
@@ -192,7 +196,7 @@ Object.assign(window, {
   appendTranslateOptions,
   _appendUserMessage, _appendAiMessage, _appendAiTyping, _removeTyping,
   // i18n.js
-  setLang,
+  setLang, t,
   // core/state.js
   state, uiState, LAYOUTS, PAPER_MM, HIDE_TITLE_LAYOUTS,
   getLocaleValue, setActiveLocale, addLocale,
