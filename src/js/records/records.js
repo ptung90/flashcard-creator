@@ -720,21 +720,12 @@ export async function _pasteToRecordImage(recordId, key) {
         reader.readAsDataURL(blob);
         return;
       }
-      if (item.types.includes('text/html')) {
-        const blob = await item.getType('text/html');
-        const html = await blob.text();
-        const m = html.match(/src=["']([^"']+)["']/);
-        if (m && (m[1].startsWith('http') || m[1].startsWith('data:image'))) {
-          _setRecordField(recordId, key, m[1]);
-          return;
-        }
-      }
     }
     if (_imgClipboard?.url) { _setRecordField(recordId, key, _imgClipboard.url); return; }
   } catch {
     if (_imgClipboard?.url) { _setRecordField(recordId, key, _imgClipboard.url); return; }
   }
-  // Clipboard API couldn't get image — highlight field and wait for Ctrl+V (mirrors card editor)
+  // Last resort: passive paste listener — Ctrl+V will be caught by document paste handler
   _highlightRecordImg(recordId, key);
   showToast('Press Ctrl+V to paste image');
   setTimeout(() => { _clearRecordImgHighlight(recordId, key); }, 10000);
