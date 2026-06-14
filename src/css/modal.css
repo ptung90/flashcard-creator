@@ -12,6 +12,15 @@ dialog {
   overflow: hidden;
 }
 dialog[open] { display: flex; flex-direction: column; }
+
+/* Safari iOS: large dialogs need explicit height so flex:1 children can fill space.
+   Without height (only max-height), Safari collapses flex:1 children to 0. */
+#img-modal[open],
+#load-modal[open],
+#settings-modal[open],
+#json-preview-modal[open] {
+  height: 85dvh;
+}
 dialog::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(2px); }
 
 .modal-header {
@@ -38,8 +47,8 @@ dialog::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(2px); }
 }
 
 .modal-body {
-  flex: 1 1 0; /* Safari: explicit flex-basis 0 prevents content-size override */
-  min-height: 0;  /* Safari: allow flex child to shrink below content min-height */
+  flex: 1 1 auto; /* auto basis: body >= content height even without explicit parent height */
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;

@@ -646,7 +646,8 @@ body.fsa-unsupported .fsa-only { display: none !important; }
 .record-preview-thumb-label { font-size: 10px; color: var(--ink-300); margin-bottom: 3px; }
 
 /* ── Dialog size overrides (base styles in modal.css dialog rule) ── */
-#schema-editor-modal { width: 620px; max-width: 95vw; max-height: 90vh; max-height: 90dvh; }
+#schema-editor-modal { width: 620px; max-width: 95vw; max-height: 90dvh; }
+#schema-editor-modal[open] { height: 90dvh; }
 #pack-dialog { width: 400px; max-width: 95vw; }
 
 .dialog-header {
@@ -654,7 +655,7 @@ body.fsa-unsupported .fsa-only { display: none !important; }
   padding: 14px 18px; border-bottom: 1px solid var(--line); flex-shrink: 0;
 }
 .dialog-title { font-size: 14px; font-weight: 600; color: var(--ink-900); }
-.dialog-body { padding: 16px 18px; overflow: auto; -webkit-overflow-scrolling: touch; flex: 1; min-height: 0; }
+.dialog-body { padding: 16px 18px; overflow: auto; -webkit-overflow-scrolling: touch; flex: 1 1 auto; min-height: 0; }
 .dialog-footer {
   display: flex; gap: 8px; padding: 12px 18px;
   border-top: 1px solid var(--line);
