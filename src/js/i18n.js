@@ -216,6 +216,8 @@ const STRINGS = {
     'ai.tpl.editActive.ph': 'What to change on this card? (e.g. "Add more detail")',
     'ai.tpl.genRecords.label': '🗂️ Generate records',
     'ai.tpl.genRecords.ph': 'Topic, or "5 freshwater fish" for multiple',
+    'ai.tpl.rewriteRecords.label': '🔄 Rewrite records for subject',
+    'ai.tpl.rewriteRecords.ph': 'New subject (e.g. "Freshwater fish of Vietnam")',
   },
 
   vi: {
@@ -434,6 +436,8 @@ const STRINGS = {
     'ai.tpl.editActive.ph': 'Sửa gì trên thẻ này? (vd: "Thêm chi tiết về môi trường sống")',
     'ai.tpl.genRecords.label': '🗂️ Tạo record',
     'ai.tpl.genRecords.ph': 'Chủ đề, hoặc "5 loài cá" để tạo nhiều',
+    'ai.tpl.rewriteRecords.label': '🔄 Viết lại record theo chủ đề',
+    'ai.tpl.rewriteRecords.ph': 'Chủ đề mới (vd: "Cá nước ngọt Việt Nam")',
   },
 };
 

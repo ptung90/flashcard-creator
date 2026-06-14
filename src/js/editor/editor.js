@@ -469,7 +469,7 @@ export function tiptapBaseConfig(placeholder) {
               if (_editorRef.commands.sinkListItem('listItem')) return true;
             }
           }
-          view.dispatch(view.state.tr.insertText('    '));
+          view.dispatch(view.state.tr.insertText('    '));
           return true;
         }
         return false;

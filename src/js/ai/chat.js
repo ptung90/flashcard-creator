@@ -15,7 +15,7 @@ let _pendingTranslateIds = null;
 
 // ── Snapshot helpers ───────────────────────────────────────────────
 
-function _chatProjectSnapshot() {
+function _chatProjectSnapshot_old() {
   const snap = JSON.parse(JSON.stringify({
     project_name: state.projectName, settings: state.settings, cards: state.cards,
   }));
@@ -24,6 +24,24 @@ function _chatProjectSnapshot() {
       return (img && img.url && img.url.startsWith('data:')) ? Object.assign({}, img, { url: '' }) : img;
     });
   });
+  return snap;
+}
+
+function _chatProjectSnapshot() {
+  const snap = JSON.parse(JSON.stringify({
+    project_name: state.projectName, settings: state.settings, records: state.records,
+  }));
+
+  snap.records.forEach(function (record) {
+    if (
+      record.image &&
+      typeof record.image === 'string' &&
+      record.image.startsWith('data:')
+    ) {
+      record.image = '';
+    }
+  });
+
   return snap;
 }
 
@@ -113,6 +131,91 @@ const AI_CHAT_TEMPLATES = [
       return [
         { role: 'system', content: systemContent },
         { role: 'user', content: userContent },
+      ];
+    },
+  },
+  {
+    id: 'rewrite_records',
+    get label() { return t('ai.tpl.rewriteRecords.label'); },
+    get placeholder() { return t('ai.tpl.rewriteRecords.ph'); },
+    buildPrompt: function (input) {
+      const localeSel = document.getElementById('ai-chat-locale-select');
+      const targetLocale = (localeSel && localeSel.style.display !== 'none' && localeSel.value) ? localeSel.value : state.activeLocale;
+      const TRUNCATE = 200;
+
+      // Collect all schemas that have records
+      const schemaData = state.schemas.map(function (s) {
+        const recs = state.records.filter(function (r) { return r.schemaId === s.id; });
+        if (!recs.length) return null;
+        return { schema: s, recs: recs };
+      }).filter(Boolean);
+      if (!schemaData.length) return null;
+
+      const totalCount = schemaData.reduce(function (n, d) { return n + d.recs.length; }, 0);
+      const hasImages = schemaData.some(function (d) { return d.schema.fields.some(function (f) { return f.type === 'image'; }); });
+
+      // Schema descriptions (for system prompt)
+      const schemaDescriptions = schemaData.map(function (d) {
+        const fieldLines = d.schema.fields.map(function (f) { return '  - ' + f.key + ' (' + f.type + '): ' + f.label; }).join('\n');
+        return 'Schema "' + d.schema.name + '" [' + d.schema.id + '] — ' + d.recs.length + ' records:\n' + fieldLines;
+      }).join('\n\n');
+
+      // Current records: truncate text-long, strip image URLs → ""
+      const recordsData = schemaData.map(function (d) {
+        const rows = d.recs.map(function (r) {
+          const obj = {};
+          d.schema.fields.forEach(function (f) {
+            if (f.type === 'image') { obj[f.key] = ''; return; }
+            let val = getLocaleValue(r.fields[f.key], targetLocale) || '';
+            if (f.type === 'text-long' && val.length > TRUNCATE) val = val.slice(0, TRUNCATE) + '…';
+            obj[f.key] = val;
+          });
+          return obj;
+        });
+        return 'Schema "' + d.schema.name + '" [' + d.schema.id + ']:\n' + JSON.stringify(rows, null, 2);
+      }).join('\n\n');
+
+      // Return shape: one REPLACE_RECORDS op per schema
+      const opsShape = schemaData.map(function (d, i) {
+        const ex = '{ ' + d.schema.fields.map(function (f) { return '"' + f.key + '": "..."'; }).join(', ') + ' }';
+        const proj = (i === 0) ? '"project_name": "...", "project_icon": "🐟", ' : '';
+        return '{ ' + proj + '"type": "REPLACE_RECORDS", "schema_id": "' + d.schema.id + '", "records": [' + ex + ', … (' + d.recs.length + ' total)] }';
+      }).join(', ');
+      const returnShape = '{ "summary": "Rewrote ' + totalCount + ' records for [new subject]", "ops": [' + opsShape + '] }';
+
+      const ruleLines = [
+        'Return one REPLACE_RECORDS op per schema. For each schema, return EXACTLY the number of records shown (the count in parentheses).',
+        'Keep all field structures; replace every piece of content with accurate facts about the new subject.',
+        'Write ALL text content in ' + targetLocale.toUpperCase() + '. Write the summary in ' + targetLocale.toUpperCase() + ' too.',
+        'text/text-long fields: rewrite with relevant facts. Match the depth and style of each original record.',
+        ...(hasImages ? ['image fields: set value to a concise English Wikimedia search keyword — NOT a URL.'] : []),
+        'Set project_name and project_icon in the FIRST op only.',
+        'Return ONLY the JSON shape below — no explanation, no markdown fences.',
+      ];
+
+      return [
+        {
+          role: 'system', content: [
+            'You are a record data rewriter. Rewrite ALL provided records for a new subject and return valid JSON.',
+            '',
+            'Schemas:',
+            schemaDescriptions,
+            '',
+            'Rules:',
+            ruleLines.map(function (r, i) { return (i + 1) + '. ' + r; }).join('\n'),
+            '',
+            'Return ONLY this JSON shape:',
+            returnShape,
+          ].join('\n'),
+        },
+        {
+          role: 'user', content: [
+            'New subject: "' + input + '"',
+            '',
+            'Current records (rewrite all, keep exact counts per schema):',
+            recordsData,
+          ].join('\n'),
+        },
       ];
     },
   },
@@ -500,6 +603,18 @@ export function applyAiChatOps(msgId) {
       const locale = (localeSel && localeSel.style.display !== 'none' && localeSel.value) ? localeSel.value : state.activeLocale;
       _applyImportedRecords(JSON.stringify(op.records), true, locale);
     }
+
+    if (op.type === 'REPLACE_RECORDS' && Array.isArray(op.records) && op.records.length) {
+      const localeSel = document.getElementById('ai-chat-locale-select');
+      const locale = (localeSel && localeSel.style.display !== 'none' && localeSel.value) ? localeSel.value : state.activeLocale;
+      if (op.schema_id) {
+        state.records = state.records.filter(function (r) { return r.schemaId !== op.schema_id; });
+        uiState.activeSchemaId = op.schema_id;
+      }
+      if (op.project_name) state.projectName = op.project_name;
+      if (op.project_icon) state.projectIcon = op.project_icon;
+      _applyImportedRecords(JSON.stringify(op.records), false, locale);
+    }
   });
 
   window.dispatch('FULL_STATE_UPDATED');
@@ -594,7 +709,7 @@ export function appendTranslateOptions(idsSnapshot) {
   wrap.scrollTop = wrap.scrollHeight;
 }
 
-window._chatTranslate = function(src, tgt, force, btn) {
+window._chatTranslate = function (src, tgt, force, btn) {
   const bubble = btn.closest('.ai-chat-bubble--translate');
   if (bubble) bubble.querySelectorAll('button').forEach(b => { b.disabled = true; });
   const ids = _pendingTranslateIds;

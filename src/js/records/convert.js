@@ -1,4 +1,4 @@
-import { state, uiState, LAYOUT_SLOTS, HIDE_TITLE_LAYOUTS } from '../core/state.js'
+import { state, uiState, LAYOUT_SLOTS } from '../core/state.js'
 import { uid, esc } from '../core/utils.js'
 import { setDirty, showToast } from '../storage/storage.js'
 
@@ -91,12 +91,10 @@ function _doConvert(cards, locale) {
 
   const textCards = cards.filter(c => !_PAIR_LAYOUTS.has(c.layout) && !_IMAGE_LAYOUTS.has(c.layout));
   if (textCards.length) {
-    const hasVisibleTitle = textCards.some(c => !HIDE_TITLE_LAYOUTS.has(c.layout));
     const maxSections = Math.max(0, ...textCards.map(c => c.sections?.length || 0));
-    const fields = [];
-    if (hasVisibleTitle) {
-      fields.push({ id: `f${uid()}`, key: 'title', label: 'Title', type: 'text', multilingual: true });
-    }
+    const fields = [
+      { id: `f${uid()}`, key: 'title', label: 'Title', type: 'text', multilingual: true },
+    ];
     for (let i = 0; i < maxSections; i++) {
       fields.push(
         { id: `f${uid()}`, key: `s${i + 1}_label`,   label: `Section ${i + 1} Label`, type: 'text', multilingual: true },
@@ -113,7 +111,7 @@ function _doConvert(cards, locale) {
         state.locales.forEach(l => { empty[l] = ''; });
         rec.fields[f.key] = empty;
       });
-      if (hasVisibleTitle) rec.fields.title[locale] = card.title || '';
+      rec.fields.title[locale] = card.title || '';
       (card.sections || []).forEach((s, i) => {
         rec.fields[`s${i + 1}_label`][locale]   = s.label   || '';
         rec.fields[`s${i + 1}_content`][locale] = s.content || '';

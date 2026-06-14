@@ -13,6 +13,8 @@ import { newCard } from '../app/cards.js'
 // ── Module state ─────────────────────────────────────────────────────
 let _imgClipboard = null;
 let _sortField = null;
+let _activeRecordImage = null; // { recordId, key } — set on click of image field
+let _openRecordId = null;     // currently open record in detail panel
 let _sortDir = 'asc';
 let _selectedIds = new Set();
 let _bilingualView = localStorage.getItem('fc_bilingual_view') === '1';
@@ -438,6 +440,8 @@ document.addEventListener('click', () => {
 });
 
 export function openRecordDetail(id) {
+  _openRecordId = id;
+  _activeRecordImage = null;
   _destroyRecordTiptapInstances();
   const record = state.records.find(r => r.id === id);
   if (!record) return;
@@ -460,7 +464,7 @@ export function openRecordDetail(id) {
       const thumb = strVal
         ? `<div class="record-img-thumb" style="background-image:url('${esc(strVal)}')"></div>`
         : `<div class="record-img-thumb record-img-thumb--empty"><svg class="icon" style="width:18px;height:18px"><use href="#i-image"/></svg></div>`;
-      const input = `<div class="record-field-img" onpaste="_pasteRecordImage('${record.id}','${f.key}',event)">
+      const input = `<div class="record-field-img" tabindex="0" data-rid="${esc(record.id)}" data-rkey="${esc(f.key)}" onclick="_setActiveRecordImage('${record.id}','${f.key}')">
         ${thumb}
         <div class="image-slot-btns">
           <button class="btn btn-secondary btn-sm btn-icon" onclick="_pasteToRecordImage('${record.id}','${f.key}')" title="${t('rec.img.paste')}"><svg class="icon" style="width:13px;height:13px"><use href="#i-clipboard"/></svg></button>
@@ -643,7 +647,65 @@ export function _copyRecordImage(recordId, key) {
   showToast(t('rec.toast.imageCopied'));
 }
 
+export function _setActiveRecordImage(recordId, key) {
+  _activeRecordImage = { recordId, key };
+}
+
+// Document-level paste: catches Ctrl+V — mirrors card editor's pendingPasteSlot pattern
+document.addEventListener('paste', (e) => {
+  // Resolve target first — if button was clicked, _activeRecordImage is set
+  const target = _activeRecordImage || _autoDetectImageTarget();
+  if (!target) return;
+
+  // Skip text inputs/TipTap ONLY when no explicit target (same as card editor pendingPasteSlot override)
+  if (!_activeRecordImage) {
+    const t = e.target;
+    if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.closest?.('.ProseMirror')) return;
+  }
+  if (!target) return;
+
+  const imgItem = Array.from(e.clipboardData?.items || []).find(it => it.type.startsWith('image/'));
+  if (!imgItem) return;
+
+  e.preventDefault();
+  const file = imgItem.getAsFile();
+  if (!file) return;
+
+  const { recordId, key } = target;
+  _clearRecordImgHighlight(recordId, key);
+  _activeRecordImage = null;
+
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    const compressed = await _compressImage(ev.target.result);
+    _setRecordField(recordId, key, compressed);
+  };
+  reader.readAsDataURL(file);
+});
+
+function _autoDetectImageTarget() {
+  if (!_openRecordId) return null;
+  const record = state.records.find(r => r.id === _openRecordId);
+  if (!record) return null;
+  const schema = getSchemaForRecord(record);
+  if (!schema) return null;
+  const imgFields = schema.fields.filter(f => f.type === 'image');
+  if (imgFields.length !== 1) return null;
+  return { recordId: record.id, key: imgFields[0].key };
+}
+
+function _highlightRecordImg(recordId, key) {
+  const div = document.querySelector(`.record-field-img[data-rid="${CSS.escape(recordId)}"][data-rkey="${CSS.escape(key)}"]`);
+  if (div) div.classList.add('record-field-img--pending');
+}
+
+function _clearRecordImgHighlight(recordId, key) {
+  const div = document.querySelector(`.record-field-img[data-rid="${CSS.escape(recordId)}"][data-rkey="${CSS.escape(key)}"]`);
+  if (div) div.classList.remove('record-field-img--pending');
+}
+
 export async function _pasteToRecordImage(recordId, key) {
+  _setActiveRecordImage(recordId, key);
   try {
     const items = await navigator.clipboard.read();
     for (const item of items) {
@@ -658,28 +720,24 @@ export async function _pasteToRecordImage(recordId, key) {
         reader.readAsDataURL(blob);
         return;
       }
+      if (item.types.includes('text/html')) {
+        const blob = await item.getType('text/html');
+        const html = await blob.text();
+        const m = html.match(/src=["']([^"']+)["']/);
+        if (m && (m[1].startsWith('http') || m[1].startsWith('data:image'))) {
+          _setRecordField(recordId, key, m[1]);
+          return;
+        }
+      }
     }
-    if (_imgClipboard?.url) _setRecordField(recordId, key, _imgClipboard.url);
+    if (_imgClipboard?.url) { _setRecordField(recordId, key, _imgClipboard.url); return; }
   } catch {
-    if (_imgClipboard?.url) _setRecordField(recordId, key, _imgClipboard.url);
+    if (_imgClipboard?.url) { _setRecordField(recordId, key, _imgClipboard.url); return; }
   }
-}
-
-export function _pasteRecordImage(recordId, key, e) {
-  const items = e.clipboardData?.items;
-  if (!items) return;
-  for (const item of items) {
-    if (!item.type.startsWith('image/')) continue;
-    e.preventDefault();
-    const file = item.getAsFile();
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-      const compressed = await _compressImage(ev.target.result);
-      _setRecordField(recordId, key, compressed);
-    };
-    reader.readAsDataURL(file);
-    return;
-  }
+  // Clipboard API couldn't get image — highlight field and wait for Ctrl+V (mirrors card editor)
+  _highlightRecordImg(recordId, key);
+  showToast('Press Ctrl+V to paste image');
+  setTimeout(() => { _clearRecordImgHighlight(recordId, key); }, 10000);
 }
 
 let _recordTiptapInstances = {};
