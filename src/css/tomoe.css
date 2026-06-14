@@ -32,9 +32,9 @@ body { background: var(--paper); color: var(--ink-900); }
 .fc-toolbar {
   background: var(--c-bg);
   border-bottom: 1px solid var(--line);
-  padding: 4px 8px;
-  gap: 3px;
-  min-height: 38px;
+  padding: 5px 12px;
+  gap: 4px;
+  min-height: 42px;
 }
 
 /* Logo block */
@@ -69,7 +69,8 @@ body { background: var(--paper); color: var(--ink-900); }
 }
 .fc-settings-bar.open {
   max-height: 220px;
-  padding-top: 7px; padding-bottom: 7px;
+  padding-top: 10px; padding-bottom: 10px;
+  gap: 6px 14px;
 }
 
 /* Group separators */
@@ -153,7 +154,7 @@ body { background: var(--paper); color: var(--ink-900); }
 /* Sidebar */
 .fc-sidebar { background: var(--paper); border-right: 1px solid var(--line); }
 .fc-sidebar-header {
-  padding: 6px 8px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--line);
   font-size: 11px;
   font-weight: 600;
@@ -170,8 +171,8 @@ body { background: var(--paper); color: var(--ink-900); }
 .fc-preview-panel { background: var(--paper); }
 .fc-preview { background: var(--paper); }
 .preview-paper { box-shadow: 0 2px 16px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.10); }
-.fc-editor { background: var(--paper); }
-.fc-preview-header { background: var(--c-bg); border-bottom: 1px solid var(--line); }
+.fc-editor { background: var(--paper); padding: 16px 18px; }
+.fc-preview-header { background: var(--c-bg); border-bottom: 1px solid var(--line); padding: 10px 14px; gap: 8px; }
 
 /* Toolbar meta (version, lang, zoom) */
 .toolbar-meta {
@@ -284,7 +285,7 @@ body { background: var(--paper); color: var(--ink-900); }
   font-size: 12.5px;
   transition: border-color .12s, box-shadow .12s;
 }
-.fc-editor input.title-input { font-size: 14px; font-weight: 600; }
+.fc-editor input.title-input { font-size: 14px; font-weight: 600; padding: 8px 12px; }
 .section-label-input {  font-size: 12px; padding: 4px 8px; }
 .section-content-input { font-family: 'SF Mono','Menlo','Consolas',monospace; font-size: 12px; line-height: 1.45; }
 
@@ -303,7 +304,8 @@ body { background: var(--paper); color: var(--ink-900); }
   background: var(--c-bg);
   border: 1px solid var(--line);
   border-radius: 6px;
-  padding: 7px 8px;
+  padding: 10px 12px;
+  gap: 8px;
   transition: border-color .12s;
 }
 .section-row:hover { border-color: var(--line-strong); }
@@ -322,7 +324,14 @@ body { background: var(--paper); color: var(--ink-900); }
   margin: 14px 0 6px;
 }
 
-input[type="range"] { accent-color: var(--mint-600); }
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+  accent-color: var(--mint-500);
+}
 .card-css-on { color: var(--mint-600); font-size: 9px; margin-left: 2px; }
 .fc-editor input[type="checkbox"] { accent-color: var(--mint-600); }
 
@@ -410,14 +419,14 @@ input[type="range"] { accent-color: var(--mint-600); }
 .fc-editor .btn-secondary { border-color: var(--line-strong); }
 
 /* Sidebar card items */
-.fc-card-list { background: var(--paper); padding: 6px; gap: 5px; }
+.fc-card-list { background: var(--paper); padding: 6px; gap: 5px; display: flex; flex-direction: column; }
 .fc-card-item {
   border: 1px solid var(--line);
   background: var(--c-bg);
   border-radius: 6px;
   height: auto;
   min-height: 34px;
-  padding: 7px 10px;
+  padding: 8px 10px;
   transition: border-color .12s, background .12s, box-shadow .12s;
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
@@ -465,28 +474,17 @@ input[type="range"] { accent-color: var(--mint-600); }
 .card-thumb-title { color: var(--ink-700); font-size: 10.5px; }
 
 /* ── Editor breathing room ── */
-.fc-editor { padding: 16px 18px; }
 .fc-editor h3:first-child, .fc-editor h4:first-child, .fc-editor .section-title:first-child { margin-top: 0; }
 .sections-list { gap: 8px; }
 .sections-list--2col { gap: 10px; }
-.section-row { padding: 10px 12px; gap: 8px; }
 .section-row-header { gap: 8px; }
 .image-slot-row { padding: 8px 10px; margin-bottom: 6px; }
 .image-slot-row:last-child { margin-bottom: 0; }
 .layout-tabs, .orientation-row { margin-bottom: 4px; }
 .height-slider-row { margin: 8px 0; gap: 10px; }
 .override-row { margin-top: 8px; gap: 12px; }
-.fc-editor input.title-input { padding: 8px 12px; }
 .fc-editor .title-row { gap: 10px; margin-bottom: 6px; }
 #card-css-area, #paste-block-area, #data-area-content { margin-top: 10px; }
-
-/* ── Sidebar spacing ── */
-.fc-card-list { padding: 6px; gap: 5px; display: flex; flex-direction: column; }
-.fc-card-item { padding: 8px 10px; }
-.fc-sidebar-header { padding: 10px 12px; }
-
-/* ── Toolbar spacing ── */
-.fc-toolbar { gap: 4px; padding: 5px 12px; min-height: 42px; }
 .fc-toolbar .spacer { min-width: 6px; }
 
 /* Visual group separators — margin-left on group boundaries */
@@ -583,7 +581,7 @@ input[type="range"] { accent-color: var(--mint-600); }
 .rec-card-chip--compound:hover { background: #ddd6fe; }
 
 #record-detail {
-  position: fixed; right: 16px; top: 56px; bottom: 16px; width: 480px;
+  position: fixed; right: 16px; top: 56px; bottom: 16px; width: 600px;
   background: var(--c-bg); border: 1px solid var(--line-strong);
   border-radius: 8px; overflow: auto; padding: 0; z-index: 50;
   box-shadow: 0 4px 24px rgba(0,0,0,.12), 0 1px 6px rgba(0,0,0,.06);
@@ -612,7 +610,10 @@ input[type="range"] { accent-color: var(--mint-600); }
 }
 .record-field-img {
   display: flex; align-items: center; gap: 10px; margin: 4px 0;
+  border-radius: 6px; outline: none;
 }
+.record-field-img:focus { outline: 2px solid var(--accent, #3e9684); outline-offset: 2px; }
+.record-field-img--pending { outline: 2px solid var(--mint-400, #5CB29D); outline-offset: 2px; }
 .record-img-thumb {
   width: 80px; height: 60px; flex-shrink: 0;
   border-radius: 5px; border: 1px solid var(--line);
@@ -756,19 +757,7 @@ input[type="range"] { accent-color: var(--mint-600); }
 .backup-del-btn { width: 28px; padding: 0; font-size: 16px; color: var(--ink-300); }
 .backup-del-btn:hover { color: var(--danger); border-color: var(--danger); }
 
-/* ── Preview header ── */
-.fc-preview-header { padding: 10px 14px; gap: 8px; }
 .fc-preview-actions { gap: 6px; }
-
-/* ── Range slider — mint themed ── */
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 22px;
-  background: transparent;
-  cursor: pointer;
-  accent-color: var(--mint-500);
-}
 input[type="range"]::-webkit-slider-runnable-track {
   height: 6px;
   background: var(--mint-100);

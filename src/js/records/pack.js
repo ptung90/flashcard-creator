@@ -45,6 +45,7 @@ export function generateRecord(record, { skipDispatch = false } = {}) {
     card.sections = (template.mapping.sections || [])
       .filter(Boolean)
       .map(fid => ({ id: uid(), label: '', content: _fieldVal(record, fid, resolvedLocale) }));
+    if (template.cardConfig) Object.assign(card, template.cardConfig);
   }
   record.fieldsHash = _hashStr(JSON.stringify(record.fields));
   if (!skipDispatch) window.dispatch('CARD_LIST_CHANGED');
@@ -86,6 +87,7 @@ export function syncRecord(recordId) {
       content: template.mapping.textSlot ? _fieldVal(rec, template.mapping.textSlot, resolvedLocale) : ''
     }));
     while (card.sections.length < slotCount) card.sections.push({ id: uid(), label: '', content: '' });
+    if (template.cardConfig) Object.assign(card, template.cardConfig);
   });
 
   setDirty();

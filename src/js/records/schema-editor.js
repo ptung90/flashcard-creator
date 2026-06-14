@@ -229,6 +229,14 @@ function _renderSchemaEditor() {
             oninput="_schemaTemplateChange(${i},'cardClass',this.value)">
         </div>
         ${_checkboxRow(i, tmpl)}
+        ${tmpl.layout === 'txtgrid' ? '' : `
+          <div class="schema-cardconfig-row" style="margin-bottom:8px;">
+            <div class="schema-cardconfig-item">
+              <span>Img h (%)</span>
+              <input type="number" min="10" max="90" value="${esc(String(tmpl.cardConfig?.imageHeightPercent ?? ''))}" placeholder="—"
+                oninput="_schemaCardConfig(${i},'imageHeightPercent',this.value)">
+            </div>
+          </div>`}
         <div class="schema-template-slots">
           ${tmpl.layout === 'txtgrid' ? `
             <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -324,6 +332,14 @@ function _renderSchemaEditor() {
             oninput="_schemaTemplateChange(${i},'cardClass',this.value)">
         </div>
         ${_checkboxRow(i, tmpl)}
+        ${(LAYOUT_SLOTS[tmpl.layout] ?? 0) > 0 ? `
+          <div class="schema-cardconfig-row" style="margin-bottom:8px;">
+            <div class="schema-cardconfig-item">
+              <span>Img h (%)</span>
+              <input type="number" min="10" max="90" value="${esc(String(tmpl.cardConfig?.imageHeightPercent ?? ''))}" placeholder="—"
+                oninput="_schemaCardConfig(${i},'imageHeightPercent',this.value)">
+            </div>
+          </div>` : ''}
         <div style="font-size:12px;">
           <div style="margin-bottom:4px;">${t('rec.schema.titleField')}
             <select onchange="_schemaTemplateChange(${i},'titleSlot',this.value)">

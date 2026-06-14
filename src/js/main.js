@@ -61,7 +61,7 @@ import { openCssModal, closeCssModal, openSettingsModal, closeSettingsModal,
 import { undo, redo, pushUndo } from './core/undo.js'
 // Layer 7
 import { renderRecordsPanel, openRecordDetail, addRecord, deleteRecord,
-         _clearRecordImage, _copyRecordImage, _pasteRecordImage, _pasteToRecordImage,
+         _clearRecordImage, _copyRecordImage, _pasteToRecordImage, _setActiveRecordImage,
          _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
          toggleRecCol, toggleAiMenu, toggleSchemaMenu, toggleJsonMenu, toggleSort,
          toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected,
@@ -164,7 +164,7 @@ Object.assign(window, {
   toggleDataArea, editCardData, cancelCardData, saveCardData, swapSlots,
   // records/records.js
   renderRecordsPanel, openRecordDetail, addRecord, deleteRecord,
-  _clearRecordImage, _copyRecordImage, _pasteRecordImage, _pasteToRecordImage,
+  _clearRecordImage, _copyRecordImage, _pasteToRecordImage, _setActiveRecordImage,
   _pickRecordImage, _recToolbarCmd, toggleColMenu, togglePackMenu,
   toggleRecCol, toggleAiMenu, toggleSchemaMenu, toggleJsonMenu, toggleSort,
   toggleSelectRecord, toggleSelectAll, deleteSelected, exportSelected,
