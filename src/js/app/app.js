@@ -1,6 +1,6 @@
 import { marked } from 'marked'
 import { setCurrentFileName, restoreWorkDir, _autoRestore,
-         setDirty, showToast, applyLoadedData } from '../storage/storage.js'
+         setDirty, showToast, applyLoadedData, FSA_SUPPORTED } from '../storage/storage.js'
 import { applyI18n, getLang, t } from '../i18n.js'
 import { renderEditor } from '../editor/editor.js'
 import { renderPreview, initPanelResize, initPreviewPan } from '../preview.js'
@@ -390,6 +390,14 @@ async function init() {
 
   const vEl = document.getElementById("app-version");
   if (vEl) vEl.textContent = "v" + (window.FC_VERSION || "?");
+  if (!FSA_SUPPORTED) {
+    document.body.classList.add('fsa-unsupported');
+    if (!localStorage.getItem('fsa_notice_seen')) {
+      localStorage.setItem('fsa_notice_seen', '1');
+      showToast('ℹ Auto-save unavailable — use Save (⌘S) to download your work');
+    }
+  }
+
   await restoreWorkDir();
   await _autoRestore();
   bindSettings();

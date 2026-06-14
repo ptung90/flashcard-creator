@@ -101,6 +101,7 @@ export async function _getDirFromPath(path) {
 function _pathLeaf(path) { return path ? path.split('/').pop() : (workDirHandle?.name || ''); }
 
 // ── Save / Load JSON ───────────────────────────────────────────────
+export const FSA_SUPPORTED = typeof window.showDirectoryPicker === 'function';
 export let workDirHandle = null;
 export let currentSubfolder = null;  // null = root, "l1" or "l1/l2" path (max 2 levels)
 export let currentFileName = null;

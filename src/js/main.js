@@ -16,7 +16,7 @@ import { state, uiState, LAYOUTS, PAPER_MM, HIDE_TITLE_LAYOUTS, getLocaleValue, 
 import './core/utils.js'
 // Layer 2
 import { saveJSON, saveJSONAs, loadJSON, dismissRestoreBanner, resumeLastProject,
-         toggleSidebar, setDirty, _updateLabels, _computeReadOnly } from './storage/storage.js'
+         toggleSidebar, setDirty, _updateLabels, _computeReadOnly, FSA_SUPPORTED } from './storage/storage.js'
 import { openLoadModal, closeLoadModal, newProject, openBackupModal, closeBackupModal,
          manualBackup, setWorkDir, openSaveAsModal, closeSaveAsModal, executeSaveAs,
          browseSubfolder, loadFromFolder, createSubfolder, openFilePicker,
@@ -124,7 +124,7 @@ Object.assign(window, {
   toggleCardSelection, selectAllCards, clearCardSelection, deleteSelectedCards,
   // storage/storage.js
   saveJSON, saveJSONAs, loadJSON, dismissRestoreBanner, resumeLastProject, toggleSidebar,
-  setDirty, _updateLabels, _computeReadOnly,
+  setDirty, _updateLabels, _computeReadOnly, FSA_SUPPORTED,
   // storage/file-modals.js
   openLoadModal, closeLoadModal, newProject, openBackupModal, closeBackupModal, manualBackup, setWorkDir,
   openSaveAsModal, closeSaveAsModal, executeSaveAs,

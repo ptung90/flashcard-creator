@@ -614,6 +614,9 @@ input[type="range"] {
 }
 .record-field-img:focus { outline: 2px solid var(--accent, #3e9684); outline-offset: 2px; }
 .record-field-img--pending { outline: 2px solid var(--mint-400, #5CB29D); outline-offset: 2px; }
+
+/* Safari / no File System Access API */
+body.fsa-unsupported .fsa-only { display: none !important; }
 .record-img-thumb {
   width: 80px; height: 60px; flex-shrink: 0;
   border-radius: 5px; border: 1px solid var(--line);
