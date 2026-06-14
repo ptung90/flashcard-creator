@@ -27,6 +27,8 @@ jobs:
 
       - run: npm ci
 
+      - run: cp src/js/env.example.js src/js/env.js
+
       - run: npx vite build
 
       - uses: actions/upload-pages-artifact@v3
