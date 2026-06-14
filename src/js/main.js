@@ -54,7 +54,7 @@ import { renderPreview, printOne, printAll, exportOnePDF,
 import { openCssModal, closeCssModal, openSettingsModal, closeSettingsModal,
          openImgModal, closeImgModal, switchTab, copySlot, pasteToSlot,
          applyCustomCss, resetCustomCss, toggleCfgSection, applyAndSaveSettings,
-         exportStyle, importStyle, resetUserConfig, previewUrlInput, insertUrl,
+         exportStyle, importStyle, resetUserConfig, previewUrlInput, insertUrl, insertImageUrl,
          migrateImages, saveStyleToLibrary, applyStyleFromLibrary,
          deleteStyleFromLibrary } from './modals.js'
 // Layer 6
@@ -142,7 +142,7 @@ Object.assign(window, {
   openCssModal, closeCssModal, openSettingsModal, closeSettingsModal,
   openImgModal, closeImgModal, switchTab, copySlot, pasteToSlot,
   applyCustomCss, resetCustomCss, toggleCfgSection, applyAndSaveSettings,
-  exportStyle, importStyle, resetUserConfig, previewUrlInput, insertUrl,
+  exportStyle, importStyle, resetUserConfig, previewUrlInput, insertUrl, insertImageUrl,
   migrateImages, saveStyleToLibrary, applyStyleFromLibrary, deleteStyleFromLibrary,
   // core/undo.js
   undo, redo, pushUndo,
