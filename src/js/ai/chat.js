@@ -188,7 +188,7 @@ const AI_CHAT_TEMPLATES = [
         'Keep all field structures; replace every piece of content with accurate facts about the new subject.',
         'Write ALL text content in ' + targetLocale.toUpperCase() + '. Write the summary in ' + targetLocale.toUpperCase() + ' too.',
         'text/text-long fields: rewrite with relevant facts. Match the depth and style of each original record.',
-        ...(hasImages ? ['image fields: set value to a concise English Wikimedia search keyword — NOT a URL.'] : []),
+        ...(hasImages ? ['image fields: derive a specific English Wikimedia search keyword from each record\'s name/subject — one distinct keyword per record, NOT a URL.'] : []),
         'Set project_name and project_icon in the FIRST op only.',
         'Return ONLY the JSON shape below — no explanation, no markdown fences.',
       ];
@@ -339,8 +339,8 @@ const AI_CHAT_TEMPLATES = [
 
       const schemaLines = allFields.map(function (f) { return '- ' + f.key + ' (' + f.type + '): ' + f.label; }).join('\n');
       const imgNote = imageFields.length
-        ? '\n5. image fields: set value to a concise English Wikimedia search keyword — NOT a URL.'
-        : '';
+        ? ['6. image fields: derive a specific English Wikimedia search keyword from each record\'s name/subject — one distinct keyword per record, NOT a URL (e.g. for "Blue-ringed Octopus" use "blue-ringed octopus", not "octopus").']
+        : [];
       const localeSel = document.getElementById('ai-chat-locale-select');
       const targetLocale = (localeSel && localeSel.style.display !== 'none' && localeSel.value) ? localeSel.value : state.activeLocale;
 
@@ -391,7 +391,8 @@ const AI_CHAT_TEMPLATES = [
             ] : [
               '4. text/text-long fields: 2–4 sentences, specific facts. Use Markdown (**bold**, - lists). No HTML.',
             ]),
-            '5. Each record must be unique — no duplicates with each other or with existing records.' + imgNote,
+            '5. Each record must be unique — no duplicates with each other or with existing records.',
+            ...imgNote,
             '',
             'Return ONLY this JSON shape:',
             returnShape,
