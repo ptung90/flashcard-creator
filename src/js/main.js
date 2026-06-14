@@ -18,7 +18,7 @@ import './core/utils.js'
 import { saveJSON, saveJSONAs, loadJSON, dismissRestoreBanner, resumeLastProject,
          toggleSidebar, setDirty, _updateLabels, _computeReadOnly, FSA_SUPPORTED } from './storage/storage.js'
 import { openLoadModal, closeLoadModal, newProject, openBackupModal, closeBackupModal,
-         manualBackup, setWorkDir, openSaveAsModal, closeSaveAsModal, executeSaveAs,
+         manualBackup, restoreBackup, setWorkDir, openSaveAsModal, closeSaveAsModal, executeSaveAs,
          browseSubfolder, loadFromFolder, createSubfolder, openFilePicker,
          _renderFolderSection, toggleFolderCollapse,
          deleteRecentItem, loadFromRecent,
@@ -126,7 +126,7 @@ Object.assign(window, {
   saveJSON, saveJSONAs, loadJSON, dismissRestoreBanner, resumeLastProject, toggleSidebar,
   setDirty, _updateLabels, _computeReadOnly, FSA_SUPPORTED,
   // storage/file-modals.js
-  openLoadModal, closeLoadModal, newProject, openBackupModal, closeBackupModal, manualBackup, setWorkDir,
+  openLoadModal, closeLoadModal, newProject, openBackupModal, closeBackupModal, manualBackup, restoreBackup, setWorkDir,
   openSaveAsModal, closeSaveAsModal, executeSaveAs,
   browseSubfolder, loadFromFolder, createSubfolder, openFilePicker,
   _renderFolderSection, toggleFolderCollapse,
