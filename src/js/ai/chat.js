@@ -171,12 +171,27 @@ const AI_CHAT_TEMPLATES = [
         return 'Schema "' + d.schema.name + '" [' + d.schema.id + ']:\n' + JSON.stringify(rows, null, 2);
       }).join('\n\n');
 
+      // Compute per-field average word counts across all records (for length instruction)
+      const rwWordCounts = {};
+      schemaData.forEach(function (d) {
+        d.schema.fields.filter(function (f) { return f.type !== 'image'; }).forEach(function (f) {
+          const total = d.recs.reduce(function (sum, r) {
+            return sum + (getLocaleValue(r.fields[f.key], targetLocale) || '').split(/\s+/).filter(Boolean).length;
+          }, 0);
+          const avg = Math.round(total / d.recs.length);
+          if (avg > 0) rwWordCounts[f.key] = Math.max(rwWordCounts[f.key] || 0, avg);
+        });
+      });
+      const rwWordHint = Object.keys(rwWordCounts).length
+        ? ' Approximate word counts to match: ' + Object.entries(rwWordCounts).map(function (e) { return '"' + e[0] + '": ~' + e[1] + ' words'; }).join(', ') + '.'
+        : '';
+
       // Return shape: one REPLACE_RECORDS op per schema
       const opsShape = schemaData.map(function (d, i) {
         const ex = '{ ' + d.schema.fields.map(function (f) {
           if (f.type === 'text-long') return '"' + f.key + '": "<detailed text>"';
           if (f.type === 'image') return '"' + f.key + '": "<search keyword>"';
-          return '"' + f.key + '": "..."';
+          return '"' + f.key + '": "<text>"';
         }).join(', ') + ' }';
         const proj = (i === 0) ? '"project_name": "...", "project_icon": "🐟", ' : '';
         return '{ ' + proj + '"type": "REPLACE_RECORDS", "schema_id": "' + d.schema.id + '", "records": [' + ex + ', … (' + d.recs.length + ' total)] }';
@@ -187,7 +202,7 @@ const AI_CHAT_TEMPLATES = [
         'Return one REPLACE_RECORDS op per schema. For each schema, return EXACTLY the number of records shown (the count in parentheses).',
         'Keep all field structures; replace every piece of content with accurate facts about the new subject.',
         'Write ALL text content in ' + targetLocale.toUpperCase() + '. Write the summary in ' + targetLocale.toUpperCase() + ' too.',
-        'text/text-long fields: rewrite with relevant facts. Match the depth and style of each original record.',
+        'text/text-long fields: rewrite with relevant facts. Match the depth and style of each original record EXACTLY — do NOT write less.' + rwWordHint,
         ...(hasImages ? ['image fields: derive a specific English Wikimedia search keyword from each record\'s name/subject — one distinct keyword per record, NOT a URL.'] : []),
         'Set project_name and project_icon in the FIRST op only.',
         'Return ONLY the JSON shape below — no explanation, no markdown fences.',
@@ -365,6 +380,21 @@ const AI_CHAT_TEMPLATES = [
         return obj;
       });
 
+      // Compute per-field average word counts from samples (for length instruction)
+      const fieldWordCounts = {};
+      if (samples.length) {
+        textFields.forEach(function (f) {
+          const total = samples.reduce(function (sum, r) {
+            return sum + (r[f.key] || '').split(/\s+/).filter(Boolean).length;
+          }, 0);
+          const avg = Math.round(total / samples.length);
+          if (avg > 0) fieldWordCounts[f.key] = avg;
+        });
+      }
+      const wordCountHint = Object.keys(fieldWordCounts).length
+        ? ' Approximate word counts from samples: ' + Object.entries(fieldWordCounts).map(function (e) { return '"' + e[0] + '": ~' + e[1] + ' words'; }).join(', ') + '.'
+        : '';
+
       const existingNames = state.records
         .map(function (r) { return getLocaleValue(r.fields['name'], targetLocale).trim(); })
         .filter(Boolean);
@@ -387,7 +417,7 @@ const AI_CHAT_TEMPLATES = [
             '2. Generate exactly ' + n + ' records, all distinct.',
             '3. Write ALL text content in ' + targetLocale.toUpperCase() + '. Write the summary in ' + targetLocale.toUpperCase() + ' too.',
             ...(samples.length ? [
-              '4. text/text-long fields: match the style and length of the sample records exactly — same approximate word count per field, same Markdown style (bullets vs paragraphs vs short phrases). No HTML.',
+              '4. text/text-long fields: match the style and length of the sample records EXACTLY — do NOT write less.' + wordCountHint + ' Same Markdown style (bullets vs paragraphs vs short phrases). No HTML.',
             ] : [
               '4. text/text-long fields: 2–4 sentences, specific facts. Use Markdown (**bold**, - lists). No HTML.',
             ]),
