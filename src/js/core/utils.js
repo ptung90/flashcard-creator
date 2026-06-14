@@ -52,6 +52,16 @@ export function esc(str) {
   return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+// ── Data URL → Blob (sync) ─────────────────────────────────────────
+export function _dataUrlToBlob(dataUrl) {
+  const [header, b64] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)[1];
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
 // ── Image compression ─────────────────────────────────────────────
 let MAX_IMG_PX = (window.FC_CONFIG || {}).maxImgPx ?? 1240;
 export function setMaxImgPx(v) { MAX_IMG_PX = v; }

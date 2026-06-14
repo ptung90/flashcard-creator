@@ -1,5 +1,5 @@
 ﻿import { state, uiState, getActiveCard } from './core/state.js'
-import { esc, uid, _hide, _compressImage, setMaxImgPx } from './core/utils.js'
+import { esc, uid, _hide, _compressImage, setMaxImgPx, _dataUrlToBlob } from './core/utils.js'
 import { FC_CONFIG } from './core/config.js'
 import { setDirty, showToast, workDirHandle, hasWorkDir, _writeToDir,
          listLibrary, saveToLibrary, loadFromLibrary, deleteFromLibrary } from './storage/storage.js'
@@ -413,10 +413,8 @@ export function copySlot(slot) {
   if (!img || !img.url) return;
   _imgClipboard = { ...img };
   if (img.url.startsWith('data:')) {
-    fetch(img.url)
-      .then(r => r.blob())
-      .then(blob => navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]))
-      .catch(() => {});
+    const blob = _dataUrlToBlob(img.url);
+    navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]).catch(() => {});
   }
   showToast('Image copied');
 }

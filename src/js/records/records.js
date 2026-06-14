@@ -2,7 +2,7 @@
 import { Editor } from '@tiptap/core'
 import { tiptapBaseConfig } from '../editor/editor.js'
 import { state, uiState, getLocaleValue, getSchemaForRecord } from '../core/state.js'
-import { esc, uid, getPaperPx, mdParseInline, _hashStr, mdParse, _compressImage } from '../core/utils.js'
+import { esc, uid, getPaperPx, mdParseInline, _hashStr, mdParse, _compressImage, _dataUrlToBlob } from '../core/utils.js'
 import { FC_CONFIG } from '../core/config.js'
 import { setDirty, showToast } from '../storage/storage.js'
 import { getAiProvider, _callOpenAI, _callGemini } from '../api.js'
@@ -645,10 +645,8 @@ export function _copyRecordImage(recordId, key) {
   if (!url) return;
   _imgClipboard = { url, slot: 0 };
   if (url.startsWith('data:')) {
-    fetch(url)
-      .then(r => r.blob())
-      .then(blob => navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]))
-      .catch(() => {});
+    const blob = _dataUrlToBlob(url);
+    navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]).catch(() => {});
   }
   showToast(t('rec.toast.imageCopied'));
 }
