@@ -8,6 +8,7 @@ dialog {
   width: 700px;
   max-width: 95vw;
   max-height: 85vh;
+  max-height: 85dvh; /* Safari iOS: dvh accounts for dynamic browser toolbar */
   overflow: hidden;
 }
 dialog[open] { display: flex; flex-direction: column; }
@@ -37,7 +38,8 @@ dialog::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(2px); }
 }
 
 .modal-body {
-  flex: 1;
+  flex: 1 1 0; /* Safari: explicit flex-basis 0 prevents content-size override */
+  min-height: 0;  /* Safari: allow flex child to shrink below content min-height */
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -89,7 +91,9 @@ dialog::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(2px); }
 
 .search-results {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 8px 12px 12px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -372,6 +376,7 @@ dialog::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(2px); }
   flex-direction: column;
   flex: 0 0 auto;
   height: 62vh;
+  height: 62dvh;
   min-height: 300px;
   overflow: hidden;
   padding: 0;
@@ -397,7 +402,9 @@ dialog::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(2px); }
 
 .load-folder-tree {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 6px 0;
 }
 
@@ -457,7 +464,8 @@ dialog::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(2px); }
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  scrollbar-gutter: stable;
+  scrollbar-gutter: stable; /* Chrome/Edge only, safely ignored by Safari */
+  -webkit-overflow-scrolling: touch;
   padding: 6px 8px;
 }
 

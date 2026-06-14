@@ -141,8 +141,6 @@ const AI_CHAT_TEMPLATES = [
     buildPrompt: function (input) {
       const localeSel = document.getElementById('ai-chat-locale-select');
       const targetLocale = (localeSel && localeSel.style.display !== 'none' && localeSel.value) ? localeSel.value : state.activeLocale;
-      const TRUNCATE = 200;
-
       // Collect all schemas that have records
       const schemaData = state.schemas.map(function (s) {
         const recs = state.records.filter(function (r) { return r.schemaId === s.id; });
@@ -160,15 +158,13 @@ const AI_CHAT_TEMPLATES = [
         return 'Schema "' + d.schema.name + '" [' + d.schema.id + '] — ' + d.recs.length + ' records:\n' + fieldLines;
       }).join('\n\n');
 
-      // Current records: truncate text-long, strip image URLs → ""
+      // Current records: strip image data URLs → "", send all other fields in full
       const recordsData = schemaData.map(function (d) {
         const rows = d.recs.map(function (r) {
           const obj = {};
           d.schema.fields.forEach(function (f) {
             if (f.type === 'image') { obj[f.key] = ''; return; }
-            let val = getLocaleValue(r.fields[f.key], targetLocale) || '';
-            if (f.type === 'text-long' && val.length > TRUNCATE) val = val.slice(0, TRUNCATE) + '…';
-            obj[f.key] = val;
+            obj[f.key] = getLocaleValue(r.fields[f.key], targetLocale) || '';
           });
           return obj;
         });
@@ -177,7 +173,11 @@ const AI_CHAT_TEMPLATES = [
 
       // Return shape: one REPLACE_RECORDS op per schema
       const opsShape = schemaData.map(function (d, i) {
-        const ex = '{ ' + d.schema.fields.map(function (f) { return '"' + f.key + '": "..."'; }).join(', ') + ' }';
+        const ex = '{ ' + d.schema.fields.map(function (f) {
+          if (f.type === 'text-long') return '"' + f.key + '": "<detailed text>"';
+          if (f.type === 'image') return '"' + f.key + '": "<search keyword>"';
+          return '"' + f.key + '": "..."';
+        }).join(', ') + ' }';
         const proj = (i === 0) ? '"project_name": "...", "project_icon": "🐟", ' : '';
         return '{ ' + proj + '"type": "REPLACE_RECORDS", "schema_id": "' + d.schema.id + '", "records": [' + ex + ', … (' + d.recs.length + ' total)] }';
       }).join(', ');
@@ -345,7 +345,11 @@ const AI_CHAT_TEMPLATES = [
       const targetLocale = (localeSel && localeSel.style.display !== 'none' && localeSel.value) ? localeSel.value : state.activeLocale;
 
       const returnShape = `{ "summary": "Generated ${n} records about [topic]", "ops": [{ "type": "GENERATE_RECORDS", "records": [{ `
-        + allFields.map(function (f) { return '"' + f.key + '": "..."'; }).join(', ')
+        + allFields.map(function (f) {
+            if (f.type === 'text-long') return '"' + f.key + '": "<detailed multi-sentence text>"';
+            if (f.type === 'image') return '"' + f.key + '": "<search keyword>"';
+            return '"' + f.key + '": "..."';
+          }).join(', ')
         + ' }] }] }';
 
       // Up to 3 sample records with most filled text fields (from targetLocale)
@@ -382,7 +386,11 @@ const AI_CHAT_TEMPLATES = [
             '1. Return ONLY the JSON shape below — no explanation, no markdown fences.',
             '2. Generate exactly ' + n + ' records, all distinct.',
             '3. Write ALL text content in ' + targetLocale.toUpperCase() + '. Write the summary in ' + targetLocale.toUpperCase() + ' too.',
-            '4. text/text-long fields: 2–4 sentences, specific facts. Use Markdown (**bold**, - lists). No HTML.',
+            ...(samples.length ? [
+              '4. text/text-long fields: match the style and length of the sample records exactly — same approximate word count per field, same Markdown style (bullets vs paragraphs vs short phrases). No HTML.',
+            ] : [
+              '4. text/text-long fields: 2–4 sentences, specific facts. Use Markdown (**bold**, - lists). No HTML.',
+            ]),
             '5. Each record must be unique — no duplicates with each other or with existing records.' + imgNote,
             '',
             'Return ONLY this JSON shape:',
@@ -391,7 +399,7 @@ const AI_CHAT_TEMPLATES = [
         },
         {
           role: 'user', content: [
-            samples.length ? ('Sample records (match style — do NOT repeat):\n' + JSON.stringify(samples, null, 2)) : '',
+            samples.length ? ('Style reference — match length and format exactly (do NOT repeat these):\n' + JSON.stringify(samples, null, 2)) : '',
             '',
             'Generate ' + n + ' new records' + (hint ? ' about: "' + hint + '"' : '') + '.',
           ].filter(Boolean).join('\n')
