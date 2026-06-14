@@ -212,6 +212,7 @@ export async function newProject() {
   _computeReadOnly();
   window.dispatch('INIT_LOAD');
   clearDirty();
+  if (!workDirHandle) idbDel('_autosave').catch(() => {});
 }
 
 export async function loadFromRecent(id) {

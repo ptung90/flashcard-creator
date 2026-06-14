@@ -152,7 +152,18 @@ export function showToast(msg) {
 }
 
 export async function _autoSaveToFile() {
-  if (readOnly || !workDirHandle || !state.cards.length) return;
+  if (readOnly) return;
+  if (!workDirHandle) {
+    // No FSA (Safari/iPadOS) — save to IndexedDB
+    if (!state.cards.length && !state.records.length) return;
+    try {
+      await idbPut('_autosave', _buildDataObj());
+      localStorage.setItem('fc_autosave_at', new Date().toISOString());
+    } catch (_) {}
+    clearDirty();
+    return;
+  }
+  if (!state.cards.length) return;
   if (!currentFileName) currentFileName = _defaultFileName();
   // Snapshot before any await — currentFileName/currentSubfolder may change if user opens another file mid-save
   const _fname = currentFileName;
@@ -335,7 +346,16 @@ export async function saveJSON() {
       return;
     } catch (err) { if (err.name === "AbortError") return; }
   }
-  await saveJSONAs();
+  // No FSA (Safari/iPadOS) — save to IndexedDB
+  try {
+    await idbPut('_autosave', dataObj);
+    localStorage.setItem('fc_autosave_at', new Date().toISOString());
+    clearDirty();
+    showToast('✓ Saved');
+  } catch (_) {
+    _fallbackDownload(json, currentFileName || _defaultFileName());
+    addToRecent(currentFileName || _defaultFileName(), dataObj).catch(() => {});
+  }
 }
 
 export async function saveJSONAs() {
@@ -375,7 +395,16 @@ export async function restoreWorkDir() {
 }
 
 export async function _autoRestore() {
-  if (!workDirHandle) return;
+  if (!workDirHandle) {
+    // No FSA — try restore from IndexedDB autosave
+    try {
+      const saved = await idbGet('_autosave');
+      if (saved && (saved.cards?.length || saved.records?.length || saved.schemas?.length)) {
+        applyLoadedData(saved);
+      }
+    } catch (_) {}
+    return;
+  }
   const lastFile = localStorage.getItem("fc_last_file");
   if (!lastFile) return;
   try {
