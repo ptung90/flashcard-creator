@@ -412,6 +412,12 @@ export function copySlot(slot) {
   const img = card.images.find((i) => i.slot === slot);
   if (!img || !img.url) return;
   _imgClipboard = { ...img };
+  if (img.url.startsWith('data:')) {
+    fetch(img.url)
+      .then(r => r.blob())
+      .then(blob => navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]))
+      .catch(() => {});
+  }
   showToast('Image copied');
 }
 

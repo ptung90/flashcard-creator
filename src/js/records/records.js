@@ -644,6 +644,12 @@ export function _copyRecordImage(recordId, key) {
   const url = record.fields[key];
   if (!url) return;
   _imgClipboard = { url, slot: 0 };
+  if (url.startsWith('data:')) {
+    fetch(url)
+      .then(r => r.blob())
+      .then(blob => navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]))
+      .catch(() => {});
+  }
   showToast(t('rec.toast.imageCopied'));
 }
 
