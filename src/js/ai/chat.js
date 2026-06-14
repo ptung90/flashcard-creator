@@ -620,12 +620,21 @@ export function applyAiChatOps(msgId) {
         state.records = state.records.filter(function (r) { return r.schemaId !== op.schema_id; });
         uiState.activeSchemaId = op.schema_id;
       }
-      if (op.project_name) state.projectName = op.project_name;
-      if (op.project_icon) state.projectIcon = op.project_icon;
+      if (op.project_name) {
+        state.projectName = op.project_name;
+        const nameEl = document.getElementById('project-name-input');
+        if (nameEl) nameEl.value = state.projectName;
+      }
+      if (op.project_icon) {
+        state.projectIcon = op.project_icon;
+        const iconEl = document.getElementById('project-icon-btn');
+        if (iconEl) iconEl.textContent = op.project_icon;
+      }
       _applyImportedRecords(JSON.stringify(op.records), false, locale);
     }
   });
 
+  setDirty();
   window.dispatch('FULL_STATE_UPDATED');
 
   // Auto-fetch images with search_query but no url
